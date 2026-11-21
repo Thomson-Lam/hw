@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en" data-pointer="custom">
+  <head>
+    <meta charset="UTF-8" />
+    <title>text · pointer 1 · crosshair</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>" />
+    <style>
+      @font-face {
+        font-family: "JetBrains Mono Variable";
+        font-weight: 100 800;
+        src:
+          local("JetBrains Mono"),
+          url("../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2") format("woff2");
+      }
+      :root {
+        color-scheme: dark;
+        --bg: #000;
+        --ink: #fff;
+        --ink-2: rgb(255 255 255 / 0.64);
+        --ink-3: rgb(255 255 255 / 0.4);
+        --ink-4: rgb(255 255 255 / 0.22);
+        --ink-5: rgb(255 255 255 / 0.1);
+        --hot: #ff5a1f;
+        --hair: 1px;
+        --stroke: 1.5px;
+        --fs: 11px;
+        --fs-s: 10px;
+        --fs-xs: 9px;
+        --lh: 18px;
+        --gap: 8px;
+        --fast: 120ms;
+        --settle: 300ms;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      /* The OS pointer is hidden while the custom one is on; the toggle in the header brings it back for comparison. */
+      html[data-pointer="custom"],
+      html[data-pointer="custom"] * {
+        cursor: none !important;
+      }
+      body {
+        margin: 0;
+        padding: 32px 40px 96px;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          var(--fs) / var(--lh) "JetBrains Mono Variable",
+          ui-monospace,
+          monospace;
+        font-variant-numeric: tabular-nums;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        max-width: 1180px;
+        margin-inline: auto;
+      }
+      h1,
+      h2,
+      p {
+        margin: 0;
+        font: inherit;
+      }
+      header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: var(--gap) 32px;
+        padding-bottom: 24px;
+        border-bottom: var(--hair) solid var(--ink-4);
+
+        p {
+          color: var(--ink-2);
+          max-width: 80ch;
+        }
+        h1 {
+          grid-column: 1 / -1;
+        }
+      }
+      section {
+        display: grid;
+        grid-template-columns: 14ch 1fr;
+        gap: 24px;
+        padding-block: 32px;
+        border-bottom: var(--hair) solid var(--ink-5);
+
+        > h2 {
+          font-size: var(--fs-s);
+          color: var(--ink-3);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+        > h2 b {
+          display: block;
+          font-weight: inherit;
+          color: var(--ink);
+        }
+      }
+      .note {
+        color: var(--ink-3);
+        font-size: var(--fs-s);
+        line-height: 16px;
+        max-width: 80ch;
+      }
+      .spec {
+        display: grid;
+        grid-template-columns: 22ch 1fr;
+        gap: 6px 16px;
+        margin: 0;
+        font-size: var(--fs-s);
+        line-height: 16px;
+
+        dt {
+          color: var(--ink);
+        }
+        dd {
+          margin: 0;
+          color: var(--ink-3);
+        }
+      }
+      .switch {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: var(--fs-s);
+        color: var(--ink-3);
+
+        button {
+          padding: 2px 8px;
+          border: var(--hair) solid var(--ink-4);
+          background: none;
+          color: var(--ink-2);
+          font: inherit;
+        }
+        button[aria-pressed="true"] {
+          background: var(--ink);
+          border-color: var(--ink);
+          color: var(--bg);
+        }
+      }
+
+      /* the try-out scene */
+      .stage {
+        position: relative;
+        min-height: 420px;
+        padding: 40px 0 72px;
+        border: var(--hair) solid var(--ink-5);
+        user-select: none;
+      }
+      .col {
+        width: 64ch;
+        margin-inline: auto;
+        line-height: var(--lh);
+        text-underline-position: under;
+
+        .w {
+          transition:
+            color var(--fast),
+            opacity var(--fast);
+        }
+        .w.ahead {
+          color: var(--ink-4);
+        }
+        /* the box deepens as the hand nears it */
+        .w[data-box] {
+          background: rgb(255 255 255 / calc(0.14 + 0.12 * var(--box-near, 0)));
+        }
+        .w.kw {
+          text-decoration: underline var(--stroke) var(--ink);
+          text-underline-offset: 3px;
+        }
+        &[data-box-hover] .w.kw {
+          text-decoration-color: var(--hot);
+        }
+      }
+      .knob {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 2;
+        width: 14px;
+        height: 14px;
+        padding: 0;
+        border: var(--hair) solid var(--ink);
+        border-radius: 50%;
+        background: none;
+        touch-action: none;
+
+        &::before {
+          content: "";
+          position: absolute;
+          inset: calc(50% - 1px);
+          border-radius: 50%;
+          background: var(--ink);
+        }
+        /* the knob's hover ring fades in as the hand nears it, full when touching */
+        &::after {
+          content: "";
+          position: absolute;
+          inset: -5px;
+          border: var(--hair) solid var(--ink-3);
+          border-radius: 50%;
+          opacity: var(--near, 0);
+          scale: calc(0.7 + 0.3 * var(--near, 0));
+        }
+        &[data-dragging] {
+          background: var(--hot);
+          border-color: var(--hot);
+        }
+        &[data-dragging]::before {
+          background: var(--bg);
+        }
+      }
+      .knob.future {
+        width: 12px;
+        height: 12px;
+        border-style: solid;
+        background: conic-gradient(var(--ink-3) calc(0.64 * 1turn), var(--bg) 0);
+
+        &::before {
+          display: none;
+        }
+        > span {
+          position: absolute;
+          top: 50%;
+          left: calc(100% + var(--gap));
+          translate: 0 -50%;
+          white-space: nowrap;
+          font-size: var(--fs-s);
+          color: var(--ink);
+          pointer-events: none;
+
+          b {
+            font-weight: inherit;
+            color: color-mix(in srgb, var(--ink) calc(var(--near, 0) * 100%), var(--ink-3));
+          }
+        }
+        &[data-dragging] {
+          background: conic-gradient(var(--hot) calc(0.64 * 1turn), var(--bg) 0);
+        }
+      }
+      .tray {
+        position: absolute;
+        inset: auto 0 0;
+        display: flex;
+        justify-content: center;
+        gap: 24px;
+        padding: var(--gap) 16px;
+        border-top: var(--hair) solid var(--ink-5);
+        font-size: var(--fs-s);
+        color: var(--ink-3);
+
+        b {
+          font-weight: inherit;
+          color: var(--ink);
+          margin-left: 0.5ch;
+        }
+        button {
+          padding: 0;
+          border: none;
+          background: none;
+          color: inherit;
+          font: inherit;
+        }
+        /* tray controls brighten as the hand nears them */
+        button {
+          color: color-mix(in srgb, var(--ink) calc(var(--near, 0) * 100%), var(--ink-3));
+        }
+      }
+
+      /* the custom pointer layer: above everything, never in the way of the pointer */
+      #pointer {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        overflow: hidden;
+        pointer-events: none;
+      }
+      html[data-pointer="os"] #pointer {
+        display: none;
+      }
+      /* backed in the page color, like the HUD's labels, so it stays legible over text */
+      .readout {
+        position: absolute;
+        top: 0;
+        left: 0;
+        padding: 0 3px;
+        background: var(--bg);
+        white-space: nowrap;
+        font-size: var(--fs-xs);
+        line-height: 12px;
+        color: var(--ink-3);
+
+        b {
+          font-weight: inherit;
+          color: var(--ink);
+        }
+        &[data-live] b {
+          color: var(--hot);
+        }
+        &:empty {
+          display: none;
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="shared.css" />
+    <style>
+      #pointer {
+        --line: var(--ink-5);
+        --tick: color-mix(in srgb, var(--ink-2) calc(var(--near, 0) * 100%), transparent);
+
+        &[data-live] {
+          --line: rgb(255 90 31 / 0.3);
+          --tick: var(--hot);
+        }
+        /* each hairline leaves a 12px gap around the point, so the point itself is never covered */
+        .v,
+        .h {
+          position: absolute;
+        }
+        .v {
+          top: 0;
+          bottom: 0;
+          left: 0;
+          width: 1px;
+          translate: var(--x) 0;
+          background: linear-gradient(to bottom, var(--line) calc(var(--y) - 6px), transparent 0 calc(var(--y) + 6px), var(--line) 0);
+        }
+        .h {
+          left: 0;
+          right: 0;
+          top: 0;
+          height: 1px;
+          translate: 0 var(--y);
+          background: linear-gradient(to right, var(--line) calc(var(--x) - 6px), transparent 0 calc(var(--x) + 6px), var(--line) 0);
+        }
+        /* where the nearest target's center crosses each hairline */
+        .tick-x,
+        .tick-y {
+          &[hidden] {
+            display: none;
+          }
+          position: absolute;
+          top: 0;
+          left: 0;
+          background: var(--tick);
+        }
+        .tick-x {
+          width: 1px;
+          height: 9px;
+          margin: -4px 0 0;
+        }
+        .tick-y {
+          width: 9px;
+          height: 1px;
+          margin: 0 0 0 -4px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <nav class="experiments" aria-label="experiments">
+        <p>
+          <b>style</b>
+          <a href="style-1.html">instrument</a>
+          <a href="style-2.html">signal</a>
+          <a href="style-3.html">telemetry</a>
+          <a href="style-4.html">merged</a>
+        </p>
+        <p>
+          <b>sound</b>
+          <a href="soundboard.html">soundboard</a>
+        </p>
+        <p>
+          <b>knob</b>
+          <a href="knob-states.html">buffer states</a>
+        </p>
+        <p>
+          <b>rail</b>
+          <a href="bar-1.html">histogram</a>
+          <a href="bar-2.html">profile</a>
+          <a href="bar-3.html">meters</a>
+        </p>
+        <p>
+          <b>pointer</b>
+          <a href="pointer-1.html" aria-current="page">crosshair</a>
+          <a href="pointer-2.html">ring</a>
+          <a href="pointer-3.html">field</a>
+          <a href="pointer-4.html">steering</a>
+          <a href="pointer-5.html">combined</a>
+        </p>
+        <p>
+          <b>tray</b>
+          <a href="tray-1.html">modules</a>
+          <a href="tray-2.html">tmux</a>
+          <a href="tray-3.html">gauges</a>
+        </p>
+      </nav>
+      <header>
+        <h1>text / pointer 1 — crosshair</h1>
+        <p>
+          Two hairlines edge to edge at the hand's exact position, as in CAD; they never snap. Idle they sit at ink-5. Guidance comes from two places: the
+          elements themselves wake as the hand nears them (a knob's ring fades in, the box deepens, a tray control brightens), and where the nearest target's
+          center crosses each hairline a short tick marks it, stronger the nearer it is, so the hand can see how far it is from lining up.
+        </p>
+        <div style="display: grid; gap: 8px; align-content: start">
+          <div class="switch">
+            pointer
+            <button type="button" data-mode="custom" aria-pressed="true">custom</button>
+            <button type="button" data-mode="os" aria-pressed="false">os</button>
+          </div>
+        </div>
+      </header>
+
+      <section>
+        <h2><b>01</b>try</h2>
+        <div style="display: grid; gap: 12px">
+          <div class="stage" id="stage">
+            <p class="col" id="col"></p>
+            <button class="knob" id="knob" type="button" aria-label="main knob"></button>
+            <button class="knob future" id="future" type="button" aria-label="future knob">
+              <span>pace: brisk <b>64%</b></span>
+            </button>
+            <div class="tray">
+              <span>idle</span>
+              <span>words<b id="count">0</b></span>
+              <span>boxes<b>1</b></span>
+              <button type="button" data-toggle>sound<b>on</b></button>
+            </div>
+          </div>
+          <p class="note">
+            Move toward the text, the shaded box, the knobs and the tray, and watch them wake before the pointer arrives; drag the main knob to scrub, or the
+            dashed one to move it. Switch to the OS pointer to compare.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2><b>02</b>behavior</h2>
+        <dl class="spec">
+          <dt>idle</dt>
+          <dd>hairlines at ink-5 with a 12px gap around the point; nothing else.</dd>
+          <dt>approaching a target</dt>
+          <dd>within 120px, the target wakes in proportion to nearness, and alignment ticks appear on both hairlines where its center crosses them.</dd>
+          <dt>near the attention box</dt>
+          <dd>the box's shading deepens; at close range its relevance reads beside the point: <i>box .91</i>.</dd>
+          <dt>near the main knob</dt>
+          <dd>its hover ring fades in; close up the readout says how many words it shows.</dd>
+          <dt>pressing, dragging</dt>
+          <dd>hairlines go a soft orange and ticks orange while the hand changes something; nothing else wakes meanwhile.</dd>
+        </dl>
+      </section>
+
+      <section>
+        <h2><b>03</b>principles</h2>
+        <dl class="spec">
+          <dt>never locks</dt>
+          <dd>the pointer is always exactly where the hand is; it never snaps to or reshapes around geometry.</dd>
+          <dt>elements wake by vicinity</dt>
+          <dd>
+            within 120px a target reacts in proportion to nearness (eased): a knob's hover ring fades in, the attention box deepens, a tray control brightens.
+            Full hover state only on touch.
+          </dd>
+          <dt>one nearest</dt>
+          <dd>only the nearest target is pointed to (tick, tether, strongest frame, label); everything else stays quiet.</dd>
+          <dt>orange = live</dt>
+          <dd>only while the hand presses or drags, or the steering vector pulls; while dragging, nothing else wakes.</dd>
+          <dt>latency</dt>
+          <dd>
+            a page-drawn pointer trails the hardware one by about a frame. It is drawn straight from the pointer event, never on a later frame, and only on
+            desktop pointers; touch keeps none.
+          </dd>
+        </dl>
+      </section>
+    </main>
+    <div id="pointer" aria-hidden="true"></div>
+
+    <script type="module">
+      const $ = (selector) => document.querySelector(selector)
+      const TEXT =
+        "The lighthouse keeper counted the ships twice. Fog had come in early that evening, and the radio was silent. She lit the lamp by hand, the way her father had taught her, and waited for the horn. Nothing answered. Somewhere past the breakwater, an engine idled and then cut out. She leaned on the rail and listened for oars, for voices, for anything at all."
+      /** The attention box: words `first` to `last`, keyword `keyword`, relevance `score`. */
+      const BOX = { first: 22, last: 27, keyword: 25, score: 0.91 }
+      /** Elements react within this distance of the hand: not at all at its edge, fully when touched. */
+      const RANGE_PX = 120
+
+      const stage = $("#stage")
+      const col = $("#col")
+      const knob = $("#knob")
+      const future = $("#future")
+      col.innerHTML = TEXT.split(" ")
+        .map((word, i) => `<span class="w${i === BOX.keyword ? " kw" : ""}"${i >= BOX.first && i <= BOX.last ? " data-box" : ""} data-i="${i}">${word}</span>`)
+        .join(" ")
+      const words = [...col.querySelectorAll(".w")]
+      let shown = 30
+
+      /** Places the main knob after the last shown word, and dims the words past it. */
+      function placeKnob() {
+        const last = words[shown - 1].getBoundingClientRect()
+        const box = stage.getBoundingClientRect()
+        knob.style.translate = `${last.right - box.left + 4}px ${last.top - box.top + last.height / 2 - 7}px`
+        words.forEach((w, i) => w.classList.toggle("ahead", i >= shown))
+        $("#count").textContent = shown
+      }
+      function placeFuture(x, y) {
+        future.style.translate = `${x - 6}px ${y - 6}px`
+      }
+
+      /** Scrubbing: the knob takes the word count under the pointer, as in the app. */
+      function wordsAt(x, y) {
+        const rects = words.map((w) => w.getBoundingClientRect())
+        const line = rects.reduce((best, r) => (Math.abs(r.top + r.height / 2 - y) < Math.abs(best.top + best.height / 2 - y) ? r : best), rects[0])
+        return Math.max(1, rects.filter((r) => r.top < line.top - 2 || (Math.abs(r.top - line.top) < 2 && r.left + r.width / 2 < x)).length)
+      }
+
+      /** Shared pointer state: the hand's exact position, whether it presses, and what it drags. */
+      const pointer = { x: -1000, y: -1000, pressed: false, dragging: null, nearest: null, near: [] }
+
+      function drag(element, onMove) {
+        element.addEventListener("pointerdown", (e) => {
+          element.setPointerCapture(e.pointerId)
+          element.toggleAttribute("data-dragging", true)
+          pointer.dragging = element
+        })
+        element.addEventListener("pointermove", (e) => element.hasPointerCapture(e.pointerId) && onMove(e))
+        element.addEventListener("lostpointercapture", () => {
+          element.removeAttribute("data-dragging")
+          pointer.dragging = null
+          update()
+        })
+      }
+      drag(knob, (e) => {
+        shown = wordsAt(e.clientX, e.clientY)
+        placeKnob()
+      })
+      drag(future, (e) => {
+        const box = stage.getBoundingClientRect()
+        placeFuture(e.clientX - box.left, e.clientY - box.top)
+      })
+      for (const button of document.querySelectorAll(".tray button[data-toggle]"))
+        button.addEventListener("click", () => {
+          const value = button.querySelector("b")
+          value.textContent = value.textContent === "on" ? "off" : "on"
+        })
+
+      /** The box's words as one rectangle per line, so a box that wraps is never treated as a block across the column. */
+      function boxLineRects() {
+        const lines = new Map()
+        for (const w of words.slice(BOX.first, BOX.last + 1)) {
+          const r = w.getBoundingClientRect()
+          const key = Math.round(r.top)
+          const line = lines.get(key)
+          lines.set(key, line ? new DOMRect(line.left, line.top, r.right - line.left, line.height) : r)
+        }
+        return [...lines.values()]
+      }
+
+      /** Everything the hand can act on, each with its boxes, the element that shows its nearness, and a label for when it is nearest. */
+      function targets() {
+        return [
+          { kind: "knob", element: knob, rects: [knob.getBoundingClientRect()], label: () => `<b>${shown}</b> words` },
+          { kind: "future", element: future, rects: [future.getBoundingClientRect()], label: () => "" },
+          { kind: "box", element: col, variable: "--box-near", rects: boxLineRects(), label: () => `box <b>.${Math.round(BOX.score * 100)}</b>` },
+          ...[...document.querySelectorAll(".tray button")].map((element) => ({
+            kind: "button",
+            element,
+            rects: [element.getBoundingClientRect()],
+            label: () => "",
+          })),
+        ]
+      }
+
+      /** Distance from the point to the rectangle (0 inside it), and the rectangle's point closest to it. */
+      function reach({ left, top, right, bottom }, x, y) {
+        const px = Math.min(Math.max(x, left), right)
+        const py = Math.min(Math.max(y, top), bottom)
+        return { distance: Math.hypot(x - px, y - py), point: { x: px, y: py } }
+      }
+      const smooth = (t) => t * t * (3 - 2 * t)
+
+      let render = () => {}
+      /**
+       * Measures every target's nearness to the hand (0 at `RANGE_PX` or beyond, 1 when touching), sets it on the target as `--near`
+       * so the element itself can react, and hands the nearest to the pointer. While dragging, only the dragged element is near.
+       */
+      function update() {
+        const { x, y, dragging } = pointer
+        pointer.near = targets().map((target) => {
+          const closest = target.rects.map((rect) => ({ rect, ...reach(rect, x, y) })).sort((a, b) => a.distance - b.distance)[0]
+          const isDragged = dragging !== null && target.element === dragging
+          const near = dragging ? (isDragged ? 1 : 0) : smooth(Math.max(0, 1 - closest.distance / RANGE_PX))
+          target.element.style.setProperty(target.variable ?? "--near", near.toFixed(3))
+          const { rect } = closest
+          return { ...target, ...closest, near, center: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } }
+        })
+        pointer.nearest = pointer.near.filter((t) => t.near > 0).sort((a, b) => b.near - a.near)[0] ?? null
+        render(pointer)
+      }
+      // Drawn straight from the event, not on a later frame, so the pointer trails the hand as little as the page allows.
+      addEventListener("pointermove", (e) => {
+        pointer.x = e.clientX
+        pointer.y = e.clientY
+        update()
+      })
+      addEventListener("pointerdown", () => ((pointer.pressed = true), update()))
+      addEventListener("pointerup", () => ((pointer.pressed = false), update()))
+      addEventListener("scroll", update, { passive: true })
+      document.documentElement.addEventListener("pointerleave", () => ((pointer.x = pointer.y = -1000), update()))
+
+      for (const button of document.querySelectorAll(".switch button"))
+        button.addEventListener("click", () => {
+          document.documentElement.dataset.pointer = button.dataset.mode
+          for (const other of document.querySelectorAll(".switch button")) other.setAttribute("aria-pressed", `${other === button}`)
+        })
+
+      function mount(variant, layer = "#pointer") {
+        render = variant($(layer))
+        placeKnob()
+        const box = stage.getBoundingClientRect()
+        const last = words.at(-1).getBoundingClientRect()
+        placeFuture(last.right - box.left + 60, last.bottom - box.top + 60)
+        addEventListener("resize", placeKnob)
+        update()
+      }
+
+      /**
+       * Crosshair: hairlines edge to edge at the hand's exact position, never snapped. Where the nearest target's center lines up with a hairline,
+       * a short tick marks it, stronger the nearer the target: the hand reads how far it is from lining up, as with CAD tracking.
+       */
+      function crosshair(layer) {
+        layer.innerHTML = `<i class="v"></i><i class="h"></i><i class="tick-x"></i><i class="tick-y"></i><span class="readout"></span>`
+        const [v, h, tickX, tickY, readout] = layer.children
+        return ({ x, y, nearest, pressed, dragging, steering }) => {
+          const live = !!dragging || (pressed && !!nearest && nearest.near === 1)
+          // while a steering vector pulls, it is the only guide
+          const near = steering ? 0 : (nearest?.near ?? 0)
+          layer.toggleAttribute("data-live", live)
+          layer.style.setProperty("--x", `${x}px`)
+          layer.style.setProperty("--y", `${y}px`)
+          layer.style.setProperty("--near", near.toFixed(3))
+          if (nearest) {
+            tickX.style.translate = `${nearest.center.x}px ${y}px`
+            tickY.style.translate = `${x}px ${nearest.center.y}px`
+          }
+          readout.innerHTML = near > 0.6 ? nearest.label() : ""
+          tickX.hidden = tickY.hidden = near === 0
+          readout.toggleAttribute("data-live", live)
+          readout.style.translate = `${x + 10}px ${y + 8}px`
+        }
+      }
+
+      await document.fonts.ready
+      mount(crosshair)
+    </script>
+  </body>
+</html>

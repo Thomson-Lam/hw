@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spaceship · illustrations</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>" />
+    <style>
+      @font-face {
+        font-family: "JetBrains Mono Variable";
+        font-weight: 100 800;
+        src: url("../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2") format("woff2");
+      }
+      :root {
+        color-scheme: dark;
+        --bg: #000;
+        --ink: #fff;
+        --ink-2: rgb(255 255 255 / 0.64);
+        --ink-3: rgb(255 255 255 / 0.4);
+        --ink-4: rgb(255 255 255 / 0.22);
+        --ink-5: rgb(255 255 255 / 0.1);
+        --ghost: rgb(255 255 255 / 0.2);
+        --hot: #ff5a1f;
+        --hot-wash: rgb(255 90 31 / 0.38);
+        --attention: rgb(255 255 255 / 0.14);
+        --hair: 1px;
+        --fs: 11px;
+        --lh: 18px;
+        --gap: 8px;
+      }
+      body {
+        margin: 0;
+        padding: 48px 32px 96px;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          var(--fs) / var(--lh) "JetBrains Mono Variable",
+          ui-monospace,
+          monospace;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        display: grid;
+        gap: calc(var(--gap) * 8);
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      header p,
+      figcaption p {
+        margin: 0;
+        color: var(--ink-2);
+        max-width: 72ch;
+      }
+      h1,
+      h2 {
+        margin: 0 0 var(--gap);
+        font: inherit;
+      }
+      h2 b {
+        color: var(--ink-3);
+        font-weight: inherit;
+      }
+      figure {
+        display: grid;
+        gap: calc(var(--gap) * 2);
+        margin: 0;
+      }
+      svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: var(--hair) solid var(--ink-5);
+        font: inherit;
+        white-space: pre;
+      }
+      input[type="range"] {
+        width: 100%;
+        margin: 0;
+        accent-color: var(--hot);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Spaceship, illustrated</h1>
+        <p>Four ideas for steering a text model at 60 FPS, each drawn as a loop. Drag the slider under a figure to scrub it.</p>
+      </header>
+      <figure data-scene="focus-monitor">
+        <svg viewBox="0 0 640 300" role="img" aria-label="The rail of meters beside the text swings to whatever the hand is on"></svg>
+        <input type="range" min="0" step="0.01" aria-label="scrub the focus monitor illustration" />
+        <figcaption>
+          <h2><b>1</b> focus monitor</h2>
+          <p>
+            A meter beside every line shows how strongly it connects to what you are on: the sentence at the knob, or a box you hover. Lines that matter
+            brighten, so your eye goes where the model's attention goes.
+          </p>
+        </figcaption>
+      </figure>
+      <figure data-scene="attention-lock">
+        <svg viewBox="0 0 640 300" role="img" aria-label="Attention boxes around key phrases bias the text that comes after the knob"></svg>
+        <input type="range" min="0" step="0.01" aria-label="scrub the attention lock illustration" />
+        <figcaption>
+          <h2><b>2</b> attention lock</h2>
+          <p>
+            Expanding the knob boxes the phrases the model leans on, each wired to the knob. Drag a box to move its keyword, and the future past the knob is
+            written again around the locked words.
+          </p>
+        </figcaption>
+      </figure>
+      <figure data-scene="future-steering">
+        <svg
+          viewBox="0 0 640 340"
+          role="img"
+          aria-label="A future knob is pulled out of the main knob, tuned on a fan of dimensions, then pinned once the text fulfills it"
+        ></svg>
+        <input type="range" min="0" step="0.01" aria-label="scrub the future vector steering illustration" />
+        <figcaption>
+          <h2><b>3</b> future vector steering</h2>
+          <p>
+            Hold the knob to pull out a future knob. Carry it through the fan to pick a dimension; its swing sets the value, its reach the strength. As the text
+            streams in, the knob fills with how surely it is fulfilled, then pins to the sentence that delivered it.
+          </p>
+        </figcaption>
+      </figure>
+      <figure data-scene="realtime-regeneration">
+        <svg
+          viewBox="0 0 640 300"
+          role="img"
+          aria-label="Scrubbing back discards the future and a new one streams in, growing a tree of explored futures"
+        ></svg>
+        <input type="range" min="0" step="0.01" aria-label="scrub the realtime re-generation illustration" />
+        <figcaption>
+          <h2><b>4</b> realtime re-generation</h2>
+          <p>
+            The knob is a playhead over text that is already written ahead. Scrub back and rest: the future past it is thrown away and a new one streams in,
+            fast enough to browse alternatives like frames.
+          </p>
+        </figcaption>
+      </figure>
+    </main>
+    <script type="module">
+      /** JetBrains Mono advances 0.6em per character, so columns map to x without measuring. */
+      const FONT_SIZE = 11
+      const CHAR = FONT_SIZE * 0.6
+      const LINE = 18
+      const BASELINE = 13
+      const COLUMNS = 46
+      const FADE = 0.4
+
+      const STORY = [
+        "The lighthouse keeper had not slept in three nights. Each evening he climbed the spiral stairs, trimmed the wick, and watched the",
+        "horizon for the ship his daughter had boarded in spring. The radio hissed with static. On the fourth night the barometer fell so fast",
+        "he tapped the glass to be sure. By midnight the storm had swallowed the stars, and waves broke white against the rocks below. Then,",
+        "through the rain, a light answered his own: three short flashes, three long, three short. He ran for the stairs before the last one",
+      ].join(" ")
+
+      const scenes = {
+        "focus-monitor": focusMonitor(),
+        "attention-lock": attentionLock(),
+        "future-steering": futureSteering(),
+        "realtime-regeneration": realtimeRegeneration(),
+      }
+      const players = [...document.querySelectorAll("figure[data-scene]")].map((figure) => playerOf(figure, scenes[figure.dataset.scene]))
+      const isFrozen = new URLSearchParams(location.search).has("frozen")
+      const isStill = matchMedia("(prefers-reduced-motion: reduce)").matches
+
+      await document.fonts.load(`${FONT_SIZE}px "JetBrains Mono Variable"`)
+      /** For `scripts/capture-illustrations.mjs`, which loads the page with `?frozen` and renders exact frames itself. */
+      window.illustrations = {
+        durationOf: (name) => scenes[name].duration,
+        renderAt: (name, seconds) => players.find((player) => player.name === name).show(seconds),
+      }
+      if (isStill) players.forEach((player) => player.show(player.scene.poster))
+      else if (!isFrozen)
+        requestAnimationFrame(function tick(now) {
+          players.forEach((player) => player.play(now / 1000))
+          requestAnimationFrame(tick)
+        })
+      else players.forEach((player) => player.show(player.scene.poster))
+
+      /** Plays a scene in its figure's svg, and lets the figure's slider scrub it: dragging holds the scene there, releasing plays on from that point. */
+      function playerOf(figure, scene) {
+        const svg = figure.querySelector("svg")
+        const slider = figure.querySelector("input")
+        slider.max = scene.duration
+        let offset = 0
+        let isHeld = false
+        slider.addEventListener("input", () => {
+          isHeld = true
+          show(slider.valueAsNumber)
+        })
+        slider.addEventListener("change", () => {
+          isHeld = false
+          offset = performance.now() / 1000 - slider.valueAsNumber
+        })
+
+        return {
+          name: figure.dataset.scene,
+          scene,
+          show,
+          play(now) {
+            if (!isHeld) show((now - offset) % scene.duration)
+          },
+        }
+
+        function show(t) {
+          slider.value = t
+          svg.innerHTML = `<g opacity="${loopFade(t, scene.duration).toFixed(3)}">${scene.render(t)}</g>`
+        }
+      }
+
+      function focusMonitor() {
+        const duration = 10
+        const doc = layoutDoc(STORY, { left: 262, top: 40 })
+        const tip = doc.text.lastIndexOf("He ran")
+        const boxes = [
+          { focus: 1, phrase: rangeOf(doc.text, "The lighthouse keeper"), keyword: rangeOf(doc.text, "lighthouse") },
+          { focus: 2, phrase: rangeOf(doc.text, "the storm had swallowed"), keyword: rangeOf(doc.text, "storm") },
+        ]
+        /** How strongly each line connects to each focus, in meter steps: the sentence at the knob, then each box. */
+        const strengths = [
+          [3, 5, 4, 7, 7, 2, 2, 2, 3, 9, 10, 10],
+          [10, 8, 7, 4, 2, 2, 2, 3, 2, 7, 3, 5],
+          [1, 1, 1, 1, 4, 9, 8, 10, 8, 6, 2, 1],
+        ]
+        const focuses = [
+          { at: 0, label: "sentence at the knob" },
+          { at: 3.3, label: "box · lighthouse keeper" },
+          { at: 6.6, label: "box · the storm" },
+        ]
+        const knob = doc.point(doc.text.length)
+        const rest = { x: knob.x + 70, y: knob.y + 34 }
+        const cursorPath = [
+          { at: 0, point: rest },
+          { at: 2.6, point: rest },
+          { at: 3.3, point: centerOf(doc.rects(...boxes[0].keyword)[0]) },
+          { at: 5.9, point: centerOf(doc.rects(...boxes[0].keyword)[0]) },
+          { at: 6.6, point: centerOf(doc.rects(...boxes[1].keyword)[0]) },
+          { at: 9.3, point: centerOf(doc.rects(...boxes[1].keyword)[0]) },
+          { at: 10, point: rest },
+        ]
+
+        return { duration, poster: 5, render }
+
+        function render(t) {
+          const current = focuses.findLastIndex((focus) => focus.at <= t)
+          const previous = (current + focuses.length - 1) % focuses.length
+          const changedAt = focuses[current].at + 0.15
+          const meters = doc.lines.map((_, line) => meterState(strengths[previous][line] ?? 0, strengths[current][line] ?? 0, t - changedAt))
+          const hovered = boxes.find((box) => box.focus === current)
+          return [
+            label(92, 22, "focus", focuses[current].label),
+            meters.map((meter, line) => meterRow(meter, 92, doc.top + line * LINE, line)).join(""),
+            boxes.map((box) => boxShade(doc, box.phrase, box === hovered)).join(""),
+            current === 0 ? underline(doc, tip, doc.text.length, "var(--hot)") : "",
+            boxes.map((box) => underline(doc, ...box.keyword, box === hovered ? "var(--hot)" : "var(--ink)")).join(""),
+            boxes.map((box) => link(midOfUnderline(doc, box.keyword), knob, box === hovered ? "var(--hot)" : "var(--ink-4)")).join(""),
+            docText(doc, { lineOpacity: (line) => 0.32 + 0.68 * (meters[line].level / 10) }),
+            mainKnob(knob),
+            cursor(along(cursorPath, t), { width: 640, height: 300 }),
+          ].join("")
+        }
+      }
+
+      function attentionLock() {
+        const duration = 11
+        const present =
+          "The lighthouse keeper had not slept in three nights. Each evening he climbed the spiral stairs, trimmed the wick, and watched the horizon for the ship his daughter had boarded in spring. The radio hissed with static. On the fourth night the barometer fell."
+        const before = " The wind began to rise. He checked the radio again: nothing but static, so he poured coffee and waited for dawn."
+        const after =
+          " The lighthouse shook. On the radio, a voice broke through the static: his daughter, calling from the ship, asking him to keep the light burning."
+        const docBefore = layoutDoc(present + before, { left: 168, top: 46 })
+        const docAfter = layoutDoc(present + after, { left: 168, top: 46 })
+        const words = wordsOf(present)
+        const wordIndex = (word) => words.findIndex(({ text }) => text === word)
+        const boxes = [
+          { at: 1.0, keyword: wordIndex("lighthouse"), before: 1, after: 1 },
+          { at: 1.35, keyword: wordIndex("wick"), before: 2, after: 0 },
+          { at: 1.7, keyword: wordIndex("radio"), before: 1, after: 1 },
+        ]
+        const echoes = [" lighthouse ", " radio,", " daughter,", " light "].map((word) =>
+          ((range) => [range[0] + 1, range[1] - 1])(rangeOf(docAfter.text, word, present.length)),
+        )
+        const knob = docBefore.point(present.length)
+        const rest = { x: knob.x + 60, y: knob.y + 40 }
+        const wick = centerOf(docBefore.rects(...spanOf(words[boxes[1].keyword]))[0])
+        const daughter = centerOf(docBefore.rects(...spanOf(words[wordIndex("daughter")]))[0])
+        const scrubEnd = docAfter.text.length
+        const scrub = (t) => Math.round(mix(present.length, scrubEnd, ramp(t, 6.6, 9.6)))
+        const cursorPath = [
+          { at: 0, point: rest },
+          { at: 0.2, point: rest },
+          { at: 0.55, point: knob },
+          { at: 1.9, point: knob },
+          { at: 2.6, point: wick },
+          { at: 2.8, point: wick },
+          { at: 3.9, point: daughter, ease: (x) => x },
+          { at: 4.1, point: daughter },
+          { at: 6.4, point: knob },
+        ]
+        const steps = [
+          { at: 0.6, label: "expand" },
+          { at: 2.8, label: "drag keyword" },
+          { at: 4.2, label: "future re-biased" },
+          { at: 6.6, label: "scrub" },
+        ]
+
+        return { duration, poster: 6.3, render }
+
+        function render(t) {
+          const isDragging = t >= 2.8 && t < 3.9
+          const scrubbed = docAfter.point(scrubEnd)
+          const point =
+            t >= 9.6
+              ? along(
+                  [
+                    { at: 9.6, point: scrubbed },
+                    { at: 10.3, point: { x: scrubbed.x + 50, y: scrubbed.y + 40 } },
+                  ],
+                  t,
+                )
+              : t >= 6.4
+                ? docAfter.point(scrub(t))
+                : along(cursorPath, t)
+          const moved = t >= 2.8 ? nearestWord(words, docBefore, along(cursorPath, Math.min(t, 3.9))) : boxes[1].keyword
+          const shownBoxes = boxes.map((box, i) => ({ ...box, keyword: i === 1 ? moved : box.keyword, isActive: i === 1 && t >= 2.6 && t < 4.1 }))
+          const isRebiased = t >= 4.2
+          const doc = isRebiased ? docAfter : docBefore
+          const streamed = isRebiased ? Math.round(mix(present.length, docAfter.text.length, progress(t, 4.6, 5.9))) : docBefore.text.length
+          const shown = isRebiased ? Math.max(present.length, Math.min(streamed, scrub(t))) : present.length
+          const knobPoint = doc.point(t >= 6.6 ? scrub(t) : present.length)
+          const echoMarks = isRebiased ? echoes.map(([from, to]) => ({ from, to, fill: "var(--hot)" })) : []
+          return [
+            stepLabels(steps, t, 168, 24),
+            shownBoxes
+              .map((box) => {
+                const visible = ramp(t, box.at, box.at + 0.25)
+                const [from, to] = boxSpanOf(words, box)
+                return visible
+                  ? `<g opacity="${visible}">${boxShade(doc, [from, to], box.isActive)}${underline(doc, ...spanOf(words[box.keyword]), box.isActive ? "var(--hot)" : "var(--ink)")}${link(midOfUnderline(doc, spanOf(words[box.keyword])), knobPoint, box.isActive ? "var(--hot)" : "var(--ink-4)", visible)}</g>`
+                  : ""
+              })
+              .join(""),
+            isRebiased ? echoes.map(([from, to]) => underline(doc, from, to, "var(--hot)", ramp(t, 5.4, 5.9) * (to <= shown ? 1 : 0.5))).join("") : "",
+            isRebiased
+              ? docText(doc, { shown, ghost: streamed, marks: echoMarks })
+              : docText(doc, { shown: present.length }) +
+                `<g opacity="${1 - progress(t, 3.9, 4.2)}">${docText(doc, { shown: present.length, ghost: doc.text.length, from: present.length })}</g>`,
+            mainKnob(knobPoint, {
+              pulse: [0.6, 0.78].map((at) => progress(t, at, at + 0.35)),
+              spin: t >= 4.2 && t < 5.9 ? t : undefined,
+              isPressed: t >= 6.6 && t < 9.6,
+            }),
+            cursor(point, { width: 640, height: 300, isPressed: isDragging || (t >= 6.6 && t < 9.6) }),
+          ].join("")
+        }
+      }
+
+      function futureSteering() {
+        const duration = 12
+        const present =
+          "The lighthouse keeper had not slept in three nights. Each evening he climbed the spiral stairs and watched the horizon for a ship. Tonight the sea was flat as glass, and"
+        const sentences = [
+          { text: " the wind rose to a howl.", confidence: 0.31 },
+          { text: " Something scraped along the hull below, slow and deliberate.", confidence: 0.58 },
+          { text: " Every lamp in the tower guttered at once.", confidence: 0.86 },
+        ]
+        const doc = layoutDoc(present + sentences.map(({ text }) => text).join(""), { left: 90, top: 40 })
+        const ends = sentences.map((_, i) => present.length + sentences.slice(0, i + 1).reduce((sum, { text }) => sum + text.length, 0))
+        const knob = doc.point(present.length)
+        const menu = ["focus", "pace", "tone", "tension", "distance"]
+        const menuAngle = (i) => mix(160, 20, i / (menu.length - 1))
+        const chosen = 3
+        const rim = 150
+        const scrub = (t) => Math.round(mix(present.length, ends.at(-1), ramp(t, 5.6, 9.2)))
+        const placeAt = (t) => {
+          const out = ramp(t, 1.3, 2.0) * 50 + ramp(t, 2.0, 2.5) * 60 + ramp(t, 4.0, 4.6) * 20
+          const angle = mix(menuAngle(chosen), 32, ramp(t, 2.7, 3.9))
+          return { angle, distance: out }
+        }
+        const steps = [
+          { at: 0.5, label: "hold" },
+          { at: 1.3, label: "pick a dimension" },
+          { at: 2.7, label: "swing value · reach strength" },
+          { at: 5.4, label: "track" },
+          { at: 9.2, label: "pin" },
+        ]
+
+        return { duration, poster: 3.9, render }
+
+        function render(t) {
+          const place = placeAt(Math.min(t, 4.8))
+          const future = polar(knob, place.distance, place.angle)
+          const value = clamp01((160 - place.angle) / 140)
+          const strength = clamp01((place.distance - 24) / (rim - 24))
+          const isChosen = place.distance >= 96
+          const isSpawned = t >= 1.1
+          const isTuning = t >= 1.1 && t < 4.8
+          const hud = isTuning ? 1 : 1 - progress(t, 4.8, 5.1)
+          const streamed = t < 5.0 ? present.length : Math.round(mix(present.length, doc.text.length, progress(t, 5.0, 5.5)))
+          const shown = scrub(t)
+          const realized = ends.findLastIndex((end) => shown >= end)
+          const confidence = realized === -1 ? 0 : sentences[realized].confidence
+          const pinned = ramp(t, 9.3, 9.9)
+          const pinSentence = [ends[1], ends[2]]
+          const pinPoint = { x: doc.left + COLUMNS * CHAR + 26, y: doc.point(pinSentence[0] + 2).y }
+          const knobPlace = { x: mix(future.x, pinPoint.x, pinned), y: mix(future.y, pinPoint.y, pinned) }
+          const setting = `${valueWord(value)}`
+          const mainPoint = doc.point(t >= 5.6 ? shown : present.length)
+          const cursorPoint =
+            t < 1.1
+              ? along(
+                  [
+                    { at: 0, point: { x: knob.x + 50, y: knob.y + 60 } },
+                    { at: 0.35, point: knob },
+                  ],
+                  t,
+                )
+              : isTuning
+                ? future
+                : t < 5.6
+                  ? along(
+                      [
+                        { at: 4.8, point: future },
+                        { at: 5.5, point: knob },
+                      ],
+                      t,
+                    )
+                  : t < 9.2
+                    ? mainPoint
+                    : along(
+                        [
+                          { at: 9.2, point: mainPoint },
+                          { at: 9.8, point: { x: mainPoint.x + 40, y: mainPoint.y + 50 } },
+                        ],
+                        t,
+                      )
+          return [
+            stepLabels(steps, t, 90, 22),
+            pinned
+              ? `${doc
+                  .rects(pinSentence[0] + 1, pinSentence[1])
+                  .map(
+                    (rect) =>
+                      `<rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" fill="var(--hot-wash)" opacity="${pinned * (1 - progress(t, 10.4, 11.2))}" />`,
+                  )
+                  .join("")}`
+              : "",
+            docText(doc, { shown: Math.max(shown, present.length), ghost: streamed }),
+            isSpawned && hud ? `<g opacity="${hud}">${isChosen ? rimOf(knob, place, value, strength) : menuOf(knob, place)}</g>` : "",
+            isSpawned && pinned < 1 ? link(mainPoint, knobPlace, isTuning ? "var(--ink)" : "var(--ink-4)", 1 - pinned, !isTuning) : "",
+            isTuning ? rulerTicks(knob, future) : "",
+            isSpawned ? futureKnob(knobPlace, { confidence, isTuning, isHot: isTuning || (t > 5.6 && t < 9.9) }) : "",
+            isSpawned && !isTuning ? knobLabel(knobPlace, `tension: ${setting}`, confidence, pinned) : "",
+            mainKnob(mainPoint, {
+              sweep: progress(t, 0.6, 1.1) * (t < 1.1 ? 1 : 0),
+              spin: t >= 4.8 && t < 5.5 ? t : undefined,
+              isPressed: t >= 5.6 && t < 9.2,
+            }),
+            cursor(cursorPoint, { width: 640, height: 340, isPressed: (t >= 0.45 && t < 4.8) || (t >= 5.6 && t < 9.2) }),
+          ].join("")
+        }
+
+        function menuOf(center, place) {
+          const candidate = place.distance > 24 ? chosen : -1
+          const arc = 70
+          return [
+            `<path d="${arcPath(center, arc, menuAngle(0) + 8, menuAngle(menu.length - 1) - 8)}" fill="none" stroke="var(--ink-3)" stroke-dasharray="3 3" />`,
+            menu
+              .map((name, i) => {
+                const at = polar(center, arc + 22, menuAngle(i))
+                const tick = [polar(center, arc - 4, menuAngle(i)), polar(center, arc + 4, menuAngle(i))]
+                return `<line x1="${tick[0].x}" y1="${tick[0].y}" x2="${tick[1].x}" y2="${tick[1].y}" stroke="var(--ink-3)" /><text x="${at.x}" y="${at.y + 4}" text-anchor="middle" fill="${i === candidate ? "var(--hot)" : "var(--ink-3)"}" font-size="10">${name}</text>`
+              })
+              .join(""),
+            candidate !== -1
+              ? `<path d="${arcPath(center, 96, menuAngle(chosen) - 14, menuAngle(chosen) + 14)}" fill="none" stroke="var(--hot)" opacity="${clamp01((place.distance - 24) / 72)}" />`
+              : "",
+          ].join("")
+        }
+
+        function rimOf(center, place, value, strength) {
+          const rings = [60, 96, 132]
+            .map(
+              (radius, i) =>
+                `<path d="${arcPath(center, radius, 165, 15)}" fill="none" stroke="var(--ink-5)" /><text x="${polar(center, radius, 168).x - 4}" y="${polar(center, radius, 168).y + 3}" text-anchor="end" fill="var(--ink-4)" font-size="9">${[25, 50, 75][i]}</text>`,
+            )
+            .join("")
+          const ticks = [0, 0.25, 0.5, 0.75, 1]
+            .map((tick) => {
+              const angle = 160 - tick * 140
+              const [inner, outer, text] = [polar(center, rim - 5, angle), polar(center, rim + 5, angle), polar(center, rim + 16, angle)]
+              return `<line x1="${inner.x}" y1="${inner.y}" x2="${outer.x}" y2="${outer.y}" stroke="var(--ink)" /><text x="${text.x}" y="${text.y + 3}" text-anchor="middle" fill="var(--ink-3)" font-size="9">${tick.toFixed(2).replace(/^0/, "")}</text>`
+            })
+            .join("")
+          const poles = [
+            { angle: 168, text: "calm", anchor: "end" },
+            { angle: 12, text: "dread", anchor: "start" },
+          ]
+            .map(({ angle, text, anchor }) =>
+              ((at) =>
+                `<text x="${at.x}" y="${at.y + 3}" text-anchor="${anchor}" fill="${(anchor === "start") === value > 0.5 ? "var(--hot)" : "var(--ink-2)"}">${text}</text>`)(
+                polar(center, rim + 6, angle),
+              ),
+            )
+            .join("")
+          const readout = `<text x="${center.x}" y="${center.y + rim + 40}" text-anchor="middle" fill="var(--ink-3)">tension: <tspan fill="var(--hot)">${valueWord(value)}</tspan> <tspan fill="var(--ink)">${Math.round(strength * 100)}%</tspan></text>`
+          return [
+            rings,
+            `<path d="${arcPath(center, rim, 160, 20)}" fill="none" stroke="var(--ink)" />`,
+            `<path d="${arcPath(center, rim, 90, place.angle)}" fill="none" stroke="var(--hot)" stroke-width="2.5" />`,
+            ticks,
+            poles,
+            readout,
+          ].join("")
+        }
+      }
+
+      function realtimeRegeneration() {
+        const duration = 13
+        const present = "The lighthouse keeper had not slept in three nights. Tonight the sea was flat as glass. He lit the lamp,"
+        const futures = [
+          {
+            text: " sat by the window, and waited. Nothing answered but the rain, steady and patient on the glass.",
+            label: "nothing answered",
+            streamAt: -1,
+            scrub: [0.6, 2.6],
+            back: [2.9, 3.5],
+          },
+          {
+            text: " and far out on the black water a small boat turned, slowly, toward the light.",
+            label: "a small boat",
+            streamAt: 3.8,
+            scrub: [5.2, 7.2],
+            back: [7.5, 8.1],
+          },
+          {
+            text: " then froze: someone was already standing at the top of the stairs, holding a match.",
+            label: "someone was there",
+            streamAt: 8.4,
+            scrub: [9.8, 11.8],
+            back: [99, 99],
+          },
+        ]
+        const docs = futures.map(({ text }) => layoutDoc(present + text, { left: 40, top: 46 }))
+        const reach = [0.8, 0.8, 1]
+        const tree = { x: 420, y: 70, fork: { x: 452, y: 120 }, tips: [130, 180, 230].map((y) => ({ x: 600, y })) }
+
+        return { duration, poster: 6.2, render }
+
+        function render(t) {
+          const current = futures.findLastIndex(({ streamAt }) => streamAt <= t)
+          const future = futures[current]
+          const doc = docs[current]
+          const end = doc.text.length
+          const forward = Math.round(mix(present.length, mix(present.length, end, reach[current]), ramp(t, ...future.scrub)))
+          const shown = t >= future.back[0] ? Math.round(mix(forward, present.length, ramp(t, ...future.back))) : forward
+          const isDiscarded = t >= future.back[0]
+          const streamed = future.streamAt < 0 ? end : Math.round(mix(present.length, end, progress(t, future.streamAt + 0.2, future.streamAt + 1.4)))
+          const ghost = isDiscarded ? shown : streamed
+          const flash = isDiscarded ? 1 - progress(t, future.back[0], future.back[1] + 0.3) : 0
+          const knob = doc.point(shown)
+          const isScrubbing = (t >= future.scrub[0] && t < future.scrub[1]) || (t >= future.back[0] && t < future.back[1])
+          const isGenerating = t >= future.streamAt && t < future.streamAt + 1.4
+          const steps = [
+            { at: 0.6, label: "scrub" },
+            { at: futures[0].back[0], label: "drag back" },
+            { at: futures[1].streamAt, label: "rest · regenerate" },
+            { at: futures[1].scrub[0], label: "scrub the new future" },
+          ]
+          return [
+            stepLabels(steps, t >= futures[1].back[0] ? t - (futures[1].back[0] - futures[0].back[0]) : t, 40, 24),
+            flash
+              ? `<g opacity="${flash}">${docText(doc, { shown: 0, ghost: forward, marks: [{ from: 0, to: forward, fill: "var(--hot)" }], from: shown })}</g>`
+              : "",
+            docText(doc, { shown, ghost }),
+            mainKnob(knob, { isPressed: isScrubbing, spin: isGenerating ? t : undefined, buffer: (ghost - shown) / (end - present.length) }),
+            treeOf(t, current, (shown - present.length) / (end - present.length)),
+            cursor({ x: knob.x + (isScrubbing ? 0 : 3), y: knob.y + (isScrubbing ? 0 : 3) }, { width: 640, height: 300, isPressed: isScrubbing }),
+          ].join("")
+        }
+
+        function treeOf(t, current, progressed) {
+          const trunk = `<line x1="${tree.x}" y1="${tree.y}" x2="${tree.x}" y2="${tree.fork.y}" stroke="var(--ink)" /><text x="${tree.x}" y="${tree.y - 16}" fill="var(--ink-3)">futures <tspan fill="var(--ink)">${current + 1}</tspan></text><circle cx="${tree.x}" cy="${tree.y}" r="2.5" fill="var(--ink)" />`
+          const branches = futures
+            .map((future, i) => {
+              if (future.streamAt > t) return ""
+              const tip = tree.tips[i]
+              const d = `M ${tree.x} ${tree.fork.y} C ${tree.x} ${tip.y}, ${tree.x + 40} ${tip.y}, ${tip.x} ${tip.y}`
+              const isCurrent = i === current
+              const grown = isCurrent ? clamp01(progressed) : reach[i]
+              const appear = future.streamAt < 0 ? 1 : ramp(t, future.streamAt, future.streamAt + 1.4)
+              const stroke = isCurrent ? "var(--ink)" : "var(--ink-4)"
+              return [
+                `<path d="${d}" pathLength="1" fill="none" stroke="var(--ink-4)" stroke-dasharray="0.012 0.012" opacity="${appear}" />`,
+                `<path d="${d}" pathLength="1" fill="none" stroke="${stroke}" stroke-width="1.5" stroke-dasharray="${grown} 1" />`,
+                `<circle cx="${tip.x}" cy="${tip.y}" r="3" fill="${isCurrent ? "var(--ink)" : "var(--bg)"}" stroke="${stroke}" opacity="${appear}" />`,
+                `<text x="${tip.x}" y="${tip.y - 8}" text-anchor="end" font-size="10" fill="${isCurrent ? "var(--ink)" : "var(--ink-4)"}" opacity="${appear}">…${future.label}</text>`,
+              ].join("")
+            })
+            .join("")
+          return trunk + branches
+        }
+      }
+
+      /** Text wrapped at `COLUMNS`, with where each character sits. */
+      function layoutDoc(text, { left, top }) {
+        const lines = []
+        let start = 0
+        while (start < text.length) {
+          let end = Math.min(text.length, start + COLUMNS)
+          if (end < text.length) end = Math.max(start + 1, text.lastIndexOf(" ", end))
+          lines.push({ start, end })
+          start = text[end] === " " ? end + 1 : end
+        }
+        const lineOf = (index) =>
+          Math.max(
+            0,
+            lines.findIndex((line) => index <= line.end),
+          )
+        return {
+          text,
+          lines,
+          left,
+          top,
+          point(index) {
+            const line = lineOf(index)
+            return { x: left + (index - lines[line].start) * CHAR + 9, y: top + line * LINE + LINE / 2 }
+          },
+          rects(from, to) {
+            return lines.flatMap((line, i) => {
+              const a = Math.max(from, line.start)
+              const b = Math.min(to, line.end)
+              return b > a ? [{ x: left + (a - line.start) * CHAR - 1, y: top + i * LINE + 1, width: (b - a) * CHAR + 2, height: LINE - 2 }] : []
+            })
+          },
+        }
+      }
+
+      /** Characters before `shown` in ink, then up to `ghost` faint, with `marks` recolouring ranges; `from` skips the characters before it. */
+      function docText(doc, { shown = doc.text.length, ghost = shown, marks = [], from = 0, lineOpacity = () => 1 }) {
+        return doc.lines
+          .map((line, i) => {
+            const clip = (index) => Math.min(line.end, Math.max(line.start, index))
+            const cuts = [...new Set([line.start, line.end, shown, ghost, from, ...marks.flatMap((mark) => [mark.from, mark.to])].map(clip))].sort(
+              (a, b) => a - b,
+            )
+            const y = doc.top + i * LINE + BASELINE
+            return cuts
+              .slice(0, -1)
+              .map((a, j) => {
+                const b = cuts[j + 1]
+                if (a >= ghost || a < from) return ""
+                const mark = marks.findLast((mark) => mark.from <= a && b <= mark.to)
+                const fill = mark?.fill ?? (a < shown ? "var(--ink)" : "var(--ghost)")
+                return `<text x="${doc.left + (a - line.start) * CHAR}" y="${y}" fill="${fill}" opacity="${lineOpacity(i)}">${escape(doc.text.slice(a, b))}</text>`
+              })
+              .join("")
+          })
+          .join("")
+      }
+
+      /** A rail row: line number every fifth line and a ten-step meter whose changed steps flash orange, then fade. */
+      function meterRow({ shown, changed }, x, top, line) {
+        const cells = Array.from({ length: 10 }, (_, i) => {
+          const cellX = x + 50 + i * 6
+          const isLit = i < shown
+          const hot = changed[i] ?? 0
+          return `<rect x="${cellX}" y="${top + 5}" width="5" height="8" fill="${isLit ? "var(--ink)" : "var(--ink-5)"}" />${hot ? `<rect x="${cellX}" y="${top + 5}" width="5" height="8" fill="var(--hot)" opacity="${hot}" />` : ""}`
+        }).join("")
+        const number =
+          (line + 1) % 5 === 0 || line === 0
+            ? `<text x="${x + 20}" y="${top + BASELINE}" text-anchor="end" fill="var(--ink-4)" font-size="9">${line + 1}</text>`
+            : ""
+        return `${number}${cells}<line x1="${x + 120}" y1="${top + 9}" x2="${x + 124}" y2="${top + 9}" stroke="var(--ink-4)" />`
+      }
+
+      /** A meter stepping from `from` to `to` steps, one step per 30 ms starting `elapsed` seconds ago; each step that flips flashes orange for 450 ms. */
+      function meterState(from, to, elapsed) {
+        const steps = elapsed < 0 ? 0 : Math.min(Math.abs(to - from), Math.floor(elapsed / 0.03))
+        const shown = from + Math.sign(to - from) * steps
+        const changed = {}
+        for (let step = 0; step < steps; step++) {
+          const cell = to > from ? from + step : from - step - 1
+          changed[cell] = 1 - progress(elapsed, (step + 1) * 0.03, (step + 1) * 0.03 + 0.45)
+        }
+        return { shown, changed, level: mix(from, to, ramp(elapsed, 0, 0.35)) }
+      }
+
+      function boxShade(doc, [from, to], isActive) {
+        return doc
+          .rects(from, to)
+          .map(
+            ({ x, y, width, height }) =>
+              `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="var(--attention)" />${isActive ? corners({ x, y, width, height }) : ""}`,
+          )
+          .join("")
+      }
+
+      function corners({ x, y, width, height }) {
+        const arm = 4
+        return `<path d="M ${x - 2} ${y + arm} v ${-arm - 2} h ${arm} M ${x + width + 2 - arm} ${y - 2} h ${arm} v ${arm} M ${x + width + 2} ${y + height - arm} v ${arm + 2} h ${-arm} M ${x - 2 + arm} ${y + height + 2} h ${-arm} v ${-arm}" fill="none" stroke="var(--hot)" />`
+      }
+
+      function underline(doc, from, to, stroke, opacity = 1) {
+        return doc
+          .rects(from, to)
+          .map(
+            ({ x, y, width }) =>
+              `<line x1="${x + 1}" y1="${y + BASELINE + 2}" x2="${x + width - 1}" y2="${y + BASELINE + 2}" stroke="${stroke}" stroke-width="1.5" opacity="${opacity}" />`,
+          )
+          .join("")
+      }
+
+      function midOfUnderline(doc, [from, to]) {
+        const { x, y, width } = doc.rects(from, to)[0]
+        return { x: x + width / 2, y: y + BASELINE + 2 }
+      }
+
+      function link(a, b, stroke, opacity = 1, isDashed = false) {
+        return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${stroke}" opacity="${opacity}" ${isDashed ? `stroke-dasharray="3 3"` : ""} />`
+      }
+
+      function rulerTicks(a, b) {
+        const length = Math.hypot(b.x - a.x, b.y - a.y)
+        const normal = { x: -(b.y - a.y) / length, y: (b.x - a.x) / length }
+        return Array.from({ length: Math.floor(length / 16) }, (_, i) => {
+          const at = (i + 1) * 16
+          const p = { x: a.x + ((b.x - a.x) * at) / length, y: a.y + ((b.y - a.y) * at) / length }
+          return `<line x1="${p.x - normal.x * 3}" y1="${p.y - normal.y * 3}" x2="${p.x + normal.x * 3}" y2="${p.y + normal.y * 3}" stroke="var(--ink-3)" />`
+        }).join("")
+      }
+
+      /** The main knob: `sweep` fills its rim while held, `spin` turns a dash around it while the model writes, `buffer` arcs how much is written ahead, `pulse` rings out on each click. */
+      function mainKnob({ x, y }, { isPressed = false, sweep = 0, spin, buffer, pulse = [] } = {}) {
+        const stroke = isPressed ? "var(--hot)" : "var(--ink)"
+        return [
+          pulse
+            .filter((p) => p > 0 && p < 1)
+            .map((p) => `<circle cx="${x}" cy="${y}" r="${7 + 14 * p}" fill="none" stroke="var(--hot)" opacity="${1 - p}" />`)
+            .join(""),
+          buffer > 0
+            ? `<path d="${arcPath({ x, y }, 11, -90, -90 + 359.9 * Math.min(1, buffer))}" fill="none" stroke="var(--ink-3)" stroke-width="1.5" />`
+            : "",
+          sweep > 0 ? `<path d="${arcPath({ x, y }, 11, -90, -90 + 359.9 * sweep)}" fill="none" stroke="var(--hot)" stroke-width="2" />` : "",
+          spin !== undefined ? `<path d="${arcPath({ x, y }, 11, spin * 540, spin * 540 + 80)}" fill="none" stroke="var(--hot)" stroke-width="2" />` : "",
+          `<circle cx="${x}" cy="${y}" r="7" fill="var(--bg)" stroke="${stroke}" stroke-width="1.5" />`,
+          [0, 60, 120, 180, 240, 300]
+            .map((angle) => ((p) => `<circle cx="${p.x}" cy="${p.y}" r="0.9" fill="${stroke}" />`)(polar({ x, y }, 3.6, angle)))
+            .join(""),
+          `<circle cx="${x}" cy="${y}" r="1" fill="${stroke}" />`,
+        ].join("")
+      }
+
+      /** A future knob, its fill a wedge of how surely the text delivers its setting. */
+      function futureKnob({ x, y }, { confidence, isHot }) {
+        const stroke = isHot ? "var(--hot)" : "var(--ink)"
+        const wedge =
+          confidence > 0
+            ? `<path d="M ${x} ${y} L ${x} ${y - 6} A 6 6 0 ${confidence > 0.5 ? 1 : 0} 1 ${polar({ x, y }, 6, -90 + 360 * Math.min(confidence, 0.999)).x} ${polar({ x, y }, 6, -90 + 360 * Math.min(confidence, 0.999)).y} Z" fill="var(--hot)" />`
+            : ""
+        return `<circle cx="${x}" cy="${y}" r="6" fill="var(--bg)" stroke="${stroke}" stroke-width="1.5" />${wedge}`
+      }
+
+      function knobLabel({ x, y }, text, confidence, pinned) {
+        return `<text x="${x + 12}" y="${y + 4}" font-size="10" fill="var(--ink)">${text} <tspan fill="var(--hot)">${Math.round(confidence * 100)}%</tspan> <tspan fill="var(--ink-3)">${pinned > 0.5 ? "realized" : ""}</tspan></text>`
+      }
+
+      /** The page's pointer: hairlines across the whole figure and a dot, orange while pressed. */
+      function cursor({ x, y }, { width, height, isPressed = false }) {
+        const ink = isPressed ? "var(--hot)" : "var(--ink)"
+        return `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="${isPressed ? "var(--hot)" : "var(--ink-5)"}" opacity="${isPressed ? 0.35 : 1}" /><line x1="${x}" y1="0" x2="${x}" y2="${height}" stroke="${isPressed ? "var(--hot)" : "var(--ink-5)"}" opacity="${isPressed ? 0.35 : 1}" /><circle cx="${x}" cy="${y}" r="2.5" fill="${ink}" />`
+      }
+
+      function label(x, y, name, value) {
+        return `<text x="${x}" y="${y}" fill="var(--ink-3)">${name} <tspan fill="var(--hot)">${escape(value)}</tspan></text>`
+      }
+
+      /** The steps of a scene in a row, the one under way in ink and the rest faint. */
+      function stepLabels(steps, t, x, y) {
+        const current = steps.findLastIndex((step) => step.at <= t)
+        let column = 0
+        return steps
+          .map((step, i) => {
+            const text = `<text x="${x + column * CHAR}" y="${y}" fill="${i === current ? "var(--ink)" : "var(--ink-4)"}">${i === current ? "▸ " : "  "}${step.label}</text>`
+            column += step.label.length + 5
+            return text
+          })
+          .join("")
+      }
+
+      function wordsOf(text) {
+        return [...text.matchAll(/[\w'’-]+/g)].map((match) => ({ text: match[0], start: match.index, end: match.index + match[0].length }))
+      }
+
+      function spanOf({ start, end }) {
+        return [start, end]
+      }
+
+      function boxSpanOf(words, { keyword, before, after }) {
+        return [words[Math.max(0, keyword - before)].start, words[Math.min(words.length - 1, keyword + after)].end]
+      }
+
+      function nearestWord(words, doc, point) {
+        const distances = words.map((word) => Math.hypot(...((c) => [c.x - point.x, (c.y - point.y) * 2])(centerOf(doc.rects(word.start, word.end)[0]))))
+        return distances.indexOf(Math.min(...distances))
+      }
+
+      function rangeOf(text, phrase, after = 0) {
+        const start = text.indexOf(phrase, after)
+        return [start, start + phrase.length]
+      }
+
+      function centerOf({ x, y, width, height }) {
+        return { x: x + width / 2, y: y + height / 2 }
+      }
+
+      function valueWord(value) {
+        return ["calm", "settled", "uneasy", "tense", "dread"][Math.min(4, Math.floor(value * 5))]
+      }
+
+      /** Where a point moving through `path` is at `t`, eased between stops. */
+      function along(path, t) {
+        const next = path.findIndex((stop) => stop.at > t)
+        if (next === -1) return path.at(-1).point
+        if (next === 0) return path[0].point
+        const [a, b] = [path[next - 1], path[next]]
+        const x = (b.ease ?? smooth)(progress(t, a.at, b.at))
+        return { x: mix(a.point.x, b.point.x, x), y: mix(a.point.y, b.point.y, x) }
+      }
+
+      function polar({ x, y }, radius, degrees) {
+        const radians = (degrees * Math.PI) / 180
+        return { x: x + radius * Math.cos(radians), y: y + radius * Math.sin(radians) }
+      }
+
+      function arcPath(center, radius, from, to) {
+        const [a, b] = [polar(center, radius, from), polar(center, radius, to)]
+        return `M ${a.x} ${a.y} A ${radius} ${radius} 0 ${Math.abs(to - from) > 180 ? 1 : 0} ${to > from ? 1 : 0} ${b.x} ${b.y}`
+      }
+
+      function loopFade(t, duration) {
+        return Math.min(ramp(t, 0, FADE), 1 - ramp(t, duration - FADE, duration))
+      }
+
+      /** Spaces are kept as no-break spaces, since svg text drops a piece's leading space. */
+      function escape(text) {
+        return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(" ", "\u00a0")
+      }
+
+      function ramp(t, start, end) {
+        const x = progress(t, start, end)
+        return x * x * (3 - 2 * x)
+      }
+
+      function smooth(x) {
+        return x * x * (3 - 2 * x)
+      }
+
+      function progress(t, start, end) {
+        return clamp01((t - start) / (end - start))
+      }
+
+      function clamp01(x) {
+        return Math.min(1, Math.max(0, x))
+      }
+
+      function mix(a, b, x) {
+        return a + (b - a) * x
+      }
+    </script>
+  </body>
+</html>

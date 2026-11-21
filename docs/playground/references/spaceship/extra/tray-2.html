@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>text · tray 2 · tmux status line</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🕹️</text></svg>" />
+    <style>
+      @font-face {
+        font-family: "JetBrains Mono Variable";
+        font-weight: 100 800;
+        src:
+          local("JetBrains Mono"),
+          url("../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2") format("woff2");
+      }
+      :root {
+        color-scheme: dark;
+        --bg: #000;
+        --ink: #fff;
+        --ink-2: rgb(255 255 255 / 0.64);
+        --ink-3: rgb(255 255 255 / 0.4);
+        --ink-4: rgb(255 255 255 / 0.22);
+        --ink-5: rgb(255 255 255 / 0.1);
+        --hot: #ff5a1f;
+        --hair: 1px;
+        --fs: 11px;
+        --fs-s: 10px;
+        --fs-xs: 9px;
+        --lh: 18px;
+        --gap: 8px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px 40px 96px;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          var(--fs) / var(--lh) "JetBrains Mono Variable",
+          ui-monospace,
+          monospace;
+        font-variant-numeric: tabular-nums;
+        -webkit-font-smoothing: antialiased;
+      }
+      main {
+        max-width: 1180px;
+        margin-inline: auto;
+      }
+      h1,
+      h2,
+      p {
+        margin: 0;
+        font: inherit;
+      }
+      header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: var(--gap) 32px;
+        padding-bottom: 24px;
+        border-bottom: var(--hair) solid var(--ink-4);
+
+        p {
+          color: var(--ink-2);
+          max-width: 80ch;
+        }
+        h1 {
+          grid-column: 1 / -1;
+        }
+      }
+      section {
+        display: grid;
+        grid-template-columns: 14ch 1fr;
+        gap: 24px;
+        padding-block: 32px;
+        border-bottom: var(--hair) solid var(--ink-5);
+
+        > h2 {
+          font-size: var(--fs-s);
+          color: var(--ink-3);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+        > h2 b {
+          display: block;
+          font-weight: inherit;
+          color: var(--ink);
+        }
+      }
+      .stack {
+        display: grid;
+        gap: 16px;
+      }
+      .note {
+        color: var(--ink-3);
+        font-size: var(--fs-s);
+        line-height: 16px;
+        max-width: 80ch;
+      }
+      .spec {
+        display: grid;
+        grid-template-columns: 22ch 1fr;
+        gap: 6px 16px;
+        margin: 0;
+        font-size: var(--fs-s);
+        line-height: 16px;
+
+        dt {
+          color: var(--ink);
+        }
+        dd {
+          margin: 0;
+          color: var(--ink-3);
+        }
+      }
+      figure {
+        display: grid;
+        gap: var(--gap);
+        margin: 0;
+
+        figcaption {
+          font-size: var(--fs-s);
+          line-height: 14px;
+          color: var(--ink-2);
+        }
+        figcaption small {
+          color: var(--ink-3);
+          font-size: inherit;
+        }
+      }
+      .screen {
+        position: relative;
+        display: grid;
+        grid-template-rows: 1fr auto;
+        height: 160px;
+        overflow: hidden;
+        border: var(--hair) solid var(--ink-5);
+
+        > p {
+          width: min(64ch, 100% - 32px);
+          margin: 24px auto 0;
+          color: var(--ink-2);
+        }
+      }
+      .narrow {
+        width: min(420px, 100%);
+      }
+      .bare {
+        border: var(--hair) dashed var(--ink-5);
+      }
+
+      /* The tray as it ships today, for comparison. */
+      .current {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px 24px;
+        padding: var(--gap) calc(2 * var(--gap));
+        border-top: var(--hair) solid var(--ink-5);
+        color: var(--ink-3);
+        font-size: 10px;
+        line-height: 14px;
+
+        b {
+          margin-left: 0.5ch;
+          font-weight: inherit;
+          color: var(--ink);
+        }
+        .state::before {
+          content: "";
+          display: inline-block;
+          width: 6px;
+          height: 6px;
+          margin-right: 6px;
+          border-radius: 50%;
+          background: var(--hot);
+          vertical-align: 1px;
+        }
+        .state {
+          color: var(--hot);
+        }
+      }
+
+      /*
+       * A tmux status line: a solid mode block on the left that turns orange while streaming and carries the stream's
+       * own telemetry, one-letter keys for the counts, a powerline wedge between segments. 14px, no border, no padding.
+       */
+      .tray {
+        display: flex;
+        align-items: stretch;
+        height: 14px;
+        background: var(--ink-5);
+        color: var(--ink);
+        font-size: var(--fs-xs);
+        line-height: 14px;
+        white-space: nowrap;
+
+        .mode {
+          display: flex;
+          gap: 1ch;
+          padding: 0 14px 0 8px;
+          background: var(--ink);
+          color: var(--bg);
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 50%, calc(100% - 6px) 100%, 0 100%);
+
+          span {
+            text-transform: none;
+            letter-spacing: 0;
+          }
+        }
+        .counts {
+          display: flex;
+          flex: 1;
+          gap: 2ch;
+          padding-inline: 1ch;
+        }
+        kbd {
+          margin-right: 0.5ch;
+          font: inherit;
+          color: var(--ink-3);
+        }
+        .ahead {
+          color: var(--ink-3);
+        }
+        button {
+          padding: 0 8px 0 14px;
+          border: none;
+          background: var(--ink-4);
+          color: var(--ink);
+          font: inherit;
+          cursor: pointer;
+          clip-path: polygon(6px 0, 100% 0, 100% 100%, 6px 100%, 0 50%);
+
+          &[aria-pressed="false"] {
+            background: none;
+            color: var(--ink-3);
+          }
+        }
+
+        &[data-streaming] {
+          .mode {
+            background: var(--hot);
+          }
+          .ahead {
+            color: var(--hot);
+          }
+        }
+      }
+    </style>
+    <link rel="stylesheet" href="shared.css" />
+  </head>
+  <body>
+    <main>
+      <nav class="experiments" aria-label="experiments">
+        <p>
+          <b>style</b>
+          <a href="style-1.html">instrument</a>
+          <a href="style-2.html">signal</a>
+          <a href="style-3.html">telemetry</a>
+          <a href="style-4.html">merged</a>
+        </p>
+        <p>
+          <b>sound</b>
+          <a href="soundboard.html">soundboard</a>
+        </p>
+        <p>
+          <b>knob</b>
+          <a href="knob-states.html">buffer states</a>
+        </p>
+        <p>
+          <b>rail</b>
+          <a href="bar-1.html">histogram</a>
+          <a href="bar-2.html">profile</a>
+          <a href="bar-3.html">meters</a>
+        </p>
+        <p>
+          <b>pointer</b>
+          <a href="pointer-1.html">crosshair</a>
+          <a href="pointer-2.html">ring</a>
+          <a href="pointer-3.html">field</a>
+          <a href="pointer-4.html">steering</a>
+          <a href="pointer-5.html">combined</a>
+        </p>
+        <p>
+          <b>tray</b>
+          <a href="tray-1.html">modules</a>
+          <a href="tray-2.html" aria-current="page">tmux</a>
+          <a href="tray-3.html">gauges</a>
+        </p>
+      </nav>
+      <header>
+        <h1>text / tray 2 — tmux status line</h1>
+        <p>
+          Borrowed from tmux and vim statuslines: a solid mode block on the left, a dense run of one-letter keys, a toggle on the right, all on a 14px band with
+          no border. The idea is to remove what only matters while text is arriving. Rate and first chunk live inside the orange <b>STREAM</b> block and
+          disappear with it; idle shows a white <b>IDLE</b> block and nothing else about the model. Labels shrink to the single letter a tmux user would bind.
+        </p>
+      </header>
+
+      <section>
+        <h2><b>01</b>live</h2>
+        <div class="stack">
+          <figure>
+            <figcaption>proposal <small>· 9px / 14px band, simulated stream</small></figcaption>
+            <div class="screen">
+              <p>
+                She leaned on the rail and listened for oars, for voices, for anything at all. Gulls had gone quiet hours ago; even the bell buoy hung still in
+                the slack tide.
+              </p>
+              <footer class="tray" id="live"></footer>
+            </div>
+          </figure>
+          <figure>
+            <figcaption>current <small>· 10px / 31px strip</small></figcaption>
+            <div class="screen">
+              <p>
+                She leaned on the rail and listened for oars, for voices, for anything at all. Gulls had gone quiet hours ago; even the bell buoy hung still in
+                the slack tide.
+              </p>
+              <footer class="current">
+                <span class="state">streaming</span>
+                <span>rate<b>12 w/s</b></span>
+                <span>first chunk<b>340ms</b></span>
+                <span>words<b>182</b></span>
+                <span>buffer<b>24</b></span>
+                <span>boxes<b>3</b></span>
+                <span>steering<b>2</b></span>
+                <span>pinned<b>1</b></span>
+                <span>sound<b>on</b></span>
+              </footer>
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2><b>02</b>states</h2>
+        <div class="stack">
+          <figure>
+            <figcaption>idle <small>· the white block alone; rate and first chunk are gone</small></figcaption>
+            <footer class="tray">
+              <span class="mode">idle</span>
+              <span class="counts"
+                ><span><kbd>w</kbd>206<span class="ahead">+0</span></span
+                ><span><kbd>b</kbd>3</span><span><kbd>s</kbd>2</span><span><kbd>p</kbd>1</span></span
+              >
+              <button type="button" aria-pressed="true">♪ on</button>
+            </footer>
+          </figure>
+          <figure>
+            <figcaption>streaming, waiting <small>· block turns orange, first chunk not in yet</small></figcaption>
+            <footer class="tray" data-streaming>
+              <span class="mode">stream<span>…</span></span>
+              <span class="counts"
+                ><span><kbd>w</kbd>206<span class="ahead">+0</span></span
+                ><span><kbd>b</kbd>3</span><span><kbd>s</kbd>2</span><span><kbd>p</kbd>1</span></span
+              >
+              <button type="button" aria-pressed="true">♪ on</button>
+            </footer>
+          </figure>
+          <figure>
+            <figcaption>streaming <small>· the block carries rate and first chunk while text arrives</small></figcaption>
+            <footer class="tray" data-streaming>
+              <span class="mode">stream<span>12w/s</span><span>340ms</span></span>
+              <span class="counts"
+                ><span><kbd>w</kbd>182<span class="ahead">+24</span></span
+                ><span><kbd>b</kbd>3</span><span><kbd>s</kbd>2</span><span><kbd>p</kbd>1</span></span
+              >
+              <button type="button" aria-pressed="true">♪ on</button>
+            </footer>
+          </figure>
+          <figure>
+            <figcaption>sound off <small>· the right segment loses its fill</small></figcaption>
+            <footer class="tray">
+              <span class="mode">idle</span>
+              <span class="counts"
+                ><span><kbd>w</kbd>206<span class="ahead">+0</span></span
+                ><span><kbd>b</kbd>3</span><span><kbd>s</kbd>2</span><span><kbd>p</kbd>1</span></span
+              >
+              <button type="button" aria-pressed="false">♪ off</button>
+            </footer>
+          </figure>
+          <figure class="narrow">
+            <figcaption>420px <small>· fits with room to spare</small></figcaption>
+            <footer class="tray" data-streaming>
+              <span class="mode">stream<span>12w/s</span><span>340ms</span></span>
+              <span class="counts"
+                ><span><kbd>w</kbd>182<span class="ahead">+24</span></span
+                ><span><kbd>b</kbd>3</span><span><kbd>s</kbd>2</span><span><kbd>p</kbd>1</span></span
+              >
+              <button type="button" aria-pressed="true">♪ on</button>
+            </footer>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2><b>03</b>encoding</h2>
+        <dl class="spec">
+          <dt>band</dt>
+          <dd>
+            14px tall (was 31px), 9px type with line-height equal to the band, no border or vertical padding. Background ink-5 so it reads as a band without a
+            rule.
+          </dd>
+          <dt>mode block</dt>
+          <dd>
+            uppercase, tracked +0.06em, solid fill with a 6px powerline wedge. IDLE: white on black. STREAM: orange, followed by rate and first chunk in
+            lowercase (an ellipsis until the first chunk lands).
+          </dd>
+          <dt>removed</dt>
+          <dd>rate and first chunk while idle. They describe the last stream and go stale as soon as it ends.</dd>
+          <dt>w b s p</dt>
+          <dd>words, boxes, steering, pinned. Single-letter keys in ink-3, values in ink. Buffer folds into words as <b>+n</b>, orange while it grows.</dd>
+          <dt>♪ segment</dt>
+          <dd>right-hand wedge, filled ink-4 when on and unfilled when off.</dd>
+        </dl>
+      </section>
+    </main>
+    <script type="module">
+      const live = document.querySelector("#live")
+      const status = {
+        isGenerating: false,
+        wordsPerSecond: undefined,
+        firstChunkMs: undefined,
+        words: 182,
+        buffer: 0,
+        boxes: 3,
+        steering: 2,
+        pinned: 1,
+        isSoundOn: true,
+      }
+      let ticks = 0
+
+      live.addEventListener("click", (event) => {
+        if (!event.target.closest("button")) return
+        status.isSoundOn = !status.isSoundOn
+        render()
+      })
+      setInterval(() => {
+        advance(status, ticks++)
+        render()
+      }, 250)
+      render()
+
+      function render() {
+        live.toggleAttribute("data-streaming", status.isGenerating)
+        live.innerHTML = trayHtml(status)
+      }
+
+      function advance(status, tick) {
+        const phase = tick % 32
+        status.isGenerating = phase < 14
+        if (phase === 0) status.firstChunkMs = undefined
+        if (phase === 2) status.firstChunkMs = 280 + Math.round(Math.random() * 140)
+        if (status.isGenerating && phase >= 2) {
+          status.wordsPerSecond = 10 + Math.random() * 6
+          status.buffer += 3
+        } else if (!status.isGenerating && status.buffer > 0) {
+          status.buffer -= 2
+          status.words += 2
+        }
+        status.buffer = Math.max(0, status.buffer)
+      }
+
+      function trayHtml({ isGenerating, wordsPerSecond, firstChunkMs, words, buffer, boxes, steering, pinned, isSoundOn }) {
+        const telemetry = firstChunkMs === undefined ? "<span>…</span>" : `<span>${Math.round(wordsPerSecond)}w/s</span><span>${firstChunkMs}ms</span>`
+        return `
+          <span class="mode">${isGenerating ? `stream${telemetry}` : "idle"}</span>
+          <span class="counts"><span><kbd>w</kbd>${words}<span class="ahead">+${buffer}</span></span><span><kbd>b</kbd>${boxes}</span><span><kbd>s</kbd>${steering}</span><span><kbd>p</kbd>${pinned}</span></span>
+          <button type="button" aria-pressed="${isSoundOn}">♪ ${isSoundOn ? "on" : "off"}</button>`
+      }
+    </script>
+  </body>
+</html>
