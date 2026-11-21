@@ -4,7 +4,7 @@ Pre-prototype phase. We try ideas fast in a shared **playground** web app and ke
 
 - `playground/`: Next.js app that holds every prototype. Rules: [`playground/AGENTS.md`](playground/AGENTS.md)
 - `docs/`: design brief (`docs/playground/references/idea-breakdown.md`) and references
-- Vercel setup (owner only): [`docs/playground/vercel-setup.md`](docs/playground/vercel-setup.md)
+- Hosting: **local only for now** (`npm run dev` / `npm run build && npm start`). Vercel setup is deferred: [`docs/playground/vercel-setup.md`](docs/playground/vercel-setup.md)
 
 ## Teammates: get started
 
