@@ -1,0 +1,15 @@
+canada-life  rusher    sim rome=yes tiles=13 time=30.9s stall=0s llm_cov=0.63 calls=4 rewrites=1 replaced=2 late=1 p50=899ms rules=(avoid stocks) unsafe=0 no_click_effects=0 rejects={"no-noise":1} → runs/2026-11-21T09-25-15-canada-life-rusher-sim-s1
+canada-life  steady    sim rome=yes tiles=17 time=50.2s stall=0s llm_cov=1 calls=3 rewrites=0 replaced=3 late=0 p50=648ms rules=- unsafe=0 no_click_effects=0 rejects={} → runs/2026-11-21T09-25-15-canada-life-steady-sim-s1
+canada-life  lingerer  sim rome=yes tiles=17 time=97.1s stall=0s llm_cov=1 calls=3 rewrites=1 replaced=3 late=0 p50=899ms rules=- unsafe=0 no_click_effects=0 rejects={"no-noise":1} → runs/2026-11-21T09-25-15-canada-life-lingerer-sim-s1
+canada-life  switcher  sim rome=yes tiles=17 time=66.4s stall=0s llm_cov=1 calls=3 rewrites=0 replaced=3 late=0 p50=648ms rules=- unsafe=0 no_click_effects=0 rejects={} → runs/2026-11-21T09-25-15-canada-life-switcher-sim-s1
+sun-life     rusher    sim rome=yes tiles=12 time=31.3s stall=0s llm_cov=0.57 calls=5 rewrites=1 replaced=2 late=2 p50=835ms rules=(avoid plan),(avoid talking) unsafe=0 no_click_effects=0 rejects={"no-noise":1} → runs/2026-11-21T09-25-15-sun-life-rusher-sim-s1
+sun-life     steady    sim rome=yes tiles=12 time=46.8s stall=0s llm_cov=1 calls=2 rewrites=0 replaced=2 late=0 p50=1571ms rules=- unsafe=0 no_click_effects=0 rejects={} → runs/2026-11-21T09-25-15-sun-life-steady-sim-s1
+sun-life     lingerer  sim rome=yes tiles=13 time=79.7s stall=0s llm_cov=1 calls=3 rewrites=1 replaced=3 late=0 p50=835ms rules=- unsafe=0 no_click_effects=0 rejects={"no-noise":1} → runs/2026-11-21T09-25-15-sun-life-lingerer-sim-s1
+sun-life     switcher  sim rome=yes tiles=12 time=50.5s stall=0s llm_cov=1 calls=4 rewrites=1 replaced=4 late=0 p50=989ms rules=(avoid talking) unsafe=0 no_click_effects=0 rejects={"unknown-topic":1,"grounded-text":1} → runs/2026-11-21T09-25-15-sun-life-switcher-sim-s1
+merch-trail  rusher    sim rome=yes tiles=14 time=32.3s stall=0.53s llm_cov=0.33 calls=5 rewrites=0 replaced=2 late=2 p50=931ms rules=(avoid printing) unsafe=0 no_click_effects=0 rejects={} → runs/2026-11-21T09-25-15-merch-trail-rusher-sim-s1
+merch-trail  steady    sim rome=yes tiles=15 time=50.7s stall=0s llm_cov=1 calls=3 rewrites=1 replaced=3 late=0 p50=895ms rules=- unsafe=0 no_click_effects=0 rejects={"unknown-topic":1,"grounded-text":1,"all-roads-to-rome":1} → runs/2026-11-21T09-25-15-merch-trail-steady-sim-s1
+merch-trail  lingerer  sim rome=yes tiles=14 time=85.1s stall=0s llm_cov=1 calls=3 rewrites=0 replaced=3 late=0 p50=648ms rules=- unsafe=0 no_click_effects=0 rejects={} → runs/2026-11-21T09-25-15-merch-trail-lingerer-sim-s1
+merch-trail  switcher  sim rome=yes tiles=15 time=64.7s stall=0s llm_cov=0.6 calls=5 rewrites=1 replaced=3 late=1 p50=989ms rules=- unsafe=0 no_click_effects=0 rejects={"fork-arity":1} → runs/2026-11-21T09-25-15-merch-trail-switcher-sim-s1
+
+12 run(s); unsafe_on_road total=0; effects_without_click total=0; not at Rome=0
+sim exit=0

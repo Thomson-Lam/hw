@@ -1,0 +1,14 @@
+Live paver via POST /api/road-lab/pave (gemini-3.5-flash-lite), dev server
+A) key not visible to route (before server/env.ts fix): 401 "GEMINI_API_KEY is not set" -> run stopped; next 2 calls: "model calls stopped for this run"
+B) after server/env.ts: canada-life
+  attempt1 REJECT 822ms limits-first  | (stretch (signpost auto-contrib) (checkpoint risk) (checkpoint fees) (toll-booth))
+  attempt2 ok     841ms               | (stretch (signpost auto-contrib) (fork :key account (branch "tax shelter" :value tfsa ...
+  attempt1 REJECT 907ms label-length  | (vista "A quiet place to watch the water move")
+  attempt2 ok    1004ms
+  attempt1 ok     527ms               | (stretch (signpost "breathe easy for a moment" :topic saving) (vista market-drops) (checkpoint risk) (checkpoint fees))
+  sun-life: ok after 3 attempts | (stretch (signpost plan-basics) (bridge unused) (fork :key care ...))
+C) forced 402: GEMINI_API_BASE=http://localhost:3972 (stub returns 402)
+  call1 -> {"ok":false,"stopped":true,"error":"402 Your prepayment credits are depleted."}
+  call2 -> {"ok":false,"stopped":true,"error":"model calls stopped for this run"}
+  call3 -> same
+  stub hits: 1 ; runs.stopped = 1 ; trace stages: run-start, paver-request, compile, paver-stop, paver-skip, paver-skip

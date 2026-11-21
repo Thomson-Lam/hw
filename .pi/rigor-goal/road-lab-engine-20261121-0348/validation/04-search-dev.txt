@@ -1,0 +1,5 @@
+POST /api/road-lab/search {"query":"low poly horse"} on merch-trail run -> 8 rows; first 3: 130368 CC BY-SA, 151101 CC BY-SA, 591821 CC BY (all allowlisted; NC rows dropped server-side)
+GET /api/road-lab/stl?print=130368&file=3749729 -> HTTP 200 model/stl 66184 bytes
+GET /api/road-lab/stl?print=13x&file=1 -> HTTP 400 (bad ids)
+POST /api/road-lab/search on canada-life run -> HTTP 403 this pack has no search tool
+Captured rows (lab/data/printables-horse.json): horse 30 items -> 8 allowed; low poly horse 30 -> 8; articulated horse 15 -> 4

@@ -1,0 +1,24 @@
+A gate: /prototypes/road-lab 307 /login?next=%2Fprototypes%2Froad-lab | /api/road-lab/control 401 | /p/road-lab 404
+B journey canada-life: reached=true effect="Automatic contribution set: $40 a month into your FHSA (simulated)." tiles=23 llm=9 fallback=8 overflow=false errors=0 toll action: realign | toll action: confirm
+  sources: opening:mood opening:fork lead:vista fallback:signpost fallback:signpost fallback:signpost fallback:bridge llm:fork lead:signpost llm:checkpoint llm:checkpoint llm:checkpoint llm:toll-booth fallback:vista fallback:signpost fallback:signpost fallback:fork lead:signpost llm:checkpoint llm:checkpoint llm:checkpoint llm:toll-booth engine:campfire
+B journey sun-life: reached=true effect="Booked: counselling, Tue 4:00 pm (simulated)." tiles=15 llm=4 fallback=6 overflow=false errors=0 toll action: decline | toll action: confirm
+  sources: opening:mood opening:fork lead:signpost fallback:signpost fallback:signpost fallback:signpost fallback:fork lead:signpost llm:signpost llm:checkpoint llm:checkpoint llm:toll-booth fallback:signpost fallback:toll-booth engine:campfire
+B journey merch-trail: reached=true effect="Saved to your merch board: Low poly horse (Creative Commons — Attribution)." tiles=14 llm=6 fallback=3 overflow=false errors=0 toll action: confirm
+  sources: opening:signpost opening:fork lead:signpost llm:signpost llm:signpost llm:search llm:pick llm:pick llm:fork lead:signpost fallback:signpost fallback:checkpoint fallback:toll-booth engine:campfire
+B journey canada-life-light: reached=true effect="Automatic contribution set: $40 a month into your TFSA (simulated)." tiles=13 llm=4 fallback=4 overflow=false errors=0 toll action: confirm
+  sources: opening:mood opening:fork lead:signpost fallback:signpost fallback:signpost fallback:signpost fallback:fork lead:signpost llm:checkpoint llm:checkpoint llm:checkpoint llm:toll-booth engine:campfire
+B crisis exit sun-life: helpTile=true text="If you are thinking about suicide or worried about someone, call or text 9-8-8, any time, day or night.\n\nCall 9-8-8\nText" sources: opening:mood opening:fork lead:signpost fallback:signpost engine:help
+C rusher run 1: rules ["(avoid stocks)"] after erase []
+C rusher run 2 (kept): rules ["(avoid stocks)"]
+D brain canada-life: phone="Future Me" rejectedWithInvariant=true msg="Compiler rejected the injected stretch: disclose-first, limits-first"
+D brain sun-life: phone="Care you already have" rejectedWithInvariant=true msg="Compiler rejected the injected stretch: no-diagnosis"
+D brain merch-trail: phone="Merch Trail" rejectedWithInvariant=true msg="Compiler rejected the injected stretch: merch-license"
+E before restart: rules ["(avoid stocks)"] tiles ["merch-board"]
+E after restart:  rules ["(avoid stocks)"] tiles ["merch-board:Low poly horse"]
+E runs table: 1:canada-life:rome=1:mood=stressed->okay:stopped=0 2:sun-life:rome=1:mood=stressed->okay:stopped=0 3:merch-trail:rome=1:mood=null->okay:stopped=0 4:canada-life:rome=1:mood=stressed->okay:stopped=0 5:sun-life:rome=0:mood=stressed->null:stopped=0 6:canada-life:rome=0:mood=stressed->null:stopped=0 7:canada-life:rome=0:mood=stressed->null:stopped=0 8:canada-life:rome=0:mood=stressed->null:stopped=0 9:sun-life:rome=0:mood=null->null:stopped=0 10:merch-trail:rome=0:mood=null->null:stopped=0
+F 402: walk reached=true llm=0 fallback=8 | stub hits=1 | run 11 stopped=1 | paver-request=1 paver-stop=1 paver-skip=0
+F 402: later direct pave call -> {"ok":false,"stopped":true,"error":"model calls stopped for this run"} | stub hits still 1
+light canada-life: reached=true effect="Automatic contribution set: $40 a month into your TFSA (simulated)." llm=4 fallback=4 overflow=false errors=0
+light merch-trail: reached=true effect="Saved to your merch board: Horse - Rearing (Creative Commons — Public Domain)." llm=9 fallback=1 overflow=false errors=0
+light merch-trail: reached=true effect="Saved to your merch board: Horse - Rearing (Creative Commons — Public Domain)." llm=5 fallback=5 overflow=false errors=0
+dark merch-trail: reached=true effect="Saved to your merch board: Horse - Rearing (Creative Commons — Public Domain)." llm=5 fallback=5 overflow=false errors=0

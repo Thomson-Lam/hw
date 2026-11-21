@@ -1,0 +1,36 @@
+[
+  {
+    "id": "985a7914-a4f5-45de-a3ea-91feebc2422d",
+    "feature": "road-lab",
+    "constraints": [
+      {
+        "id": "16fcc98e-a413-4e29-b19e-c25ed14bac74",
+        "text": "Effects (contribute, book, save-pick) run only after a click on a toll booth. Amounts, slots, and picks come from user input or pack data, never from LLM text."
+      },
+      {
+        "id": "fe2145b4-cb78-46cf-9d79-44b2afec8139",
+        "text": "Every stretch, including deterministic fallback stretches and injected demo stretches, passes the same compiler with the active pack invariants before it renders."
+      },
+      {
+        "id": "86631c4f-a18c-4d3a-b34b-d8eeea27f8a5",
+        "text": "The LLM never writes facts. Claim text renders only from the active pack facts table or from tool result rows, by ID. Every LLM label passes the grounded-text guard."
+      },
+      {
+        "id": "ae72bb2b-92a7-45ba-92e1-8b10e6c79c2f",
+        "text": "Every compiler invariant has at least one fixture that the compiler rejects, and `npm run lab -- fixtures` exits 1 if any fixture result is wrong."
+      },
+      {
+        "id": "dac2d0fd-cb67-4aac-ac6f-89ee36d91fd2",
+        "text": "A 401, 402, or 403 from the model API stops all later model calls for the session. The road continues on the fallback paver."
+      },
+      {
+        "id": "436384dd-97ad-44ed-ad9d-e3303ebf5022",
+        "text": "The sun-life pack shows a crisis exit (call or text 9-8-8) on every stretch and never renders a clinical claim."
+      },
+      {
+        "id": "7a4d349f-fccb-4ce0-8148-47a35478d2aa",
+        "text": "road-lab follows playground/AGENTS.md: self-contained prototype folder, design tokens only, tap targets of 44 px or more, works at 375 px, and `npm run check` passes."
+      }
+    ]
+  }
+]

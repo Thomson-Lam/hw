@@ -1,0 +1,76 @@
+PASS  canada-life  valid signposts                expect=ok                 got=ok
+PASS  canada-life  valid grounded number          expect=ok                 got=ok
+PASS  canada-life  valid grown tile               expect=ok                 got=ok
+PASS  canada-life  valid keyed fork               expect=ok                 got=ok
+PASS  canada-life  syntax                         expect=syntax             got=syntax: missing )
+PASS  canada-life  size                           expect=size               got=size: source is 4210 chars (max 4000)
+PASS  canada-life  no-noise                       expect=no-noise           got=no-noise: unknown tile popup-ad
+PASS  canada-life  engine-only                    expect=engine-only        got=engine-only: campfire tiles come only from the engine
+PASS  canada-life  stretch-size                   expect=stretch-size       got=stretch-size: LLM stretch has 5 tiles (1..4)
+PASS  canada-life  fork-arity                     expect=fork-arity         got=fork-arity: fork has 4 branches (2..3)
+PASS  canada-life  fork-last                      expect=fork-last          got=fork-last: fork must end the stretch
+PASS  canada-life  fork-values                    expect=fork-values        got=fork-values: fork account value gold not in tfsa|fhsa|unsure
+PASS  canada-life  lead-kind                      expect=lead-kind          got=lead-kind: lead-in must be a simple tile, got toll-booth | fork-arity: fork has 1 branches (2..3)
+PASS  canada-life  no-silent-effect               expect=no-silent-effect   got=no-silent-effect: effect word "contribute" in paved text | no-silent-effect: effect word ":effect" in paved text
+PASS  canada-life  unknown-fact                   expect=unknown-fact       got=unknown-fact: unknown fact tfsa-magic
+PASS  canada-life  unknown-topic                  expect=unknown-topic      got=unknown-topic: unknown topic gossip
+PASS  canada-life  checkpoint-kind                expect=checkpoint-kind    got=checkpoint-kind: checkpoint must be risk|fees|limits, got "low"
+PASS  canada-life  grounded-text claim            expect=grounded-text      got=grounded-text: claim word "Zero" in "Zero fees here"
+PASS  canada-life  grounded-text number           expect=grounded-text      got=grounded-text: ungrounded number "$150" in "Put in $150"
+PASS  canada-life  label-length                   expect=label-length       got=label-length: label has 7 words (max 6): "one two three four five six seven"
+PASS  canada-life  user-rule                      expect=user-rule          got=user-rule: topic stocks is avoided by a user rule
+PASS  canada-life  user-rule exempts checkpoints  expect=ok                 got=ok
+PASS  canada-life  all-roads-to-rome              expect=all-roads-to-rome  got=all-roads-to-rome: 1 filler tile(s) but only 0 of budget 9 left after unmet steps (fork:account, checkpoint:risk, checkpoint:fees, checkpoint:limits, toll)
+PASS  canada-life  grown-tile bad body            expect=grown-tile         got=grown-tile: spam must expand to an existing simple tile, got (popup-ad x)
+PASS  canada-life  grown-tile redefine            expect=grown-tile         got=grown-tile: cannot redefine fork
+PASS  canada-life  termination                    expect=termination        got=termination: grown tile t2 expands deeper than 8
+PASS  canada-life  disclose-first                 expect=disclose-first     got=disclose-first: toll-booth before risk checkpoint
+PASS  canada-life  limits-first                   expect=limits-first       got=limits-first: limits checkpoint before an account is chosen
+PASS  canada-life  goal-realign                   expect=goal-realign       got=goal-realign: limits were shown for another account, not tfsa
+PASS  canada-life  valid finance toll             expect=ok                 got=ok
+PASS  sun-life     no-diagnosis                   expect=no-diagnosis       got=no-diagnosis: clinical claim "Sounds like" in "Sounds like anxiety to me"
+PASS  sun-life     crisis-exit                    expect=crisis-exit        got=crisis-exit: crisis exit taken: only (help) may follow, got signpost
+PASS  sun-life     crisis help ok                 expect=ok                 got=ok
+PASS  sun-life     no-surprise-cost               expect=no-surprise-cost   got=no-surprise-cost: booking toll-booth before cost for counselling
+PASS  sun-life     valid booking toll             expect=ok                 got=ok
+PASS  merch-trail  real-results                   expect=real-results       got=real-results: model 123 is not a result of this run's search
+PASS  merch-trail  merch-license                  expect=merch-license      got=merch-license: model 7 license "Creative Commons — Attribution — Noncommercial" does not allow merch
+PASS  merch-trail  merch-license blocklist trap   expect=merch-license      got=merch-license: model 8 license "Standard Digital File License" does not allow merch
+PASS  merch-trail  phone-size                     expect=phone-size         got=phone-size: model 9 STL is 8.6 MB (max 5 MB)
+PASS  merch-trail  pick-shown                     expect=pick-shown         got=pick-shown: pick fork offers model 2 that is not shown on the road
+PASS  merch-trail  search-form                    expect=search-form        got=search-form: search :style huge not in realistic|low-poly|articulated|any
+PASS  merch-trail  attribution                    expect=attribution        got=attribution: toll-booth before the license and credit of the chosen model
+PASS  merch-trail  valid pick                     expect=ok                 got=ok
+PASS  canada-life  inject:hidden-risk             expect=disclose-first     got=disclose-first,limits-first
+PASS  sun-life     inject:diagnosis               expect=no-diagnosis       got=no-diagnosis
+PASS  merch-trail  inject:nc-license              expect=merch-license      got=merch-license
+PASS  fallback walk canada-life  pace=rush   branch=0 → Rome in 9 tiles
+PASS  fallback walk canada-life  pace=rush   branch=1 → Rome in 13 tiles
+PASS  fallback walk canada-life  pace=rush   branch=2 → Rome in 15 tiles
+PASS  fallback walk canada-life  pace=steady branch=0 → Rome in 12 tiles
+PASS  fallback walk canada-life  pace=steady branch=1 → Rome in 16 tiles
+PASS  fallback walk canada-life  pace=steady branch=2 → Rome in 18 tiles
+PASS  fallback walk canada-life  pace=linger branch=0 → Rome in 16 tiles
+PASS  fallback walk canada-life  pace=linger branch=1 → Rome in 16 tiles
+PASS  fallback walk canada-life  pace=linger branch=2 → Rome in 18 tiles
+PASS  fallback walk sun-life     pace=rush   branch=0 → Rome in 8 tiles
+PASS  fallback walk sun-life     pace=rush   branch=1 → Rome in 8 tiles
+PASS  fallback walk sun-life     pace=rush   branch=2 → Rome in 8 tiles
+PASS  fallback walk sun-life     pace=steady branch=0 → Rome in 11 tiles
+PASS  fallback walk sun-life     pace=steady branch=1 → Rome in 11 tiles
+PASS  fallback walk sun-life     pace=steady branch=2 → Rome in 11 tiles
+PASS  fallback walk sun-life     pace=linger branch=0 → Rome in 12 tiles
+PASS  fallback walk sun-life     pace=linger branch=1 → Rome in 12 tiles
+PASS  fallback walk sun-life     pace=linger branch=2 → Rome in 12 tiles
+PASS  fallback walk merch-trail  pace=rush   branch=0 → Rome in 10 tiles
+PASS  fallback walk merch-trail  pace=rush   branch=1 → Rome in 10 tiles
+PASS  fallback walk merch-trail  pace=rush   branch=2 → Rome in 10 tiles
+PASS  fallback walk merch-trail  pace=steady branch=0 → Rome in 13 tiles
+PASS  fallback walk merch-trail  pace=steady branch=1 → Rome in 13 tiles
+PASS  fallback walk merch-trail  pace=steady branch=2 → Rome in 13 tiles
+PASS  fallback walk merch-trail  pace=linger branch=0 → Rome in 13 tiles
+PASS  fallback walk merch-trail  pace=linger branch=1 → Rome in 13 tiles
+PASS  fallback walk merch-trail  pace=linger branch=2 → Rome in 14 tiles
+
+46 fixtures, 27 fallback walks, 0 failure(s)
+exit=0

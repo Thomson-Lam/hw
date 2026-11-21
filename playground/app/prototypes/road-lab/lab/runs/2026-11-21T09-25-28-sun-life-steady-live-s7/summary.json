@@ -1,0 +1,31 @@
+{
+  "id": "2026-11-21T09-25-28-sun-life-steady-live-s7",
+  "pack": "sun-life",
+  "persona": "steady",
+  "mode": "live",
+  "model": "gemini-3.5-flash-lite",
+  "seed": 7,
+  "reached_rome": true,
+  "tiles_to_rome": 13,
+  "time_s": 48.7,
+  "stall_s": 0,
+  "llm_coverage": 0.38,
+  "pave_calls": 3,
+  "attempts": 7,
+  "rewrites": 4,
+  "rejects_by_invariant": {
+    "lead-kind": 2,
+    "fork-values": 10,
+    "no-surprise-cost": 16
+  },
+  "replaced": 1,
+  "late": 0,
+  "fallback_tiles_seen": 5,
+  "llm_tiles_seen": 3,
+  "unsafe_on_road": 0,
+  "effects_without_click": 0,
+  "rules_added": [],
+  "paver_ms_p50": 1898,
+  "paver_ms_p95": 2545,
+  "stopped": false
+}
