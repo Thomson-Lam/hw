@@ -1,0 +1,32 @@
+{
+  "id": "2026-11-21T09-25-15-sun-life-rusher-sim-s1",
+  "pack": "sun-life",
+  "persona": "rusher",
+  "mode": "sim",
+  "model": "sim-paver(fallback+20% faults, lognormal 850ms)",
+  "seed": 1,
+  "reached_rome": true,
+  "tiles_to_rome": 12,
+  "time_s": 31.3,
+  "stall_s": 0,
+  "llm_coverage": 0.57,
+  "pave_calls": 5,
+  "attempts": 6,
+  "rewrites": 1,
+  "rejects_by_invariant": {
+    "no-noise": 1
+  },
+  "replaced": 2,
+  "late": 2,
+  "fallback_tiles_seen": 3,
+  "llm_tiles_seen": 4,
+  "unsafe_on_road": 0,
+  "effects_without_click": 0,
+  "rules_added": [
+    "(avoid plan)",
+    "(avoid talking)"
+  ],
+  "paver_ms_p50": 835,
+  "paver_ms_p95": 1304,
+  "stopped": false
+}

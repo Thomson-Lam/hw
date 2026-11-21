@@ -44,3 +44,7 @@ next-env.d.ts
 /lib/generated/
 # playwright
 /test-results/
+
+# road-lab local data
+/.data/
+/app/prototypes/road-lab/lab/runs/*/trace.jsonl

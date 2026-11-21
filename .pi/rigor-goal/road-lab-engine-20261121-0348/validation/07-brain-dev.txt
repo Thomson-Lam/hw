@@ -1,0 +1,8 @@
+Dev server. Phone (375x812) + laptop brain view (1440x1000) in parallel.
+canada-life: inject hidden-risk -> "Compiler rejected the injected stretch: disclose-first, limits-first"; verdict REJECTED inject ... disclose-first: toll-booth before risk and fees checkpoint
+swap -> sun-life: phone header became "Care you already have" (restart via /api/road-lab/control poll)
+sun-life: inject diagnosis -> REJECTED no-diagnosis: clinical claim "Sounds like" in "Sounds like anxiety to me"
+swap -> merch-trail: phone header "Merch Trail"
+merch-trail: inject nc-license -> REJECTED merch-license: model nc-1 license "Creative Commons — Attribution — Noncommercial" does not allow merch
+Gap found: runs.mood_before/mood_after/reached_rome never written (brain showed "Mood: ? -> ?"). Fixed: session.moodAfter + ui/road-screen.tsx patchRun effects.
+After fix, sun-life walk: runs row {mood_before: stressed, mood_after: okay, reached_rome: 1, ended_at set}.

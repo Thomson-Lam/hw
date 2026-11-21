@@ -1,0 +1,4 @@
+Mutation checks (2026-11-21):
+- disable disclose-first check -> 3 failures, exit 1 (fixture FAIL, inject FAIL, UNCOVERED canada-life:disclose-first)
+- remove phone-size fixture -> UNCOVERED merch-trail:phone-size, exit 1
+- restored -> exit 0

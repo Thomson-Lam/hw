@@ -1,0 +1,14 @@
+{
+  "title": "Road Lab",
+  "description": "One engine, three roads. An LLM paves the road as you scroll; a closed compiler checks every stretch before you see it.",
+  "tags": [
+    "road-scroll",
+    "engine",
+    "llm",
+    "compiler"
+  ],
+  "createdAt": "2026-11-21",
+  "updatedAt": "2026-11-21T09:32:25Z",
+  "hidden": false,
+  "public": false
+}

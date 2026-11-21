@@ -1,0 +1,12 @@
+Dev server, ROAD_LAB_DB=/tmp/rl-test.db (2026-11-21)
+POST /runs canada-life                       -> {"id":1}
+POST /rules topic=stocks                      -> {"id":1,"form":"(avoid stocks)"}
+POST /rules topic=risk (protected)            -> 409 {"error":"risk is protected by the canada-life pack and cannot be avoided"}
+POST /rules topic=crypto                      -> {"id":2}
+POST /tiles milestone (deftile milestone (label) (vista label)) -> {"id":1}
+POST /tiles spam (popup-ad)                   -> 422 grown tile rejected: spam must expand to an existing simple tile
+DELETE /rules?id=2                            -> {"ok":true}
+GET /rules before restart                     -> [stocks]
+-- server killed and restarted on the same DB file --
+GET /rules after restart                      -> [{"id":1,"topic":"stocks","form":"(avoid stocks)"}]
+GET /tiles after restart                      -> [{"id":1,"name":"milestone","form":"(deftile milestone (label) (vista label))"}]

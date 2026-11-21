@@ -180,6 +180,16 @@ Keep this file current on every change. It has these sections:
 - `cacheComponents` is turned off in `next.config.ts` on purpose. With it on, every `params`/`cookies` access needs a Suspense boundary, and prototypes break easily.
 - Vendored `components/ui` and `hooks/` fail `react-hooks/set-state-in-effect`. That rule is relaxed only for those paths, in `eslint.config.mjs`. It stays on for prototype code.
 - After a Playwright upgrade, run `npx playwright install chromium`, or the capture scripts fail at launch.
+- Next resets `process.env` after `next.config.ts` runs, so `loadEnvConfig()` in the config does not reach route handlers. Secrets in the repo-root `.env` are read server-side on first use (`road-lab/server/env.ts`). Never put keys in the `env` config: that inlines them into bundles.
+- Only one `next dev` per directory. A second one exits with "Another next dev server is already running". Stop the first before you start one with other env vars.
+- An IntersectionObserver effect keyed on the list *length* misses replaced elements of the same length. Key it on the element ids (`road-lab/ui/road-view.tsx`).
+- Pages that poll never reach Playwright `networkidle`. Wait for `domcontentloaded` and a selector.
+- Printables license strings use em dashes and double spaces ("Creative Commons — Attribution  — Share Alike"). Normalize whitespace, and use an allowlist: a blocklist let "Standard Digital File License" through.
+- A check you never saw fail proves nothing: `npm run lab -- fixtures` exits 1 when an invariant loses its reject fixture (tested by deleting one).
+- `@types/node` must be ≥ 22.5 for `node:sqlite` types (the scaffold pins 20).
+- Theme tokens are `oklch()`. `THREE.Color.setStyle` cannot parse them and silently falls back to white (invisible in light mode). Resolve the token through a 1×1 canvas (`road-lab/ui/stl-viewer.tsx → cssColor`).
+- Playwright `colorScheme: "light"` does not switch the app: next-themes defaults to dark. Set `localStorage.theme` with `addInitScript` before testing light mode.
+- Dynamic `fs.readFileSync(path.resolve(process.cwd(), …))` in server code makes Turbopack trace the whole project. Mark the path with `/* turbopackIgnore: true */` (`road-lab/server/env.ts`).
 
 ## 5. Suggested libraries
 
@@ -203,6 +213,8 @@ Add these when a prototype needs them, with `npm i` in `playground/`.
 | Variable | Where | Purpose |
 |---|---|---|
 | `PLAYGROUND_PASSWORD` | Vercel (Production + Preview) | Password for the gate. If it is unset in production, nobody can log in. |
+| `GEMINI_API_KEY` | repo-root `.env` (gitignored) | road-lab paver. Read server-side only. |
+| `ROAD_LAB_DB` | shell (optional) | SQLite file for road-lab (default `playground/.data/road-lab.db`). |
 | `NEXT_PUBLIC_SITE_URL` | Vercel (optional) | Canonical origin for OG URLs. Falls back to `VERCEL_PROJECT_PRODUCTION_URL`, then `VERCEL_URL`. |
 
 Vercel project setting: **Root Directory = `playground`**.

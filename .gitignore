@@ -2,3 +2,8 @@
 .env.*
 !.env.example
 .DS_Store
+
+# validation screenshots and run copies live in the goal store
+.pi/rigor-goal/*/validation/**/*.png
+.pi/rigor-goal/*/validation/lab-runs/
+.pi/rigor-goal/*/validation/prod/server-*.log

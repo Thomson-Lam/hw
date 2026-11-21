@@ -1,0 +1,76 @@
+
+> playground@0.1.0 check
+> npm run lint && npm run typecheck && npm run build
+
+
+> playground@0.1.0 prelint
+> node scripts/gen-registry.mjs
+
+[gen-registry] 2 prototype(s): road-lab, road-scroll
+
+> playground@0.1.0 lint
+> eslint
+
+
+> playground@0.1.0 pretypecheck
+> node scripts/gen-registry.mjs
+
+[gen-registry] 2 prototype(s): road-lab, road-scroll
+
+> playground@0.1.0 typecheck
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+> playground@0.1.0 prebuild
+> node scripts/gen-registry.mjs
+
+[gen-registry] 2 prototype(s): road-lab, road-scroll
+
+> playground@0.1.0 build
+> next build
+
+▲ Next.js 16.4.6 (Turbopack)
+✓ Running next.config.ts took 12ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 331ms
+  Running TypeScript ...
+  Finished TypeScript in 879ms ...
+  Collecting page data using 9 workers ...
+  Generating static pages using 9 workers (0/18) ...
+  Generating static pages using 9 workers (4/18) 
+  Generating static pages using 9 workers (8/18) 
+  Generating static pages using 9 workers (13/18) 
+✓ Generating static pages using 9 workers (18/18) in 102ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/auth
+├ ƒ /api/road-lab/control
+├ ƒ /api/road-lab/inject
+├ ƒ /api/road-lab/pave
+├ ƒ /api/road-lab/rules
+├ ƒ /api/road-lab/runs
+├ ƒ /api/road-lab/search
+├ ƒ /api/road-lab/stl
+├ ƒ /api/road-lab/tiles
+├ ƒ /api/road-lab/trace
+├ ○ /login
+├ ● /p/[slug]
+├ ƒ /prototypes/[slug]
+├ ○ /prototypes/road-lab
+├ ○ /prototypes/road-lab/brain
+└ ○ /prototypes/road-scroll
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+final check exit=0

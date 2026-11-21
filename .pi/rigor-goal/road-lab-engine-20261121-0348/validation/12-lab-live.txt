@@ -1,0 +1,9 @@
+canada-life  steady    live rome=yes tiles=18 time=58.8s stall=0s llm_cov=0.42 calls=4 rewrites=7 replaced=2 late=0 p50=2146ms rules=- unsafe=0 no_click_effects=0 rejects={"disclose-first":1,"limits-first":9,"stretch-size":2,"fork-last":1,"goal-realign":2,"syntax":2} → runs/2026-11-21T09-25-22-canada-life-steady-live-s7
+
+1 run(s); unsafe_on_road total=0; effects_without_click total=0; not at Rome=0
+sun-life     steady    live rome=yes tiles=13 time=48.7s stall=0s llm_cov=0.38 calls=3 rewrites=4 replaced=1 late=0 p50=1898ms rules=- unsafe=0 no_click_effects=0 rejects={"lead-kind":2,"fork-values":10,"no-surprise-cost":16} → runs/2026-11-21T09-25-28-sun-life-steady-live-s7
+
+1 run(s); unsafe_on_road total=0; effects_without_click total=0; not at Rome=0
+merch-trail  steady    live rome=yes tiles=14 time=50.6s stall=0s llm_cov=1 calls=3 rewrites=0 replaced=3 late=0 p50=699ms rules=- unsafe=0 no_click_effects=0 rejects={} → runs/2026-11-21T09-25-30-merch-trail-steady-live-s7
+
+1 run(s); unsafe_on_road total=0; effects_without_click total=0; not at Rome=0

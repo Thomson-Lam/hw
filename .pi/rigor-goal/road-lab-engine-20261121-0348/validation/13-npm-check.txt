@@ -1,0 +1,104 @@
+
+> playground@0.1.0 check
+> npm run lint && npm run typecheck && npm run build
+
+
+> playground@0.1.0 prelint
+> node scripts/gen-registry.mjs
+
+[gen-registry] 2 prototype(s): road-lab, road-scroll
+
+> playground@0.1.0 lint
+> eslint
+
+
+> playground@0.1.0 pretypecheck
+> node scripts/gen-registry.mjs
+
+[gen-registry] 2 prototype(s): road-lab, road-scroll
+
+> playground@0.1.0 typecheck
+> next typegen && tsc --noEmit
+
+Generating route types...
+✓ Types generated successfully
+
+> playground@0.1.0 prebuild
+> node scripts/gen-registry.mjs
+
+[gen-registry] 2 prototype(s): road-lab, road-scroll
+
+> playground@0.1.0 build
+> next build
+
+▲ Next.js 16.4.6 (Turbopack)
+✓ Running next.config.ts took 13ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 367ms
+  Running TypeScript ...
+  Finished TypeScript in 840ms ...
+  Collecting page data using 9 workers ...
+  Generating static pages using 9 workers (0/18) ...
+  Generating static pages using 9 workers (4/18) 
+  Generating static pages using 9 workers (8/18) 
+  Generating static pages using 9 workers (13/18) 
+✓ Generating static pages using 9 workers (18/18) in 107ms
+Turbopack build encountered 1 warning:
+./app/prototypes/road-lab/server/env.ts:13:14
+Warning: Dynamic filesystem access causes tracing of the whole project
+  [90m11 |[0m     [36mlet[0m text = [32m""[0m;
+  [90m12 |[0m     [36mtry[0m {
+[33m[1m>[0m [90m13 |[0m       text = fs.readFileSync(file, [32m"utf8"[0m);
+  [90m   |[0m              [33m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m14 |[0m     } [36mcatch[0m {
+  [90m15 |[0m       [36mcontinue[0m;
+  [90m16 |[0m     }
+
+Static analysis determined that this filesystem access causes the whole project to be traced and included in the output.
+This is usually unintentional and leads to all source files (including the public folder) to be deployed as part of the server code.
+This can slow down deployments or lead to failures when size limits are exceeded.
+To resolve this, you can
+- make sure the path is statically scoped to some subfolder, for example path.join(process.cwd(), 'data', bar), or
+- only use them in development, or
+- opt out by adding an ignore comment to the highlighted call: fs.readFileSync(/*turbopackIgnore: true*/ ...), or
+- remove them.
+
+Import trace:
+  App Route:
+    ./app/prototypes/road-lab/server/env.ts
+    ./app/prototypes/road-lab/server/gemini.ts
+    ./app/prototypes/road-lab/server/paver.ts
+    ./app/api/road-lab/pave/route.ts
+
+
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/auth
+├ ƒ /api/road-lab/control
+├ ƒ /api/road-lab/inject
+├ ƒ /api/road-lab/pave
+├ ƒ /api/road-lab/rules
+├ ƒ /api/road-lab/runs
+├ ƒ /api/road-lab/search
+├ ƒ /api/road-lab/stl
+├ ƒ /api/road-lab/tiles
+├ ƒ /api/road-lab/trace
+├ ○ /login
+├ ● /p/[slug]
+├ ƒ /prototypes/[slug]
+├ ○ /prototypes/road-lab
+├ ○ /prototypes/road-lab/brain
+└ ○ /prototypes/road-scroll
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand
+
+check exit=0

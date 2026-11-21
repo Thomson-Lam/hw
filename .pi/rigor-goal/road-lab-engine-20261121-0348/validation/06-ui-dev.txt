@@ -1,0 +1,11 @@
+Dev server (next dev, ROAD_LAB_DB=/tmp/rl-dev.db, live gemini-3.5-flash-lite), Playwright 375x812, dark.
+Walk (dwell 900 ms, first branch) — all three packs reached Rome, no console errors, no horizontal overflow:
+canada-life: effect "Automatic contribution set: $40 a month into your TFSA (simulated)." sources: opening:mood opening:fork lead:signpost fallback:signpost x3 fallback:fork lead:signpost llm:checkpoint x3 llm:toll-booth engine:campfire
+sun-life: effect "Booked: counselling, Tue 4:00 pm (simulated)." sources: ... llm:signpost llm:checkpoint llm:checkpoint llm:toll-booth engine:campfire
+merch-trail: effect "Saved to your merch board: Horse - Rearing (Creative Commons — Public Domain)." sources: opening:signpost opening:fork lead:signpost llm:signpost llm:vista llm:search fallback:search llm:pick llm:pick llm:fork lead:checkpoint llm:signpost llm:checkpoint llm:toll-booth engine:campfire
+  (LLM search found <2 usable models -> fallback re-searched "horse"; STL of "Horse - Rearing" rendered in the pick tile)
+Rusher on scenic road (dwell 250 ms), canada-life — trace:
+  horse pace -> rush; skip stocks (1); skip compounding (1); skip stocks (2); rule (avoid stocks); reroute from 7; ... rule-erased stocks
+  UI: legend "1", rules ["(avoid stocks)"]; after tapping erase: []
+Fast road + rush: no slack -> no filler -> no repeated topic -> no rule (correct: road holds only the required steps).
+Bug found and fixed during this run: IntersectionObserver only re-observed on tile count change; an LLM replacement of equal length left new tiles unobserved, so the toll booth stayed "not reached". Fixed by keying the effect on tile ids (ui/road-view.tsx).
