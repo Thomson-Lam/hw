@@ -1,0 +1,35 @@
+# hw: Road Scroll (Hack Western 13)
+
+Pre-prototype phase. We try ideas fast in a shared **playground** web app and keep what works.
+
+- `playground/`: Next.js app that holds every prototype. Rules: [`playground/AGENTS.md`](playground/AGENTS.md)
+- `docs/`: design brief (`docs/playground/references/idea-breakdown.md`) and references
+- Vercel setup (owner only): [`docs/playground/vercel-setup.md`](docs/playground/vercel-setup.md)
+
+## Teammates: get started
+
+### One-time
+1. Accept the GitHub invite to `Thomson-Lam/hw`. Ask Thomson for one if you have none.
+2. Get the playground password from Thomson in DMs. It is never in the repo.
+3. Optional, for a local dev setup: Node 24+, then:
+   ```bash
+   git clone https://github.com/Thomson-Lam/hw && cd hw/playground
+   npm install
+   npx playwright install chromium   # only needed for thumbnail/OG scripts
+   npm run dev                       # http://localhost:3000. Local dev has no password gate
+   ```
+
+### Make a prototype (laptop or phone)
+You don't write the boilerplate. A coding agent does, by following `playground/AGENTS.md`.
+
+- **From a phone:** open Claude Code on the web (claude.ai/code) or your agent of choice, and select the `Thomson-Lam/hw` repo. Ask, for example:
+  > Make a playground prototype called `fork-tap`: three road signs at a fork; tapping one bends the road toward it. Add controls for sign count and bend speed.
+  The agent reads `CLAUDE.md` → `playground/AGENTS.md`. It builds on a branch, runs the checks, opens a PR, and posts the preview link.
+- **From a laptop:** run your agent (Claude Code, Codex, Cursor…) in the repo root with the same kind of request.
+
+### Rules of thumb
+- Each prototype is one folder: `playground/app/prototypes/<slug>/`. Don't import from another person's prototype. Copy instead.
+- Work on a branch, never on `main`. Before you push, `npm run check` must pass. CI runs the same check on every PR.
+- Open a prototype on your phone from the PR's Vercel preview link: `<preview>/prototypes/<slug>`.
+- Prototypes are private (password) by default. A prototype goes public at `/p/<slug>` only when Thomson asks for it.
+- When something breaks and you fix it, add the lesson to `playground/AGENTS.md` §4.
