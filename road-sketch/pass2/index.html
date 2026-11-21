@@ -183,12 +183,12 @@ function reset(goal,pipe){G=fresh(goal,pipe);track.innerHTML='';road.scrollTop=0
   document.getElementById('router').textContent=`"${goal}" → ${pipe==='decide'?'Decide pipeline (ordered stages, has a destination)':'Explore pipeline (open-ended, checks back in)'}`;
   log('pl',`goal routed to ${pipe}`);request()}
 function more(){if(G&&!G.pending&&track.offsetHeight-(road.scrollTop+road.clientHeight)<road.clientHeight*.8)request()}
-function request(){if(!G||G.pending||G.segs.some(x=>x.e.type==='deadend'))return;
+function request(){if(!G||G.replay||G.pending||G.segs.some(x=>x.e.type==='deadend'))return;
   if(G.pipe==='decide'){const gate=[...G.segs].reverse().find(x=>x.e.type==='fork'||x.e.type==='commit');if(gate&&!gate.answered)return}const els=stretch();if(!els.length)return;G.pending=true;const my=++G.token;
   const ph=seg({type:'paving'});const ms=Math.round(latency*(.7+Math.random()*.6));
   log('pl',`fill stretch ${G.stretch}: ${els.map(e=>e.type).join(' → ')} · obeying: ${why()}`);
   setTimeout(()=>{if(my!==G.token)return;ph.el.remove();G.segs=G.segs.filter(s=>s!==ph);els.forEach(e=>seg(e));G.pending=false;if(els[0].type!=='deadend')more()},ms)}
-function replanAhead(reason){if(G.pipe==='decide')return;const bottom=road.scrollTop+road.clientHeight;
+function replanAhead(reason){if(G.pipe==='decide'||G.replay)return;const bottom=road.scrollTop+road.clientHeight;
   const drop=G.segs.filter(s=>s.el.offsetTop>bottom||s.e.type==='paving');if(!drop.length&&!G.pending)return;
   drop.forEach(s=>{s.el.remove();if(s.e.ask)G.asked.delete(s.e.ask);if(s.e.id)G.seen.delete(s.e.id);if(s.e.a)G.seen.delete(s.e.a.id),G.seen.delete(s.e.b.id)});
   G.segs=G.segs.filter(s=>!drop.includes(s));G.pending=false;G.token++;
@@ -255,5 +255,18 @@ document.getElementById('lat').oninput=e=>{latency=+e.target.value;document.getE
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='1')setPolicy('keep');if(e.key==='2')setPolicy('last3');if(e.key==='3')setPolicy('keyed');if(e.key==='m')bM.click()});
 road.addEventListener('scroll',more);
 setPolicy('keyed');
+async function replay(){
+  const T=await (await fetch('../spot/transcripts.json')).json();
+  const box=document.getElementById('dbg');const h=document.createElement('div');h.innerHTML='<h3>replay live Gemini transcripts</h3>';const row=document.createElement('div');row.className='row';h.appendChild(row);box.insertBefore(h,box.children[1]);
+  T.forEach((t,i)=>{const b=document.createElement('button');b.textContent=`${t.goal.split(' ').slice(-2).join(' ')} · ${t.persona} · ${t.policy}`;b.onclick=()=>show(t);row.appendChild(b)});
+  function show(t){document.getElementById('goalScreen').classList.add('hide');reset(t.goal,'explore');G.replay=true;track.innerHTML='';G.segs=[];G.pending=false;
+    t.steps.forEach(st=>{(st.elements||[]).forEach(e=>{const why=`live Gemini · stretch ${st.s} · ${st.attempts.length} tr${st.attempts.length>1?'ies':'y'} · rules: ${st.active.map(r=>r.kind+' '+r.key+(r.value!=null?' '+r.value:'')).join(', ')||'none'}`;
+      if(e.type==='slider')seg({...e,unit:'h',rule:v=>({kind:'max',key:'hours',value:v,text:`at most ${v} h per idea`,short:`≤${v}h`}),why});
+      else if(e.type==='fork')seg({...e,pred:0,why});else seg({...e,why})});
+      log('pl',`stretch ${st.s}: ${st.attempts.map(a=>a.ms+'ms'+(a.errs.length?' rejected ('+a.errs.join('; ')+')':'')).join(' → ')}${st.picks?' · scripted user picked: '+st.picks.map(p=>p.from).join(', '):''}`)});
+    document.getElementById('router').textContent=`replaying ${t.goal} · ${t.persona} · ${t.policy} (no live calls)`}
+  show(T[0]);
+}
+if(new URLSearchParams(location.search).has('replay'))replay();
 </script>
 </body></html>

@@ -1,0 +1,5688 @@
+[
+ {
+  "goal": "Get into astronomy",
+  "persona": "avoider",
+  "policy": "keep",
+  "steps": [
+   {
+    "s": 1,
+    "active": [],
+    "attempts": [
+     {
+      "ms": 1559,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "How do you prefer to start?",
+      "a": {
+       "label": "Read star maps",
+       "sub": "Learn constellations and charts",
+       "rule": {
+        "kind": "prefer",
+        "key": "reading"
+       }
+      },
+      "b": {
+       "label": "Watch night sky",
+       "sub": "Head outside right now",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Naked Eye Stargazing",
+      "line": "Identify major constellations visible from your backyard tonight.",
+      "tags": [
+       "outdoors",
+       "night",
+       "free"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Stellarium Web Tour",
+      "line": "Explore the night sky virtually on your browser.",
+      "tags": [
+       "visual",
+       "free"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next focus",
+      "opts": [
+       {
+        "label": "Deep Sky Observing",
+        "rule": {
+         "kind": "prefer",
+         "key": "night"
+        }
+       },
+       {
+        "label": "Planetarium Apps",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Space History",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "outdoors",
+      "from": "nope on \"Naked Eye Stargazing\""
+     },
+     {
+      "kind": "prefer",
+      "key": "history",
+      "from": "fork \"Space History\""
+     }
+    ]
+   },
+   {
+    "s": 2,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "outdoors",
+      "from": "nope on \"Naked Eye Stargazing\""
+     },
+     {
+      "kind": "prefer",
+      "key": "history",
+      "from": "fork \"Space History\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1047,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How long to look up?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 2
+     },
+     {
+      "type": "item",
+      "title": "Galileo and the Telescope",
+      "line": "Read how early astronomers changed our view of space.",
+      "tags": [
+       "history",
+       "reading"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next view",
+      "opts": [
+       {
+        "label": "Read old star logs",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       },
+       {
+        "label": "Study sky maps",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Listen to space sounds",
+        "rule": {
+         "kind": "avoid",
+         "key": "visual"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "history",
+      "from": "nope on \"Galileo and the Telescope\""
+     },
+     {
+      "kind": "avoid",
+      "key": "visual",
+      "from": "fork \"Listen to space sounds\""
+     }
+    ]
+   },
+   {
+    "s": 3,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "outdoors",
+      "from": "nope on \"Naked Eye Stargazing\""
+     },
+     {
+      "kind": "prefer",
+      "key": "history",
+      "from": "fork \"Space History\""
+     },
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "history",
+      "from": "nope on \"Galileo and the Telescope\""
+     },
+     {
+      "kind": "avoid",
+      "key": "visual",
+      "from": "fork \"Listen to space sounds\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1130,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your observing style",
+      "a": {
+       "label": "Quick check",
+       "sub": "Short moon view",
+       "rule": {
+        "kind": "prefer",
+        "key": "quick"
+       }
+      },
+      "b": {
+       "label": "Deep reading",
+       "sub": "Star lore study",
+       "rule": {
+        "kind": "prefer",
+        "key": "reading"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Stargazing Handbook",
+      "line": "Read a concise guide on constellation shapes.",
+      "tags": [
+       "reading",
+       "quick"
+      ],
+      "hours": 0.75
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next step",
+      "opts": [
+       {
+        "label": "Read more books",
+        "rule": {
+         "kind": "prefer",
+         "key": "reading"
+        }
+       },
+       {
+        "label": "Quick sky notes",
+        "rule": {
+         "kind": "prefer",
+         "key": "quick"
+        }
+       },
+       {
+        "label": "Build model kit",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "reading",
+      "from": "nope on \"Stargazing Handbook\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Build model kit\""
+     }
+    ]
+   },
+   {
+    "s": 4,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "outdoors",
+      "from": "nope on \"Naked Eye Stargazing\""
+     },
+     {
+      "kind": "prefer",
+      "key": "history",
+      "from": "fork \"Space History\""
+     },
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "history",
+      "from": "nope on \"Galileo and the Telescope\""
+     },
+     {
+      "kind": "avoid",
+      "key": "visual",
+      "from": "fork \"Listen to space sounds\""
+     },
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "reading",
+      "from": "nope on \"Stargazing Handbook\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Build model kit\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1123,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How much time for this session?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 1
+     },
+     {
+      "type": "item",
+      "title": "Build a Simple Astrolabe",
+      "line": "Construct a basic altitude measuring tool using cardstock.",
+      "tags": [
+       "hands-on",
+       "math"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next direction",
+      "opts": [
+       {
+        "label": "Build more tools",
+        "rule": {
+         "kind": "prefer",
+         "key": "math"
+        }
+       },
+       {
+        "label": "Listen to podcasts",
+        "rule": {
+         "kind": "prefer",
+         "key": "music"
+        }
+       },
+       {
+        "label": "Study ancient myths",
+        "rule": {
+         "kind": "prefer",
+         "key": "animals"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "hands-on",
+      "from": "nope on \"Build a Simple Astrolabe\""
+     },
+     {
+      "kind": "prefer",
+      "key": "animals",
+      "from": "fork \"Study ancient myths\""
+     }
+    ]
+   }
+  ],
+  "finalRules": [
+   {
+    "kind": "prefer",
+    "key": "outdoors",
+    "from": "thisthat"
+   },
+   {
+    "kind": "avoid",
+    "key": "outdoors",
+    "from": "nope on \"Naked Eye Stargazing\""
+   },
+   {
+    "kind": "prefer",
+    "key": "history",
+    "from": "fork \"Space History\""
+   },
+   {
+    "kind": "max",
+    "key": "hours",
+    "value": 1,
+    "from": "slider"
+   },
+   {
+    "kind": "avoid",
+    "key": "history",
+    "from": "nope on \"Galileo and the Telescope\""
+   },
+   {
+    "kind": "avoid",
+    "key": "visual",
+    "from": "fork \"Listen to space sounds\""
+   },
+   {
+    "kind": "prefer",
+    "key": "reading",
+    "from": "thisthat"
+   },
+   {
+    "kind": "avoid",
+    "key": "reading",
+    "from": "nope on \"Stargazing Handbook\""
+   },
+   {
+    "kind": "prefer",
+    "key": "hands-on",
+    "from": "fork \"Build model kit\""
+   },
+   {
+    "kind": "max",
+    "key": "hours",
+    "value": 1,
+    "from": "slider"
+   },
+   {
+    "kind": "avoid",
+    "key": "hands-on",
+    "from": "nope on \"Build a Simple Astrolabe\""
+   },
+   {
+    "kind": "prefer",
+    "key": "animals",
+    "from": "fork \"Study ancient myths\""
+   }
+  ]
+ },
+ {
+  "goal": "Get into astronomy",
+  "persona": "steady",
+  "policy": "keyed",
+  "steps": [
+   {
+    "s": 1,
+    "active": [],
+    "attempts": [
+     {
+      "ms": 1416,
+      "errs": [
+       "syntax: not JSON"
+      ]
+     },
+     {
+      "ms": 1135,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "How do you want to start exploring?",
+      "a": {
+       "label": "Read Guides",
+       "sub": "Learn terminology and star charts",
+       "rule": {
+        "kind": "prefer",
+        "key": "reading"
+       }
+      },
+      "b": {
+       "label": "Visual Tour",
+       "sub": "Look at stunning nebula photos",
+       "rule": {
+        "kind": "prefer",
+        "key": "visual"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Beginner Stargazing Guide",
+      "line": "Learn the basic constellations visible from your backyard tonight.",
+      "tags": [
+       "reading",
+       "outdoors"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Deep Space Gallery",
+      "line": "Browse high-resolution captures of distant galaxies and nebulae.",
+      "tags": [
+       "visual"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Deep Constellation Study",
+        "rule": {
+         "kind": "prefer",
+         "key": "reading"
+        }
+       },
+       {
+        "label": "Stargazing Field Trip",
+        "rule": {
+         "kind": "prefer",
+         "key": "outdoors"
+        }
+       },
+       {
+        "label": "Astrophysics Math Lab",
+        "rule": {
+         "kind": "prefer",
+         "key": "math"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "save \"Beginner Stargazing Guide\""
+     },
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "fork \"Deep Constellation Study\""
+     }
+    ]
+   },
+   {
+    "s": 2,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "fork \"Deep Constellation Study\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1110,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How long for tonight?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 2
+     },
+     {
+      "type": "item",
+      "title": "Cosmos Stargazing Map",
+      "line": "Learn constellations and night sky coordinates quickly.",
+      "tags": [
+       "reading",
+       "outdoors"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Celestial Sphere Workshop",
+      "line": "Build a working mechanical model of orbits.",
+      "tags": [
+       "hands-on",
+       "visual"
+      ],
+      "hours": 2
+     },
+     {
+      "type": "fork",
+      "prompt": "What is next?",
+      "opts": [
+       {
+        "label": "Deep constellation reading",
+        "rule": {
+         "kind": "prefer",
+         "key": "reading"
+        }
+       },
+       {
+        "label": "Visual sky atlases",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Animal migration astronomy",
+        "rule": {
+         "kind": "prefer",
+         "key": "animals"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "save \"Cosmos Stargazing Map\""
+     },
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "fork \"Deep constellation reading\""
+     }
+    ]
+   },
+   {
+    "s": 3,
+    "active": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "fork \"Deep constellation reading\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1201,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How long for this stop?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 1.5
+     },
+     {
+      "type": "item",
+      "title": "Stellar Evolution Handbook",
+      "line": "Read about the birth and death of giant stars.",
+      "tags": [
+       "reading",
+       "visual"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Planetary Motion Essays",
+      "line": "Explore historical texts on orbits and gravity.",
+      "tags": [
+       "reading",
+       "history"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next focus:",
+      "opts": [
+       {
+        "label": "Deep into literature",
+        "rule": {
+         "kind": "prefer",
+         "key": "reading"
+        }
+       },
+       {
+        "label": "Visual sky maps",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Acoustic space sounds",
+        "rule": {
+         "kind": "prefer",
+         "key": "music"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1.5,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "save \"Stellar Evolution Handbook\""
+     },
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "fork \"Deep into literature\""
+     }
+    ]
+   },
+   {
+    "s": 4,
+    "active": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1.5,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "fork \"Deep into literature\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 794,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your reading style",
+      "a": {
+       "label": "Essays",
+       "sub": "Short academic views",
+       "rule": {
+        "kind": "prefer",
+        "key": "reading"
+       }
+      },
+      "b": {
+       "label": "Novels",
+       "sub": "Sci-fi narratives",
+       "rule": {
+        "kind": "avoid",
+        "key": "visual"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Constellation Lore Book",
+      "line": "Read about ancient mythological figures in the night sky.",
+      "tags": [
+       "reading",
+       "history"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next step",
+      "opts": [
+       {
+        "label": "Deep Astronomy Texts",
+        "rule": {
+         "kind": "prefer",
+         "key": "reading"
+        }
+       },
+       {
+        "label": "Stargazing Walks",
+        "rule": {
+         "kind": "prefer",
+         "key": "outdoors"
+        }
+       },
+       {
+        "label": "Acoustic Space",
+        "rule": {
+         "kind": "prefer",
+         "key": "music"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "save \"Constellation Lore Book\""
+     },
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "fork \"Deep Astronomy Texts\""
+     }
+    ]
+   }
+  ],
+  "finalRules": [
+   {
+    "kind": "max",
+    "key": "hours",
+    "value": 1.5,
+    "from": "slider"
+   },
+   {
+    "kind": "prefer",
+    "key": "reading",
+    "from": "fork \"Deep Astronomy Texts\""
+   }
+  ]
+ },
+ {
+  "goal": "Get into astronomy",
+  "persona": "steady",
+  "policy": "last3",
+  "steps": [
+   {
+    "s": 1,
+    "active": [],
+    "attempts": [
+     {
+      "ms": 1429,
+      "errs": [
+       "length: thisthat side"
+      ]
+     },
+     {
+      "ms": 1251,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "How do you prefer to start?",
+      "a": {
+       "label": "Read charts",
+       "sub": "Study guides",
+       "rule": {
+        "kind": "prefer",
+        "key": "reading"
+       }
+      },
+      "b": {
+       "label": "Stargaze",
+       "sub": "View sky",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Stargazing in the Backyard",
+      "line": "Step outside tonight and locate the major constellations.",
+      "tags": [
+       "outdoors",
+       "night",
+       "free"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Read Astronomy Basics",
+      "line": "Explore introductory guides about planets and stars.",
+      "tags": [
+       "reading",
+       "cheap"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next astronomy step",
+      "opts": [
+       {
+        "label": "Build a telescope",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Join astronomy club",
+        "rule": {
+         "kind": "prefer",
+         "key": "social"
+        }
+       },
+       {
+        "label": "Listen to space podcasts",
+        "rule": {
+         "kind": "prefer",
+         "key": "music"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "save \"Stargazing in the Backyard\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Build a telescope\""
+     }
+    ]
+   },
+   {
+    "s": 2,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "save \"Stargazing in the Backyard\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Build a telescope\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 979,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How long will your stargazing session be?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 2
+     },
+     {
+      "type": "item",
+      "title": "Build a Simple Star Chart",
+      "line": "Craft a rotating paper wheel to find constellations tonight.",
+      "tags": [
+       "hands-on",
+       "reading",
+       "outdoors"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next step",
+      "opts": [
+       {
+        "label": "Deep night sky session",
+        "rule": {
+         "kind": "prefer",
+         "key": "outdoors"
+        }
+       },
+       {
+        "label": "Switch to reading guides",
+        "rule": {
+         "kind": "prefer",
+         "key": "reading"
+        }
+       },
+       {
+        "label": "Explore ancient calendars",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "save \"Build a Simple Star Chart\""
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "fork \"Deep night sky session\""
+     }
+    ]
+   },
+   {
+    "s": 3,
+    "active": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "save \"Build a Simple Star Chart\""
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "fork \"Deep night sky session\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1223,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your stargazing setup preference.",
+      "a": {
+       "label": "Binoculars",
+       "sub": "Portable and easy use",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      },
+      "b": {
+       "label": "Small Scope",
+       "sub": "Detailed lunar viewing",
+       "rule": {
+        "kind": "prefer",
+        "key": "hands-on"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Navigate by Constellations",
+      "line": "Learn major patterns visible tonight using your own eyes.",
+      "tags": [
+       "outdoors",
+       "free",
+       "quick"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Construct a Moon Phase Tracker",
+      "line": "Assemble a cardboard wheel to predict lunar cycles.",
+      "tags": [
+       "hands-on",
+       "cheap"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Deep Sky Astrophotography",
+        "rule": {
+         "kind": "prefer",
+         "key": "night"
+        }
+       },
+       {
+        "label": "Sideways Shift",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Ancient Sky Lore",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "save \"Navigate by Constellations\""
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "fork \"Deep Sky Astrophotography\""
+     }
+    ]
+   },
+   {
+    "s": 4,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "save \"Navigate by Constellations\""
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "fork \"Deep Sky Astrophotography\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1503,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your stargazing style.",
+      "a": {
+       "label": "Deep Space",
+       "sub": "Look at distant galaxies",
+       "rule": {
+        "kind": "prefer",
+        "key": "night"
+       }
+      },
+      "b": {
+       "label": "Solar Viewing",
+       "sub": "Study our home star safely",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Visit a Local Dark Sky Site",
+      "line": "Travel to a designated dark location for clear views.",
+      "tags": [
+       "outdoors",
+       "night",
+       "far"
+      ],
+      "hours": 3
+     },
+     {
+      "type": "item",
+      "title": "Attend a Planetarium Show",
+      "line": "Learn constellations inside a dome theater.",
+      "tags": [
+       "visual",
+       "reading"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Astrophotography Basics",
+        "rule": {
+         "kind": "prefer",
+         "key": "night"
+        }
+       },
+       {
+        "label": "Solar System Scale",
+        "rule": {
+         "kind": "prefer",
+         "key": "outdoors"
+        }
+       },
+       {
+        "label": "Space History",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "save \"Visit a Local Dark Sky Site\""
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "fork \"Astrophotography Basics\""
+     }
+    ]
+   }
+  ],
+  "finalRules": [
+   {
+    "kind": "prefer",
+    "key": "night",
+    "from": "thisthat"
+   },
+   {
+    "kind": "prefer",
+    "key": "outdoors",
+    "from": "save \"Visit a Local Dark Sky Site\""
+   },
+   {
+    "kind": "prefer",
+    "key": "night",
+    "from": "fork \"Astrophotography Basics\""
+   }
+  ]
+ },
+ {
+  "goal": "Get into astronomy",
+  "persona": "steady",
+  "policy": "keep",
+  "steps": [
+   {
+    "s": 1,
+    "active": [],
+    "attempts": [
+     {
+      "ms": 1674,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "How do you prefer to start?",
+      "a": {
+       "label": "Star Gazing",
+       "sub": "Look up at night",
+       "rule": {
+        "kind": "prefer",
+        "key": "night"
+       }
+      },
+      "b": {
+       "label": "Read Science",
+       "sub": "Study the cosmos",
+       "rule": {
+        "kind": "prefer",
+        "key": "reading"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Naked Eye Constellation Hunt",
+      "line": "Learn major star patterns without any gear.",
+      "tags": [
+       "night",
+       "outdoors"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Beginner Stargazing Guide",
+      "line": "Read foundational concepts of celestial navigation.",
+      "tags": [
+       "reading"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where next?",
+      "opts": [
+       {
+        "label": "Deep into optics",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Sideways to history",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       },
+       {
+        "label": "Explore unknown",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "save \"Naked Eye Constellation Hunt\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Deep into optics\""
+     }
+    ]
+   },
+   {
+    "s": 2,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "save \"Naked Eye Constellation Hunt\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Deep into optics\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1350,
+      "errs": [
+       "syntax: not JSON"
+      ]
+     },
+     {
+      "ms": 1291,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your viewing setup",
+      "a": {
+       "label": "Binoculars",
+       "sub": "Portable and wide field",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      },
+      "b": {
+       "label": "Small Scope",
+       "sub": "Higher magnification view",
+       "rule": {
+        "kind": "prefer",
+        "key": "hands-on"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Binocular Moon Mapping",
+      "line": "Trace lunar craters using handheld binoculars and a map.",
+      "tags": [
+       "outdoors",
+       "hands-on",
+       "night"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "item",
+      "title": "Star Cluster Sketching",
+      "line": "Draw the Pleiades cluster while observing through a lens.",
+      "tags": [
+       "hands-on",
+       "visual",
+       "night"
+      ],
+      "hours": 2
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next step",
+      "opts": [
+       {
+        "label": "Deep Sky Astrophotography",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Astronomical Club Meetup",
+        "rule": {
+         "kind": "prefer",
+         "key": "social"
+        }
+       },
+       {
+        "label": "History of Telescopes",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "save \"Binocular Moon Mapping\""
+     },
+     {
+      "kind": "prefer",
+      "key": "visual",
+      "from": "fork \"Deep Sky Astrophotography\""
+     }
+    ]
+   },
+   {
+    "s": 3,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "save \"Naked Eye Constellation Hunt\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Deep into optics\""
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "save \"Binocular Moon Mapping\""
+     },
+     {
+      "kind": "prefer",
+      "key": "visual",
+      "from": "fork \"Deep Sky Astrophotography\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1272,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your viewing style tonight",
+      "a": {
+       "label": "Wide Field",
+       "sub": "Look with naked eyes",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      },
+      "b": {
+       "label": "Deep Space",
+       "sub": "Zoom in closer",
+       "rule": {
+        "kind": "prefer",
+        "key": "visual"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Meteor Shower Watch Party",
+      "line": "Count shooting stars under the dark sky.",
+      "tags": [
+       "night",
+       "outdoors"
+      ],
+      "hours": 2.5
+     },
+     {
+      "type": "item",
+      "title": "Planet Tracker App Setup",
+      "line": "Calibrate tools to find planets easily.",
+      "tags": [
+       "hands-on",
+       "visual"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Deep Night Focus",
+        "rule": {
+         "kind": "prefer",
+         "key": "night"
+        }
+       },
+       {
+        "label": "Visual Gear",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Astrophotography Lab",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "save \"Meteor Shower Watch Party\""
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "fork \"Deep Night Focus\""
+     }
+    ]
+   },
+   {
+    "s": 4,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "save \"Naked Eye Constellation Hunt\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Deep into optics\""
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "save \"Binocular Moon Mapping\""
+     },
+     {
+      "kind": "prefer",
+      "key": "visual",
+      "from": "fork \"Deep Sky Astrophotography\""
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "save \"Meteor Shower Watch Party\""
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "fork \"Deep Night Focus\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1334,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your viewing style tonight",
+      "a": {
+       "label": "Wide Field",
+       "sub": "Scan the Milky Way",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      },
+      "b": {
+       "label": "Deep Space",
+       "sub": "Focus on faint nebulae",
+       "rule": {
+        "kind": "prefer",
+        "key": "night"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Build a Simple Planisphere",
+      "line": "Construct a cardboard star wheel for finding tonight constellations easily.",
+      "tags": [
+       "hands-on",
+       "night"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "item",
+      "title": "Dark Sky Site Scouting",
+      "line": "Find a local low-light horizon for crystal clear celestial viewing.",
+      "tags": [
+       "outdoors",
+       "night"
+      ],
+      "hours": 2
+     },
+     {
+      "type": "fork",
+      "prompt": "What next in astronomy?",
+      "opts": [
+       {
+        "label": "Astrophotography Setup",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Astronomy Book Club",
+        "rule": {
+         "kind": "prefer",
+         "key": "social"
+        }
+       },
+       {
+        "label": "Cosmology Theory",
+        "rule": {
+         "kind": "prefer",
+         "key": "math"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "save \"Build a Simple Planisphere\""
+     },
+     {
+      "kind": "prefer",
+      "key": "visual",
+      "from": "fork \"Astrophotography Setup\""
+     }
+    ]
+   }
+  ],
+  "finalRules": [
+   {
+    "kind": "prefer",
+    "key": "night",
+    "from": "thisthat"
+   },
+   {
+    "kind": "prefer",
+    "key": "night",
+    "from": "save \"Naked Eye Constellation Hunt\""
+   },
+   {
+    "kind": "prefer",
+    "key": "hands-on",
+    "from": "fork \"Deep into optics\""
+   },
+   {
+    "kind": "prefer",
+    "key": "outdoors",
+    "from": "thisthat"
+   },
+   {
+    "kind": "prefer",
+    "key": "outdoors",
+    "from": "save \"Binocular Moon Mapping\""
+   },
+   {
+    "kind": "prefer",
+    "key": "visual",
+    "from": "fork \"Deep Sky Astrophotography\""
+   },
+   {
+    "kind": "prefer",
+    "key": "outdoors",
+    "from": "thisthat"
+   },
+   {
+    "kind": "prefer",
+    "key": "night",
+    "from": "save \"Meteor Shower Watch Party\""
+   },
+   {
+    "kind": "prefer",
+    "key": "night",
+    "from": "fork \"Deep Night Focus\""
+   },
+   {
+    "kind": "prefer",
+    "key": "outdoors",
+    "from": "thisthat"
+   },
+   {
+    "kind": "prefer",
+    "key": "hands-on",
+    "from": "save \"Build a Simple Planisphere\""
+   },
+   {
+    "kind": "prefer",
+    "key": "visual",
+    "from": "fork \"Astrophotography Setup\""
+   }
+  ]
+ },
+ {
+  "goal": "Get into astronomy",
+  "persona": "avoider",
+  "policy": "last3",
+  "steps": [
+   {
+    "s": 1,
+    "active": [],
+    "attempts": [
+     {
+      "ms": 1116,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "How do you want to start exploring?",
+      "a": {
+       "label": "Read books",
+       "sub": "Deep star guides",
+       "rule": {
+        "kind": "prefer",
+        "key": "reading"
+       }
+      },
+      "b": {
+       "label": "Look outside",
+       "sub": "Night sky viewing",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Stargazing in the Backyard",
+      "line": "Learn major constellations using just your naked eyes tonight.",
+      "tags": [
+       "outdoors",
+       "night"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "DIY Star Charting",
+      "line": "Draw your own celestial map using basic observation notes.",
+      "tags": [
+       "hands-on",
+       "visual"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Deep stargazing guides",
+        "rule": {
+         "kind": "prefer",
+         "key": "reading"
+        }
+       },
+       {
+        "label": "Local astronomy club",
+        "rule": {
+         "kind": "prefer",
+         "key": "social"
+        }
+       },
+       {
+        "label": "Astrophotography tech",
+        "rule": {
+         "kind": "prefer",
+         "key": "music"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "outdoors",
+      "from": "nope on \"Stargazing in the Backyard\""
+     },
+     {
+      "kind": "prefer",
+      "key": "music",
+      "from": "fork \"Astrophotography tech\""
+     }
+    ]
+   },
+   {
+    "s": 2,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "outdoors",
+      "from": "nope on \"Stargazing in the Backyard\""
+     },
+     {
+      "kind": "prefer",
+      "key": "music",
+      "from": "fork \"Astrophotography tech\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1086,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How long for this stretch?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 2
+     },
+     {
+      "type": "item",
+      "title": "Cosmic Soundscape Listening Session",
+      "line": "Listen to space-inspired ambient music while reading star lore.",
+      "tags": [
+       "music",
+       "reading"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where next?",
+      "opts": [
+       {
+        "label": "Deep into literature",
+        "rule": {
+         "kind": "prefer",
+         "key": "reading"
+        }
+       },
+       {
+        "label": "Sideways to sounds",
+        "rule": {
+         "kind": "prefer",
+         "key": "music"
+        }
+       },
+       {
+        "label": "Unknown territory",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "music",
+      "from": "nope on \"Cosmic Soundscape Listening Session\""
+     },
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "fork \"Unknown territory\""
+     }
+    ]
+   },
+   {
+    "s": 3,
+    "active": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "music",
+      "from": "nope on \"Cosmic Soundscape Listening Session\""
+     },
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "fork \"Unknown territory\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1183,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your night view approach",
+      "a": {
+       "label": "Naked Eye",
+       "sub": "Spot constellations easily",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      },
+      "b": {
+       "label": "Binoculars",
+       "sub": "Zoom into lunar craters",
+       "rule": {
+        "kind": "prefer",
+        "key": "visual"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Download Moon Atlas App",
+      "line": "Explore lunar features on your phone screen",
+      "tags": [
+       "visual",
+       "cheap"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Next astronomy step?",
+      "opts": [
+       {
+        "label": "Track Satellites Online",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Read Stargazing Guide",
+        "rule": {
+         "kind": "prefer",
+         "key": "reading"
+        }
+       },
+       {
+        "label": "Feed Zoo Nocturnal Animals",
+        "rule": {
+         "kind": "prefer",
+         "key": "animals"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "visual",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "visual",
+      "from": "nope on \"Download Moon Atlas App\""
+     },
+     {
+      "kind": "prefer",
+      "key": "animals",
+      "from": "fork \"Feed Zoo Nocturnal Animals\""
+     }
+    ]
+   },
+   {
+    "s": 4,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "visual",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "visual",
+      "from": "nope on \"Download Moon Atlas App\""
+     },
+     {
+      "kind": "prefer",
+      "key": "animals",
+      "from": "fork \"Feed Zoo Nocturnal Animals\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1181,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your stargazing style",
+      "a": {
+       "label": "Binocular Sweep",
+       "sub": "Scan the night sky",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      },
+      "b": {
+       "label": "Planetarium App",
+       "sub": "Explore digital constellations",
+       "rule": {
+        "kind": "prefer",
+        "key": "reading"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Evening Constellation Walk",
+      "line": "Identify major seasonal patterns with a simple map outdoors.",
+      "tags": [
+       "outdoors",
+       "reading"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Next step in astronomy?",
+      "opts": [
+       {
+        "label": "Join local astronomy club",
+        "rule": {
+         "kind": "prefer",
+         "key": "social"
+        }
+       },
+       {
+        "label": "Read about telescopes",
+        "rule": {
+         "kind": "prefer",
+         "key": "reading"
+        }
+       },
+       {
+        "label": "Bake celestial cookies",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "outdoors",
+      "from": "nope on \"Evening Constellation Walk\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "fork \"Bake celestial cookies\""
+     }
+    ]
+   }
+  ],
+  "finalRules": [
+   {
+    "kind": "prefer",
+    "key": "reading",
+    "from": "thisthat"
+   },
+   {
+    "kind": "avoid",
+    "key": "outdoors",
+    "from": "nope on \"Evening Constellation Walk\""
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "fork \"Bake celestial cookies\""
+   }
+  ]
+ },
+ {
+  "goal": "Learn to cook on a student budget",
+  "persona": "steady",
+  "policy": "keep",
+  "steps": [
+   {
+    "s": 1,
+    "active": [],
+    "attempts": [
+     {
+      "ms": 1177,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How long for this session?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 2
+     },
+     {
+      "type": "item",
+      "title": "Mastering Basic Rice Bowls",
+      "line": "Learn cheap pantry staples with grains and legumes.",
+      "tags": [
+       "food",
+       "cheap"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "One-Pot Pasta Mechanics",
+      "line": "Discover starch ratios for fast and inexpensive meals.",
+      "tags": [
+       "food",
+       "quick"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your culinary direction:",
+      "opts": [
+       {
+        "label": "Budget Groceries",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Quick Prep",
+        "rule": {
+         "kind": "prefer",
+         "key": "quick"
+        }
+       },
+       {
+        "label": "Outdoor Grill",
+        "rule": {
+         "kind": "prefer",
+         "key": "outdoors"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Mastering Basic Rice Bowls\""
+     },
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "fork \"Budget Groceries\""
+     }
+    ]
+   },
+   {
+    "s": 2,
+    "active": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Mastering Basic Rice Bowls\""
+     },
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "fork \"Budget Groceries\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1181,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How much time can you spend?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 2
+     },
+     {
+      "type": "item",
+      "title": "Lentil Soup Fundamentals",
+      "line": "Create hearty meals using dry staples and spices.",
+      "tags": [
+       "food",
+       "cheap"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Budget Egg Fried Rice",
+      "line": "Transform leftover ingredients into a warm, savory dinner.",
+      "tags": [
+       "food",
+       "cheap"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next culinary path",
+      "opts": [
+       {
+        "label": "Master knife skills",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       },
+       {
+        "label": "Bake affordable bread",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Explore local flora",
+        "rule": {
+         "kind": "prefer",
+         "key": "outdoors"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Lentil Soup Fundamentals\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "fork \"Master knife skills\""
+     }
+    ]
+   },
+   {
+    "s": 3,
+    "active": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Mastering Basic Rice Bowls\""
+     },
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "fork \"Budget Groceries\""
+     },
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Lentil Soup Fundamentals\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "fork \"Master knife skills\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1244,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Pick your preferred cooking equipment:",
+      "a": {
+       "label": "Sheet Pan",
+       "sub": "Minimal cleanup required",
+       "rule": {
+        "kind": "prefer",
+        "key": "food"
+       }
+      },
+      "b": {
+       "label": "Slow Cooker",
+       "sub": "Set and forget method",
+       "rule": {
+        "kind": "prefer",
+        "key": "cheap"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Oven Roasted Root Veggies",
+      "line": "Toss seasonal vegetables in oil and roast until tender.",
+      "tags": [
+       "food",
+       "cheap"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Quick Chickpea Salad",
+      "line": "Combine canned chickpeas with simple pantry dressings.",
+      "tags": [
+       "food",
+       "quick"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Baking Bread",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       },
+       {
+        "label": "Pantry Inventory",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Animal Tracking",
+        "rule": {
+         "kind": "prefer",
+         "key": "animals"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Oven Roasted Root Veggies\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "fork \"Baking Bread\""
+     }
+    ]
+   },
+   {
+    "s": 4,
+    "active": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Mastering Basic Rice Bowls\""
+     },
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "fork \"Budget Groceries\""
+     },
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Lentil Soup Fundamentals\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "fork \"Master knife skills\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Oven Roasted Root Veggies\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "fork \"Baking Bread\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1109,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your cooking style today",
+      "a": {
+       "label": "Stove Top",
+       "sub": "Fast skillet meals",
+       "rule": {
+        "kind": "prefer",
+        "key": "food"
+       }
+      },
+      "b": {
+       "label": "Batch Prep",
+       "sub": "Cook once eat twice",
+       "rule": {
+        "kind": "prefer",
+        "key": "cheap"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Savory Oatmeal Bowls",
+      "line": "Turn basic oats into a savory cheap meal.",
+      "tags": [
+       "food",
+       "cheap"
+      ],
+      "hours": 0.75
+     },
+     {
+      "type": "item",
+      "title": "Black Bean Quesadillas",
+      "line": "Crispy tortillas filled with spiced beans and cheese.",
+      "tags": [
+       "food",
+       "cheap"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Next cooking direction?",
+      "opts": [
+       {
+        "label": "Master Knife Skills",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       },
+       {
+        "label": "Pantry Meal Prep",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Music While Cooking",
+        "rule": {
+         "kind": "prefer",
+         "key": "music"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Savory Oatmeal Bowls\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "fork \"Master Knife Skills\""
+     }
+    ]
+   }
+  ],
+  "finalRules": [
+   {
+    "kind": "max",
+    "key": "hours",
+    "value": 2,
+    "from": "slider"
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "save \"Mastering Basic Rice Bowls\""
+   },
+   {
+    "kind": "prefer",
+    "key": "cheap",
+    "from": "fork \"Budget Groceries\""
+   },
+   {
+    "kind": "max",
+    "key": "hours",
+    "value": 2,
+    "from": "slider"
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "save \"Lentil Soup Fundamentals\""
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "fork \"Master knife skills\""
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "thisthat"
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "save \"Oven Roasted Root Veggies\""
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "fork \"Baking Bread\""
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "thisthat"
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "save \"Savory Oatmeal Bowls\""
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "fork \"Master Knife Skills\""
+   }
+  ]
+ },
+ {
+  "goal": "Learn to cook on a student budget",
+  "persona": "steady",
+  "policy": "last3",
+  "steps": [
+   {
+    "s": 1,
+    "active": [],
+    "attempts": [
+     {
+      "ms": 1302,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your cooking style today.",
+      "a": {
+       "label": "Quick Bites",
+       "sub": "Fast and easy meals",
+       "rule": {
+        "kind": "prefer",
+        "key": "quick"
+       }
+      },
+      "b": {
+       "label": "Budget Meals",
+       "sub": "Cheap ingredients only",
+       "rule": {
+        "kind": "prefer",
+        "key": "cheap"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Mastering Rice and Beans",
+      "line": "Learn the ultimate cheap and filling student staple dish.",
+      "tags": [
+       "cheap",
+       "hands-on"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Pantry Pasta Basics",
+      "line": "Create delicious sauces using only what is in your cupboard.",
+      "tags": [
+       "cheap",
+       "quick"
+      ],
+      "hours": 0.75
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Bake Cheap Bread",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Grocery Store Haul",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Stargaze Outdoors",
+        "rule": {
+         "kind": "prefer",
+         "key": "outdoors"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "quick",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "save \"Mastering Rice and Beans\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Bake Cheap Bread\""
+     }
+    ]
+   },
+   {
+    "s": 2,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "quick",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "save \"Mastering Rice and Beans\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Bake Cheap Bread\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1181,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How long to practice cooking?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 2
+     },
+     {
+      "type": "item",
+      "title": "One-Pot Lentil Soup",
+      "line": "Use dry lentils and basic spices for cheap meals.",
+      "tags": [
+       "food",
+       "cheap",
+       "hands-on"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Budget Veggie Stir-Fry",
+      "line": "Transform discounted produce into a quick hot dinner.",
+      "tags": [
+       "food",
+       "cheap",
+       "quick"
+      ],
+      "hours": 0.75
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next step",
+      "opts": [
+       {
+        "label": "Master Knife Skills",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Plan Weekly Menus",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Study Food History",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"One-Pot Lentil Soup\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Master Knife Skills\""
+     }
+    ]
+   },
+   {
+    "s": 3,
+    "active": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"One-Pot Lentil Soup\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Master Knife Skills\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1304,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How much time can you spend cooking?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 2
+     },
+     {
+      "type": "item",
+      "title": "Egg Fried Rice Masterclass",
+      "line": "Transform day-old rice into a cheap hot meal.",
+      "tags": [
+       "food",
+       "hands-on",
+       "cheap"
+      ],
+      "hours": 0.75
+     },
+     {
+      "type": "item",
+      "title": "Sheet Pan Roasted Veggies",
+      "line": "Chop root vegetables, oil, and roast until tender.",
+      "tags": [
+       "food",
+       "cheap",
+       "free"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your culinary direction:",
+      "opts": [
+       {
+        "label": "Bake Cheap Bread",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Quick Microwave Hacks",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Late Night Snacking",
+        "rule": {
+         "kind": "prefer",
+         "key": "night"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Egg Fried Rice Masterclass\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Bake Cheap Bread\""
+     }
+    ]
+   },
+   {
+    "s": 4,
+    "active": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 2,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Egg Fried Rice Masterclass\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Bake Cheap Bread\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1323,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your cooking style:",
+      "a": {
+       "label": "Stovetop",
+       "sub": "Quick flame skills",
+       "rule": {
+        "kind": "prefer",
+        "key": "quick"
+       }
+      },
+      "b": {
+       "label": "Baking",
+       "sub": "Oven temperature basics",
+       "rule": {
+        "kind": "prefer",
+        "key": "food"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Basic Bread Baking",
+      "line": "Learn flour water and yeast for cheap daily loaves.",
+      "tags": [
+       "food",
+       "hands-on",
+       "cheap"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "item",
+      "title": "Simple Tomato Sauce",
+      "line": "Simmer canned tomatoes with garlic and herbs.",
+      "tags": [
+       "food",
+       "hands-on"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Advanced Baking",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       },
+       {
+        "label": "Kitchen Organization",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Music Pairing",
+        "rule": {
+         "kind": "prefer",
+         "key": "music"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "quick",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Basic Bread Baking\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "fork \"Advanced Baking\""
+     }
+    ]
+   }
+  ],
+  "finalRules": [
+   {
+    "kind": "prefer",
+    "key": "quick",
+    "from": "thisthat"
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "save \"Basic Bread Baking\""
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "fork \"Advanced Baking\""
+   }
+  ]
+ },
+ {
+  "goal": "Get into astronomy",
+  "persona": "avoider",
+  "policy": "keyed",
+  "steps": [
+   {
+    "s": 1,
+    "active": [],
+    "attempts": [
+     {
+      "ms": 1252,
+      "errs": [
+       "syntax: not JSON"
+      ]
+     },
+     {
+      "ms": 1227,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "How do you want to learn first?",
+      "a": {
+       "label": "Read books",
+       "sub": "Study printed star charts",
+       "rule": {
+        "kind": "prefer",
+        "key": "reading"
+       }
+      },
+      "b": {
+       "label": "Look outside",
+       "sub": "Go straight to night skies",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Beginner Stargazing Guide",
+      "line": "Learn basic constellations and find the North Star tonight.",
+      "tags": [
+       "reading",
+       "outdoors"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Stellar Brightness Math",
+      "line": "Calculate apparent magnitude and distance to nearby stars.",
+      "tags": [
+       "math",
+       "reading"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next step",
+      "opts": [
+       {
+        "label": "Deep backyard stargazing",
+        "rule": {
+         "kind": "prefer",
+         "key": "night"
+        }
+       },
+       {
+        "label": "Build a cardboard telescope",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Listen to space podcasts",
+        "rule": {
+         "kind": "prefer",
+         "key": "music"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "reading",
+      "from": "nope on \"Beginner Stargazing Guide\""
+     },
+     {
+      "kind": "prefer",
+      "key": "music",
+      "from": "fork \"Listen to space podcasts\""
+     }
+    ]
+   },
+   {
+    "s": 2,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "reading",
+      "from": "nope on \"Beginner Stargazing Guide\""
+     },
+     {
+      "kind": "prefer",
+      "key": "music",
+      "from": "fork \"Listen to space podcasts\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1310,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "How do you prefer to learn?",
+      "a": {
+       "label": "Listen to ambient",
+       "sub": "Music while looking up",
+       "rule": {
+        "kind": "prefer",
+        "key": "music"
+       }
+      },
+      "b": {
+       "label": "Watch visuals",
+       "sub": "Observe the night sky",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Night Sky Soundscapes",
+      "line": "Listen to cosmic ambient music under the open stars.",
+      "tags": [
+       "outdoors",
+       "music"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "item",
+      "title": "Binocular Constellation Tour",
+      "line": "Find major constellations visually without heavy textbooks.",
+      "tags": [
+       "outdoors",
+       "visual"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Deep into astrophotography",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Sideways to telescope gear",
+        "rule": {
+         "kind": "avoid",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Explore culinary stargazing",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "outdoors",
+      "from": "nope on \"Night Sky Soundscapes\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "fork \"Explore culinary stargazing\""
+     }
+    ]
+   },
+   {
+    "s": 3,
+    "active": [
+     {
+      "kind": "avoid",
+      "key": "reading",
+      "from": "nope on \"Beginner Stargazing Guide\""
+     },
+     {
+      "kind": "prefer",
+      "key": "music",
+      "from": "fork \"Listen to space podcasts\""
+     },
+     {
+      "kind": "avoid",
+      "key": "outdoors",
+      "from": "nope on \"Night Sky Soundscapes\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "fork \"Explore culinary stargazing\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1253,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your astronomy style",
+      "a": {
+       "label": "Ambient space tunes",
+       "sub": "Relaxing cosmic soundscapes",
+       "rule": {
+        "kind": "prefer",
+        "key": "music"
+       }
+      },
+      "b": {
+       "label": "Stargazing snacks",
+       "sub": "Planetary themed treats",
+       "rule": {
+        "kind": "prefer",
+        "key": "food"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Cosmic Sound Exploration",
+      "line": "Listen to translated radio emissions from distant planets.",
+      "tags": [
+       "music"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Deep into data",
+        "rule": {
+         "kind": "prefer",
+         "key": "math"
+        }
+       },
+       {
+        "label": "Visual art focus",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Animal constellations",
+        "rule": {
+         "kind": "prefer",
+         "key": "animals"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "music",
+      "from": "nope on \"Cosmic Sound Exploration\""
+     },
+     {
+      "kind": "prefer",
+      "key": "animals",
+      "from": "fork \"Animal constellations\""
+     }
+    ]
+   },
+   {
+    "s": 4,
+    "active": [
+     {
+      "kind": "avoid",
+      "key": "reading",
+      "from": "nope on \"Beginner Stargazing Guide\""
+     },
+     {
+      "kind": "avoid",
+      "key": "outdoors",
+      "from": "nope on \"Night Sky Soundscapes\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "music",
+      "from": "nope on \"Cosmic Sound Exploration\""
+     },
+     {
+      "kind": "prefer",
+      "key": "animals",
+      "from": "fork \"Animal constellations\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1383,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your cosmic snack style",
+      "a": {
+       "label": "Star Cookies",
+       "sub": "Bake galaxy shaped treats",
+       "rule": {
+        "kind": "prefer",
+        "key": "food"
+       }
+      },
+      "b": {
+       "label": "Moon Pie",
+       "sub": "Classic sweet lunar snack",
+       "rule": {
+        "kind": "prefer",
+        "key": "food"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Astro Bakery Night",
+      "line": "Bake cookies shaped like planets and constellations indoors",
+      "tags": [
+       "food",
+       "hands-on"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "item",
+      "title": "Planetarium Snack Bar",
+      "line": "Enjoy space themed snacks while watching digital sky shows",
+      "tags": [
+       "food",
+       "visual"
+      ],
+      "hours": 2
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next astronomy path",
+      "opts": [
+       {
+        "label": "Deep Space Baking",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       },
+       {
+        "label": "Visual Constellations",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Math Calculations",
+        "rule": {
+         "kind": "prefer",
+         "key": "math"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "food",
+      "from": "nope on \"Astro Bakery Night\""
+     },
+     {
+      "kind": "prefer",
+      "key": "math",
+      "from": "fork \"Math Calculations\""
+     }
+    ]
+   }
+  ],
+  "finalRules": [
+   {
+    "kind": "avoid",
+    "key": "reading",
+    "from": "nope on \"Beginner Stargazing Guide\""
+   },
+   {
+    "kind": "avoid",
+    "key": "outdoors",
+    "from": "nope on \"Night Sky Soundscapes\""
+   },
+   {
+    "kind": "avoid",
+    "key": "music",
+    "from": "nope on \"Cosmic Sound Exploration\""
+   },
+   {
+    "kind": "prefer",
+    "key": "animals",
+    "from": "fork \"Animal constellations\""
+   },
+   {
+    "kind": "avoid",
+    "key": "food",
+    "from": "nope on \"Astro Bakery Night\""
+   },
+   {
+    "kind": "prefer",
+    "key": "math",
+    "from": "fork \"Math Calculations\""
+   }
+  ]
+ },
+ {
+  "goal": "Learn to cook on a student budget",
+  "persona": "steady",
+  "policy": "keyed",
+  "steps": [
+   {
+    "s": 1,
+    "active": [],
+    "attempts": [
+     {
+      "ms": 1342,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your cooking style today",
+      "a": {
+       "label": "Hot Stove",
+       "sub": "Master basic heat",
+       "rule": {
+        "kind": "prefer",
+        "key": "food"
+       }
+      },
+      "b": {
+       "label": "No Cook",
+       "sub": "Assembly only",
+       "rule": {
+        "kind": "prefer",
+        "key": "cheap"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Pantry Pasta Masterclass",
+      "line": "Turn basic staples into a satisfying weeknight meal.",
+      "tags": [
+       "food",
+       "cheap",
+       "hands-on"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Budget Bean Stew",
+      "line": "Dried beans and aromatics create deep savory flavors.",
+      "tags": [
+       "food",
+       "cheap"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where next?",
+      "opts": [
+       {
+        "label": "Master knife skills",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Save more money",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Explore history",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Pantry Pasta Masterclass\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Master knife skills\""
+     }
+    ]
+   },
+   {
+    "s": 2,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Pantry Pasta Masterclass\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Master knife skills\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1313,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your primary kitchen style",
+      "a": {
+       "label": "Hot stove",
+       "sub": "Stovetop simmering and frying",
+       "rule": {
+        "kind": "prefer",
+        "key": "food"
+       }
+      },
+      "b": {
+       "label": "No cook",
+       "sub": "Assembly and cold prep",
+       "rule": {
+        "kind": "avoid",
+        "key": "food"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Sheet Pan Egg Fried Rice",
+      "line": "Transform leftover rice and cheap veggies into crispy fried rice.",
+      "tags": [
+       "food",
+       "hands-on",
+       "cheap"
+      ],
+      "hours": 0.75
+     },
+     {
+      "type": "item",
+      "title": "One-Pot Lentil Dahl",
+      "line": "Simmer protein-rich red lentils with pantry spices for cheap dinners.",
+      "tags": [
+       "food",
+       "hands-on"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Master knife skills",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Plan cheap bulk meals",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       },
+       {
+        "label": "Explore local farm markets",
+        "rule": {
+         "kind": "prefer",
+         "key": "outdoors"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "thisthat"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Sheet Pan Egg Fried Rice\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Master knife skills\""
+     }
+    ]
+   },
+   {
+    "s": 3,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Sheet Pan Egg Fried Rice\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Master knife skills\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1074,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How many hours can you cook?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 1.5
+     },
+     {
+      "type": "item",
+      "title": "Thrifty Veggie Dumpling Folds",
+      "line": "Learn folding basics with cheap cabbage and carrots.",
+      "tags": [
+       "food",
+       "hands-on",
+       "cheap"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "item",
+      "title": "Oatmeal Bread from Scratch",
+      "line": "Bake a loaf using basic pantry staples.",
+      "tags": [
+       "food",
+       "hands-on",
+       "cheap"
+      ],
+      "hours": 2
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your kitchen path",
+      "opts": [
+       {
+        "label": "Master knife skills",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       },
+       {
+        "label": "Try cheap baking",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Study food history",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1.5,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Thrifty Veggie Dumpling Folds\""
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "fork \"Master knife skills\""
+     }
+    ]
+   },
+   {
+    "s": 4,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Master knife skills\""
+     },
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1.5,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "fork \"Master knife skills\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 909,
+      "errs": [
+       "syntax: not JSON"
+      ]
+     },
+     {
+      "ms": 1035,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How much time to cook tonight?",
+      "min": 0.5,
+      "max": 1.5,
+      "step": 0.5,
+      "v": 1
+     },
+     {
+      "type": "item",
+      "title": "Microwave Mug Omelet",
+      "line": "Quick single-serve egg meal using cheap fridge scraps.",
+      "tags": [
+       "food",
+       "hands-on",
+       "cheap"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "fork",
+      "prompt": "What is next?",
+      "opts": [
+       {
+        "label": "Master basic knife skills",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Bake budget sweet treats",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       },
+       {
+        "label": "Learn ancient pottery bowls",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "prefer",
+      "key": "food",
+      "from": "save \"Microwave Mug Omelet\""
+     },
+     {
+      "kind": "prefer",
+      "key": "hands-on",
+      "from": "fork \"Master basic knife skills\""
+     }
+    ]
+   }
+  ],
+  "finalRules": [
+   {
+    "kind": "max",
+    "key": "hours",
+    "value": 1,
+    "from": "slider"
+   },
+   {
+    "kind": "prefer",
+    "key": "food",
+    "from": "save \"Microwave Mug Omelet\""
+   },
+   {
+    "kind": "prefer",
+    "key": "hands-on",
+    "from": "fork \"Master basic knife skills\""
+   }
+  ]
+ },
+ {
+  "goal": "Learn to cook on a student budget",
+  "persona": "avoider",
+  "policy": "keep",
+  "steps": [
+   {
+    "s": 1,
+    "active": [],
+    "attempts": [
+     {
+      "ms": 1286,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your cooking style:",
+      "a": {
+       "label": "One Pot",
+       "sub": "Minimal cleanup",
+       "rule": {
+        "kind": "prefer",
+        "key": "food"
+       }
+      },
+      "b": {
+       "label": "Meal Prep",
+       "sub": "Cook once eat all week",
+       "rule": {
+        "kind": "prefer",
+        "key": "cheap"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Mastering Budget Lentil Soup",
+      "line": "A hearty, nutritious meal costing under two dollars per batch.",
+      "tags": [
+       "food",
+       "cheap",
+       "hands-on"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Pantry Pasta Masterclass",
+      "line": "Turn basic staples into restaurant quality comfort food.",
+      "tags": [
+       "food",
+       "cheap"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Baking Bread",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       },
+       {
+        "label": "Quick Snacks",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Music Pairing",
+        "rule": {
+         "kind": "prefer",
+         "key": "music"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "food",
+      "from": "nope on \"Mastering Budget Lentil Soup\""
+     },
+     {
+      "kind": "prefer",
+      "key": "music",
+      "from": "fork \"Music Pairing\""
+     }
+    ]
+   },
+   {
+    "s": 2,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "food",
+      "from": "nope on \"Mastering Budget Lentil Soup\""
+     },
+     {
+      "kind": "prefer",
+      "key": "music",
+      "from": "fork \"Music Pairing\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1120,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How many hours can you practice?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 2
+     },
+     {
+      "type": "item",
+      "title": "Kitchen Beats Playlist Prep",
+      "line": "Set up a rhythm for chopping vegetables efficiently.",
+      "tags": [
+       "music",
+       "cheap"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Audiobook and Rice Bowl",
+      "line": "Learn grain absorption ratios while listening to albums.",
+      "tags": [
+       "cheap",
+       "reading"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "More Budget Beats",
+        "rule": {
+         "kind": "prefer",
+         "key": "music"
+        }
+       },
+       {
+        "label": "Save More Money",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Animal Care",
+        "rule": {
+         "kind": "prefer",
+         "key": "animals"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "music",
+      "from": "nope on \"Kitchen Beats Playlist Prep\""
+     },
+     {
+      "kind": "prefer",
+      "key": "animals",
+      "from": "fork \"Animal Care\""
+     }
+    ]
+   },
+   {
+    "s": 3,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "food",
+      "from": "nope on \"Mastering Budget Lentil Soup\""
+     },
+     {
+      "kind": "prefer",
+      "key": "music",
+      "from": "fork \"Music Pairing\""
+     },
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "music",
+      "from": "nope on \"Kitchen Beats Playlist Prep\""
+     },
+     {
+      "kind": "prefer",
+      "key": "animals",
+      "from": "fork \"Animal Care\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 979,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Pick your kitchen vibe",
+      "a": {
+       "label": "Silent focus",
+       "sub": "Pure concentration",
+       "rule": {
+        "kind": "prefer",
+        "key": "reading"
+       }
+      },
+      "b": {
+       "label": "Lo-fi beats",
+       "sub": "Background tunes",
+       "rule": {
+        "kind": "prefer",
+        "key": "math"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "One-Pot Oat Porridge",
+      "line": "Budget-friendly warm breakfast",
+      "tags": [
+       "reading",
+       "cheap"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your culinary path",
+      "opts": [
+       {
+        "label": "Master budget baking",
+        "rule": {
+         "kind": "prefer",
+         "key": "reading"
+        }
+       },
+       {
+        "label": "Try instant noodles",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Explore textile weaving",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "math",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "reading",
+      "from": "nope on \"One-Pot Oat Porridge\""
+     },
+     {
+      "kind": "prefer",
+      "key": "visual",
+      "from": "fork \"Explore textile weaving\""
+     }
+    ]
+   },
+   {
+    "s": 4,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "food",
+      "from": "nope on \"Mastering Budget Lentil Soup\""
+     },
+     {
+      "kind": "prefer",
+      "key": "music",
+      "from": "fork \"Music Pairing\""
+     },
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "music",
+      "from": "nope on \"Kitchen Beats Playlist Prep\""
+     },
+     {
+      "kind": "prefer",
+      "key": "animals",
+      "from": "fork \"Animal Care\""
+     },
+     {
+      "kind": "prefer",
+      "key": "math",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "reading",
+      "from": "nope on \"One-Pot Oat Porridge\""
+     },
+     {
+      "kind": "prefer",
+      "key": "visual",
+      "from": "fork \"Explore textile weaving\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1119,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your kitchen vibe",
+      "a": {
+       "label": "Silent Prep",
+       "sub": "Focus on measurements",
+       "rule": {
+        "kind": "prefer",
+        "key": "math"
+       }
+      },
+      "b": {
+       "label": "Colorize Plate",
+       "sub": "Focus on vibrant plating",
+       "rule": {
+        "kind": "prefer",
+        "key": "visual"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Root Vegetable Cost Breakdown",
+      "line": "Calculate exact costs per portion using basic arithmetic.",
+      "tags": [
+       "math",
+       "cheap"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Analyze Nutrition Data",
+        "rule": {
+         "kind": "prefer",
+         "key": "math"
+        }
+       },
+       {
+        "label": "Sketch Dish Layout",
+        "rule": {
+         "kind": "prefer",
+         "key": "visual"
+        }
+       },
+       {
+        "label": "Night Market Stroll",
+        "rule": {
+         "kind": "prefer",
+         "key": "night"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "visual",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "math",
+      "from": "nope on \"Root Vegetable Cost Breakdown\""
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "fork \"Night Market Stroll\""
+     }
+    ]
+   }
+  ],
+  "finalRules": [
+   {
+    "kind": "prefer",
+    "key": "cheap",
+    "from": "thisthat"
+   },
+   {
+    "kind": "avoid",
+    "key": "food",
+    "from": "nope on \"Mastering Budget Lentil Soup\""
+   },
+   {
+    "kind": "prefer",
+    "key": "music",
+    "from": "fork \"Music Pairing\""
+   },
+   {
+    "kind": "max",
+    "key": "hours",
+    "value": 1,
+    "from": "slider"
+   },
+   {
+    "kind": "avoid",
+    "key": "music",
+    "from": "nope on \"Kitchen Beats Playlist Prep\""
+   },
+   {
+    "kind": "prefer",
+    "key": "animals",
+    "from": "fork \"Animal Care\""
+   },
+   {
+    "kind": "prefer",
+    "key": "math",
+    "from": "thisthat"
+   },
+   {
+    "kind": "avoid",
+    "key": "reading",
+    "from": "nope on \"One-Pot Oat Porridge\""
+   },
+   {
+    "kind": "prefer",
+    "key": "visual",
+    "from": "fork \"Explore textile weaving\""
+   },
+   {
+    "kind": "prefer",
+    "key": "visual",
+    "from": "thisthat"
+   },
+   {
+    "kind": "avoid",
+    "key": "math",
+    "from": "nope on \"Root Vegetable Cost Breakdown\""
+   },
+   {
+    "kind": "prefer",
+    "key": "night",
+    "from": "fork \"Night Market Stroll\""
+   }
+  ]
+ },
+ {
+  "goal": "Learn to cook on a student budget",
+  "persona": "avoider",
+  "policy": "keyed",
+  "steps": [
+   {
+    "s": 1,
+    "active": [],
+    "attempts": [
+     {
+      "ms": 1291,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your ideal student cooking style",
+      "a": {
+       "label": "Quick Bites",
+       "sub": "Fast and easy meals",
+       "rule": {
+        "kind": "prefer",
+        "key": "quick"
+       }
+      },
+      "b": {
+       "label": "Saved Cash",
+       "sub": "Ultra cheap recipes",
+       "rule": {
+        "kind": "prefer",
+        "key": "cheap"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "One-Pot Pasta Basics",
+      "line": "Master cheap dinners using only one pot to save time.",
+      "tags": [
+       "cheap",
+       "quick"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Pantry Staple Curry",
+      "line": "Create rich flavors using low-cost dried spices and lentils.",
+      "tags": [
+       "cheap",
+       "food"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to cook next?",
+      "opts": [
+       {
+        "label": "Meal prep batches",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Baking bread",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Stargazing snacks",
+        "rule": {
+         "kind": "prefer",
+         "key": "night"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "cheap",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "cheap",
+      "from": "nope on \"One-Pot Pasta Basics\""
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "fork \"Stargazing snacks\""
+     }
+    ]
+   },
+   {
+    "s": 2,
+    "active": [
+     {
+      "kind": "avoid",
+      "key": "cheap",
+      "from": "nope on \"One-Pot Pasta Basics\""
+     },
+     {
+      "kind": "prefer",
+      "key": "night",
+      "from": "fork \"Stargazing snacks\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1217,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How long to cook?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 2
+     },
+     {
+      "type": "item",
+      "title": "Midnight Stir Fry Skills",
+      "line": "Master fast wok techniques after dark using basic fridge finds.",
+      "tags": [
+       "night",
+       "hands-on"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Evening Baking Basics",
+      "line": "Learn dough fundamentals during late hours.",
+      "tags": [
+       "night",
+       "reading"
+      ],
+      "hours": 2
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "More night sessions",
+        "rule": {
+         "kind": "prefer",
+         "key": "night"
+        }
+       },
+       {
+        "label": "Try hands-on tasks",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Explore animal care",
+        "rule": {
+         "kind": "prefer",
+         "key": "animals"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "night",
+      "from": "nope on \"Midnight Stir Fry Skills\""
+     },
+     {
+      "kind": "prefer",
+      "key": "animals",
+      "from": "fork \"Explore animal care\""
+     }
+    ]
+   },
+   {
+    "s": 3,
+    "active": [
+     {
+      "kind": "avoid",
+      "key": "cheap",
+      "from": "nope on \"One-Pot Pasta Basics\""
+     },
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "night",
+      "from": "nope on \"Midnight Stir Fry Skills\""
+     },
+     {
+      "kind": "prefer",
+      "key": "animals",
+      "from": "fork \"Explore animal care\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1010,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your cooking style",
+      "a": {
+       "label": "Savory Meats",
+       "sub": "Cook animal proteins well",
+       "rule": {
+        "kind": "prefer",
+        "key": "animals"
+       }
+      },
+      "b": {
+       "label": "Plant Based",
+       "sub": "Use basic veggies",
+       "rule": {
+        "kind": "avoid",
+        "key": "animals"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Budget Chicken Skillet",
+      "line": "Master simple poultry dishes quickly without spending much.",
+      "tags": [
+       "animals",
+       "food"
+      ],
+      "hours": 0.75
+     },
+     {
+      "type": "fork",
+      "prompt": "Next cooking path?",
+      "opts": [
+       {
+        "label": "Advanced Proteins",
+        "rule": {
+         "kind": "prefer",
+         "key": "animals"
+        }
+       },
+       {
+        "label": "Kitchen Speed",
+        "rule": {
+         "kind": "prefer",
+         "key": "quick"
+        }
+       },
+       {
+        "label": "Math & Ratios",
+        "rule": {
+         "kind": "prefer",
+         "key": "math"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "avoid",
+      "key": "animals",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "animals",
+      "from": "nope on \"Budget Chicken Skillet\""
+     },
+     {
+      "kind": "prefer",
+      "key": "math",
+      "from": "fork \"Math & Ratios\""
+     }
+    ]
+   },
+   {
+    "s": 4,
+    "active": [
+     {
+      "kind": "avoid",
+      "key": "cheap",
+      "from": "nope on \"One-Pot Pasta Basics\""
+     },
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "night",
+      "from": "nope on \"Midnight Stir Fry Skills\""
+     },
+     {
+      "kind": "avoid",
+      "key": "animals",
+      "from": "nope on \"Budget Chicken Skillet\""
+     },
+     {
+      "kind": "prefer",
+      "key": "math",
+      "from": "fork \"Math & Ratios\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1230,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "Set max cooking prep time",
+      "min": 0.5,
+      "max": 2,
+      "step": 0.5,
+      "v": 1
+     },
+     {
+      "type": "item",
+      "title": "Ratio Rice and Beans",
+      "line": "Measure precise grain to liquid ratios for perfect batches.",
+      "tags": [
+       "math",
+       "food",
+       "quick"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "item",
+      "title": "Oatmeal Portion Math",
+      "line": "Scale ingredient weights and costs for single servings.",
+      "tags": [
+       "math",
+       "food",
+       "reading"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your kitchen path",
+      "opts": [
+       {
+        "label": "Grain Scaling",
+        "rule": {
+         "kind": "prefer",
+         "key": "math"
+        }
+       },
+       {
+        "label": "Spice Blends",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       },
+       {
+        "label": "Outdoor Grilling",
+        "rule": {
+         "kind": "prefer",
+         "key": "outdoors"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "math",
+      "from": "nope on \"Ratio Rice and Beans\""
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "fork \"Outdoor Grilling\""
+     }
+    ]
+   }
+  ],
+  "finalRules": [
+   {
+    "kind": "avoid",
+    "key": "cheap",
+    "from": "nope on \"One-Pot Pasta Basics\""
+   },
+   {
+    "kind": "avoid",
+    "key": "night",
+    "from": "nope on \"Midnight Stir Fry Skills\""
+   },
+   {
+    "kind": "avoid",
+    "key": "animals",
+    "from": "nope on \"Budget Chicken Skillet\""
+   },
+   {
+    "kind": "max",
+    "key": "hours",
+    "value": 1,
+    "from": "slider"
+   },
+   {
+    "kind": "avoid",
+    "key": "math",
+    "from": "nope on \"Ratio Rice and Beans\""
+   },
+   {
+    "kind": "prefer",
+    "key": "outdoors",
+    "from": "fork \"Outdoor Grilling\""
+   }
+  ]
+ },
+ {
+  "goal": "Learn to cook on a student budget",
+  "persona": "avoider",
+  "policy": "last3",
+  "steps": [
+   {
+    "s": 1,
+    "active": [],
+    "attempts": [
+     {
+      "ms": 1140,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "slider",
+      "key": "hours",
+      "prompt": "How long to study cooking today?",
+      "min": 0.5,
+      "max": 5,
+      "step": 0.5,
+      "v": 2
+     },
+     {
+      "type": "item",
+      "title": "Master Cheap Pantry Pasta",
+      "line": "Turn basic staples into a filling dinner.",
+      "tags": [
+       "food",
+       "cheap"
+      ],
+      "hours": 1
+     },
+     {
+      "type": "item",
+      "title": "Egg Basics for Dorms",
+      "line": "Learn fast, inexpensive methods for perfect eggs.",
+      "tags": [
+       "food",
+       "quick"
+      ],
+      "hours": 0.75
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to cook next?",
+      "opts": [
+       {
+        "label": "Batch Prep",
+        "rule": {
+         "kind": "prefer",
+         "key": "food"
+        }
+       },
+       {
+        "label": "Save Money",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Garden Herbs",
+        "rule": {
+         "kind": "prefer",
+         "key": "outdoors"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "food",
+      "from": "nope on \"Master Cheap Pantry Pasta\""
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "fork \"Garden Herbs\""
+     }
+    ]
+   },
+   {
+    "s": 2,
+    "active": [
+     {
+      "kind": "max",
+      "key": "hours",
+      "value": 1,
+      "from": "slider"
+     },
+     {
+      "kind": "avoid",
+      "key": "food",
+      "from": "nope on \"Master Cheap Pantry Pasta\""
+     },
+     {
+      "kind": "prefer",
+      "key": "outdoors",
+      "from": "fork \"Garden Herbs\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1324,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your budget cooking focus:",
+      "a": {
+       "label": "Camp Stove",
+       "sub": "Cook outside simply",
+       "rule": {
+        "kind": "prefer",
+        "key": "outdoors"
+       }
+      },
+      "b": {
+       "label": "Dorm Microwave",
+       "sub": "Quick indoor meals",
+       "rule": {
+        "kind": "prefer",
+        "key": "quick"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Campfire Foil Packets",
+      "line": "Prepare cheap vegetable packets over an open fire.",
+      "tags": [
+       "outdoors",
+       "cheap"
+      ],
+      "hours": 0.75
+     },
+     {
+      "type": "item",
+      "title": "Outdoor Stove Rice Bowl",
+      "line": "Boil grains cheaply using a portable burner.",
+      "tags": [
+       "outdoors",
+       "quick"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "fork",
+      "prompt": "Where to next?",
+      "opts": [
+       {
+        "label": "Advanced Camp Meals",
+        "rule": {
+         "kind": "prefer",
+         "key": "outdoors"
+        }
+       },
+       {
+        "label": "Quick Savings",
+        "rule": {
+         "kind": "prefer",
+         "key": "cheap"
+        }
+       },
+       {
+        "label": "Music Pairing",
+        "rule": {
+         "kind": "prefer",
+         "key": "music"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "quick",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "outdoors",
+      "from": "nope on \"Campfire Foil Packets\""
+     },
+     {
+      "kind": "prefer",
+      "key": "music",
+      "from": "fork \"Music Pairing\""
+     }
+    ]
+   },
+   {
+    "s": 3,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "quick",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "outdoors",
+      "from": "nope on \"Campfire Foil Packets\""
+     },
+     {
+      "kind": "prefer",
+      "key": "music",
+      "from": "fork \"Music Pairing\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1347,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "Choose your ideal kitchen vibe",
+      "a": {
+       "label": "Lo-fi Beats",
+       "sub": "Cook with chill tunes",
+       "rule": {
+        "kind": "prefer",
+        "key": "music"
+       }
+      },
+      "b": {
+       "label": "Silent Focus",
+       "sub": "Quiet concentration",
+       "rule": {
+        "kind": "prefer",
+        "key": "reading"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Five Minute Mug Omelet",
+      "line": "Whip up a warm breakfast fast in your dorm.",
+      "tags": [
+       "quick",
+       "food",
+       "cheap"
+      ],
+      "hours": 0.5
+     },
+     {
+      "type": "item",
+      "title": "Single Skillet Fried Rice",
+      "line": "Turn leftover rice into a flavorful student meal.",
+      "tags": [
+       "food",
+       "cheap",
+       "hands-on"
+      ],
+      "hours": 0.75
+     },
+     {
+      "type": "fork",
+      "prompt": "Where next?",
+      "opts": [
+       {
+        "label": "Deep dive into baking",
+        "rule": {
+         "kind": "prefer",
+         "key": "hands-on"
+        }
+       },
+       {
+        "label": "Explore more quick bites",
+        "rule": {
+         "kind": "prefer",
+         "key": "quick"
+        }
+       },
+       {
+        "label": "Study ancient food origins",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "quick",
+      "from": "nope on \"Five Minute Mug Omelet\""
+     },
+     {
+      "kind": "prefer",
+      "key": "history",
+      "from": "fork \"Study ancient food origins\""
+     }
+    ]
+   },
+   {
+    "s": 4,
+    "active": [
+     {
+      "kind": "prefer",
+      "key": "reading",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "quick",
+      "from": "nope on \"Five Minute Mug Omelet\""
+     },
+     {
+      "kind": "prefer",
+      "key": "history",
+      "from": "fork \"Study ancient food origins\""
+     }
+    ],
+    "attempts": [
+     {
+      "ms": 1153,
+      "errs": []
+     }
+    ],
+    "ok": true,
+    "elements": [
+     {
+      "type": "thisthat",
+      "prompt": "How do you prefer your recipes?",
+      "a": {
+       "label": "Cookbooks",
+       "sub": "Detailed chapters",
+       "rule": {
+        "kind": "prefer",
+        "key": "reading"
+       }
+      },
+      "b": {
+       "label": "Videos",
+       "sub": "Watch and copy",
+       "rule": {
+        "kind": "prefer",
+        "key": "visual"
+       }
+      }
+     },
+     {
+      "type": "item",
+      "title": "Medieval Peasant Pottage Stew",
+      "line": "Hearty historical root vegetables simmered slowly on a budget.",
+      "tags": [
+       "history",
+       "cheap"
+      ],
+      "hours": 1.5
+     },
+     {
+      "type": "item",
+      "title": "Traditional Bread Baking Science",
+      "line": "Understand fermentation and flour ratios through deep text study.",
+      "tags": [
+       "reading",
+       "hands-on"
+      ],
+      "hours": 2
+     },
+     {
+      "type": "fork",
+      "prompt": "Choose your next culinary path:",
+      "opts": [
+       {
+        "label": "Ancient Grains",
+        "rule": {
+         "kind": "prefer",
+         "key": "history"
+        }
+       },
+       {
+        "label": "Budget Baking",
+        "rule": {
+         "kind": "prefer",
+         "key": "reading"
+        }
+       },
+       {
+        "label": "Stray Pets",
+        "rule": {
+         "kind": "prefer",
+         "key": "animals"
+        }
+       }
+      ]
+     }
+    ],
+    "picks": [
+     {
+      "kind": "prefer",
+      "key": "visual",
+      "from": "thisthat"
+     },
+     {
+      "kind": "avoid",
+      "key": "history",
+      "from": "nope on \"Medieval Peasant Pottage Stew\""
+     },
+     {
+      "kind": "prefer",
+      "key": "animals",
+      "from": "fork \"Stray Pets\""
+     }
+    ]
+   }
+  ],
+  "finalRules": [
+   {
+    "kind": "prefer",
+    "key": "visual",
+    "from": "thisthat"
+   },
+   {
+    "kind": "avoid",
+    "key": "history",
+    "from": "nope on \"Medieval Peasant Pottage Stew\""
+   },
+   {
+    "kind": "prefer",
+    "key": "animals",
+    "from": "fork \"Stray Pets\""
+   }
+  ]
+ }
+]

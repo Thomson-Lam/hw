@@ -32,5 +32,39 @@
         "text": "road-lab follows playground/AGENTS.md: self-contained prototype folder, design tokens only, tap targets of 44 px or more, works at 375 px, and `npm run check` passes."
       }
     ]
+  },
+  {
+    "id": "deeada9d-7da6-4218-9727-205dfdc5e836",
+    "feature": "uncharted-agent",
+    "constraints": [
+      {
+        "id": "17643a5b-3f9b-4d80-b0d4-4635ab00bc63",
+        "text": "Every model output passes the server checker before it becomes a visible node. After 3 failed attempts, the node becomes a fixed dead-end tile that offers a retry path."
+      },
+      {
+        "id": "514f3d79-67a3-4a4b-a939-97655af9fdf3",
+        "text": "The model never writes a number into a finance tile. The simulator gives every number. A message may contain only numbers that appear in the data of its own tile or in the user's own words."
+      },
+      {
+        "id": "066cc03f-33e8-4d93-ab42-5fc90b907d66",
+        "text": "Every user pick writes an answer row and one rule row for each rule, linked by foreign key. A changed pick marks the old answer superseded and keeps the old child as a not_taken node."
+      },
+      {
+        "id": "83b072e2-287c-41a2-b106-dc15647d2382",
+        "text": "When a fork or this-or-that node appears, the server generates one child node for each option in the background. The pick promotes that child to taken. The other children stay in SQLite as not_taken nodes. Sliders and idea cards generate their child after the answer."
+      },
+      {
+        "id": "4e81112f-267c-46a2-b955-0d07c805424c",
+        "text": "SQLite stores sessions, nodes (a tree through parent_id), answers, rules, generations (every model call with prompt, raw text, errors, and latency), and sim_runs."
+      },
+      {
+        "id": "425deb7e-288b-4fe8-858d-935d6eff850c",
+        "text": "The server calls Gemini through direct HTTP requests in a custom loop. No agent framework or harness is used."
+      },
+      {
+        "id": "b2b3fcb0-95bf-4977-a898-e20ac78de662",
+        "text": "A 401, 402, or 403 from the model API stops all later model calls in the server process. The road continues on fixed fallback tiles."
+      }
+    ]
   }
 ]
