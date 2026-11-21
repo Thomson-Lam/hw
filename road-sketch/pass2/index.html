@@ -1,0 +1,259 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>road sketch pass 2 (throwaway)</title>
+<style>
+:root{--bg:#101010;--fg:#e4e4e4;--mut:#808080;--line:#3a3a3a;--gen:#4aa8ff;--fix:#9a9a9a;--card:#181818;--sel:#2b2b2b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 ui-monospace,Menlo,monospace;display:flex;gap:20px;padding:16px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+button{font:inherit;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;min-height:44px;padding:6px 12px;cursor:pointer}
+button.on,button.sel{border-color:var(--fg);background:var(--sel)}
+button:disabled{opacity:.35;cursor:default}
+#phone{width:375px;height:760px;border:2px solid var(--line);border-radius:28px;position:relative;overflow:hidden;flex:none;background:#0c0c0c}
+#top{position:absolute;top:0;left:0;right:0;height:56px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--line);background:#0c0c0c;z-index:6}
+#top .g{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.badge{font-size:11px;border:1px solid var(--fix);border-radius:6px;padding:2px 6px;color:var(--fix)}
+#road{position:absolute;top:56px;left:0;right:0;bottom:52px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+#road::-webkit-scrollbar{display:none}
+#track{position:relative;padding-bottom:40px}
+#track:before{content:'';position:absolute;top:0;bottom:0;left:50%;width:30px;margin-left:-15px;background:#222;z-index:0}
+#track:after{content:'';position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:repeating-linear-gradient(#555 0 6px,transparent 6px 15px);z-index:0}
+.seg{position:relative;padding:22px 14px;z-index:1}
+.card{position:relative;border:1px solid var(--fix);border-radius:14px;padding:12px;background:var(--card);display:flex;flex-direction:column;gap:8px}
+.card h4{margin:0;font-size:15px;font-weight:600}
+.card .k{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.card .sub{color:var(--mut)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:2px 8px;color:var(--mut)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.big{min-height:84px;text-align:left;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.big small{color:var(--mut)}
+.done{opacity:.55}
+.img{height:84px;border-radius:10px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut);font-size:11px}
+input[type=range]{width:100%;height:36px}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{border-top:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}th{color:var(--mut);font-weight:normal}
+.tag{display:none;position:absolute;top:-9px;left:10px;font-size:9px;padding:1px 5px;border-radius:4px;background:var(--bg);white-space:nowrap;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;z-index:3}
+.marks .tag{display:block}
+.marks .gen{outline:1.5px dashed var(--gen);outline-offset:3px}.marks .gen>.tag{color:var(--gen);border:1px solid var(--gen)}
+.marks .fixed>.tag{color:var(--fix);border:1px solid var(--fix)}
+.paving{border-style:dashed;color:var(--mut)}.paving .bar{height:10px;border-radius:4px;background:#222;animation:pulse 1s ease-in-out infinite alternate}
+@keyframes pulse{to{background:#303030}}
+.enter{animation:enter .45s cubic-bezier(.2,.8,.2,1)}@keyframes enter{from{opacity:0;transform:translateY(12px)}}
+.fork{display:grid;gap:8px}
+.fork button{text-align:left}
+.fork .pred{border-style:dashed}
+#legend{position:absolute;left:0;right:0;bottom:0;min-height:52px;max-height:46%;overflow:auto;border-top:1px solid var(--line);background:#0c0c0c;z-index:6;padding:8px 10px}
+#legend .head{display:flex;justify-content:space-between;align-items:center;min-height:36px}
+#legend .rules{display:none;flex-direction:column;gap:6px;padding-top:6px}
+#legend.open .rules{display:flex}
+.rule{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:4px 4px 4px 10px}
+.rule.off{opacity:.35;text-decoration:line-through}
+.rule button{min-height:36px;min-width:36px;padding:0}
+#goalScreen{position:absolute;inset:0;background:#0c0c0c;z-index:10;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:24px}
+#goalScreen input{font:inherit;font-size:16px;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;min-height:48px}
+#goalScreen.hide{display:none}
+#dbg{width:360px;flex:none;display:flex;flex-direction:column;gap:10px}
+#dbg h3{margin:6px 0 0;font-size:11px;color:var(--mut);font-weight:normal;text-transform:uppercase;letter-spacing:.08em}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+#log{height:260px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:6px;font-size:11px;white-space:pre-wrap}
+#log div{border-bottom:1px solid #1d1d1d;padding:2px 0}.ev{color:#fc6}.pl{color:var(--gen)}.bad{color:#f77}
+pre{margin:0;font-size:11px;white-space:pre-wrap;border:1px solid var(--line);border-radius:6px;padding:6px;max-height:200px;overflow:auto}
+@media (max-width:520px){body{padding:0;gap:0}#phone{width:100vw;height:100dvh;border:0;border-radius:0}#dbg{width:100%;padding:12px}}
+</style></head>
+<body>
+<div id="phone" class="marks">
+  <div id="goalScreen" class="fixed">
+    <span class="tag">FIXED · goal entry</span>
+    <h2 style="margin:0">Where do you want to go?</h2>
+    <input id="goalIn" placeholder="Type a goal" autocomplete="off">
+    <div class="chips" id="examples"></div>
+    <button id="goBtn">Start</button>
+  </div>
+  <div id="top" class="fixed"><span class="tag">FIXED · goal bar</span><span class="badge" id="pipeBadge"></span><span class="g" id="goalText"></span><button id="changeGoal" style="min-height:36px">Goal</button></div>
+  <div id="road"><div id="track"></div></div>
+  <div id="legend" class="fixed"><span class="tag">FIXED · your rules (each one came from a pick)</span>
+    <div class="head"><span id="ruleCount">rules 0</span><button id="legendBtn" style="min-height:36px">show</button></div>
+    <div class="rules" id="rules"></div></div>
+</div>
+<div id="dbg">
+  <div><b>Road sketch pass 2</b> (throwaway; no LLM, a rule-based fake fills the slots)</div>
+  <h3>how picks become rules (keys 1 2 3)</h3>
+  <div class="row" id="policies"></div>
+  <div id="pdesc" style="color:var(--mut)"></div>
+  <h3>toggles</h3>
+  <div class="row"><button id="bMarks" class="on">markers (m)</button><button id="bReset">reset</button></div>
+  <div class="row">fill latency <input id="lat" type="range" min="0" max="3000" step="100" value="900"><span id="latv">900ms</span></div>
+  <h3>router</h3><div id="router" style="color:var(--mut)">no goal yet</div>
+  <h3>rules the next stretch must obey</h3><pre id="active">[]</pre>
+  <h3>log (newest first)</h3><div id="log"></div>
+</div>
+<script>
+/* ---------- content the fake model may draw from (the real model fills these slots) ---------- */
+const EXPLORE_ITEMS=[
+ {id:'dipper',title:'Find the Big Dipper tonight',line:'Seven stars, then hop to the North Star.',tags:['outdoors','night','free'],hours:.5},
+ {id:'moonphoto',title:'Photograph the Moon with a phone',line:'Hold the phone to binocular eyepieces.',tags:['hands-on','visual','free'],hours:1},
+ {id:'iss',title:'Watch the ISS pass overhead',line:'A bright dot crossing the sky in minutes.',tags:['outdoors','night','free'],hours:.5},
+ {id:'pluto',title:'Why Pluto stopped being a planet',line:'A vote in 2006 and a crowded outer zone.',tags:['history','reading'],hours:1},
+ {id:'kepler',title:"Kepler's laws in three drawings",line:'Ellipses, equal areas, and a period rule.',tags:['math','visual','reading'],hours:1.5},
+ {id:'starparty',title:'Go to a local star party',line:'Strangers lend you their telescopes.',tags:['social','outdoors','night'],hours:3},
+ {id:'pinhole',title:'Build a pinhole Sun projector',line:'Two pieces of card, safe for eyes.',tags:['hands-on','free'],hours:1},
+ {id:'voyager',title:'The Voyager golden record',line:'What we chose to say to strangers.',tags:['history','visual','reading'],hours:1},
+ {id:'cdspec',title:'See a spectrum with an old CD',line:'Light splits into its colours.',tags:['hands-on','math','free'],hours:1},
+ {id:'meteors',title:'Plan a meteor shower night',line:'Pick a dark spot and a date.',tags:['outdoors','night','social'],hours:3},
+ {id:'birds',title:'Birds that navigate by the stars',line:'Buntings learn the sky as chicks.',tags:['far','animals','reading'],hours:1},
+ {id:'polynesia',title:'Polynesian star navigation',line:'Crossing oceans with a star compass.',tags:['far','history','outdoors'],hours:2},
+ {id:'sundial',title:'Make a sundial on your windowsill',line:'Time from a shadow.',tags:['far','hands-on','free'],hours:1},
+ {id:'darksky',title:'Read a light pollution map',line:'Where the nearest dark sky really is.',tags:['visual','outdoors'],hours:.5},
+];
+const EXPLORE_TAGS=['outdoors','night','hands-on','visual','history','math','social','reading','free','animals','far'];
+const ACCOUNTS=[
+ {id:'hisa',title:'High-interest savings',line:'Steady and easy to withdraw.',tags:['safe','flexible'],fits:['emergency','trip']},
+ {id:'tfsa-cash',title:'TFSA, held as savings',line:'Tax-free growth, low risk.',tags:['safe','tax-free','flexible'],fits:['emergency','trip','long']},
+ {id:'tfsa-etf',title:'TFSA, held in an index fund',line:'Can grow more, can also drop.',tags:['growth','tax-free'],fits:['long']},
+ {id:'fhsa',title:'FHSA',line:'Only for a first home.',tags:['tax-free','locked','home'],fits:['home']},
+];
+const FACTS={risk:'Index funds can lose value. You can get back less than you put in.',fees:'Every fund charges a yearly fee. Check it before you pick one.',limits:'Each registered account has a yearly contribution limit.'};
+
+/* ---------- state ---------- */
+const POLICIES={
+ keep:{name:'1 · keep all',desc:'Every pick adds a rule that stays until you erase it.'},
+ last3:{name:'2 · last 3',desc:'Only your 3 most recent rules count. Older ones fade but stay visible.'},
+ keyed:{name:'3 · newest wins',desc:'A new rule on the same thing (same tag or same number) replaces the old one. Others stay.'},
+};
+const road=document.getElementById('road'),track=document.getElementById('track'),phone=document.getElementById('phone');
+let G,policy='keyed',latency=900,nextId=0;
+function fresh(goal,pipe){return{goal,pipe,rules:[],segs:[],seen:new Set(),stage:0,stretch:0,pending:false,token:0,asked:new Set()}}
+
+/* ---------- rules ---------- */
+function addRule(r){r.id=nextId++;r.t=performance.now();
+  if(policy==='keyed')G.rules=G.rules.filter(x=>!(x.key===r.key&&(x.kind===r.kind||(x.kind!=='max'&&r.kind!=='max'))));
+  G.rules.push(r);log('ev',`rule + ${r.text}`);drawRules();replanAhead('a new rule');}
+function active(){const live=G.rules.filter(r=>!r.erased);return policy==='last3'?live.slice(-3):live}
+function eraseRule(id){const r=G.rules.find(x=>x.id===id);r.erased=true;log('ev',`rule erased: ${r.text}`);drawRules();replanAhead('a rule was erased')}
+function ok(item){const A=active();
+  if(A.some(r=>r.kind==='avoid'&&item.tags.includes(r.key)))return false;
+  if(A.some(r=>r.kind==='max'&&r.key==='hours'&&item.hours>r.value))return false;
+  if(A.some(r=>r.kind==='require'&&!item.tags.includes(r.key)&&!(item.fits||[]).includes(r.key)))return false;
+  return true}
+function score(item){return active().filter(r=>r.kind==='prefer'&&item.tags.includes(r.key)).length}
+function why(){const A=active();return A.length?A.map(r=>r.short).join(', '):'no rules yet'}
+
+/* ---------- the fake model: fills one stretch of designed elements ---------- */
+function stretch(){G.stretch=G.segs.filter(x=>x.e.type==='fork').length+1;return G.pipe==='decide'?decideStretch():exploreStretch()}
+function exploreStretch(){
+  const pool=EXPLORE_ITEMS.filter(i=>!G.seen.has(i.id)&&ok(i)).sort((a,b)=>score(b)-score(a)||Math.random()-.5);
+  if(pool.length<2)return[{type:'deadend'}];
+  const out=[];const n=G.stretch;
+  if(n%4===0)out.push({type:'checkin'});
+  if(!G.asked.has('tt'))out.push({ask:'tt',type:'thisthat',prompt:'Look up, or make something?',a:{label:'Look up',sub:'skies, nights out',rule:{kind:'prefer',key:'outdoors'}},b:{label:'Make something',sub:'small builds at home',rule:{kind:'prefer',key:'hands-on'}}});
+  else if(!G.asked.has('hours'))out.push({ask:'hours',type:'slider',key:'hours',prompt:'How much time this week?',min:.5,max:5,step:.5,v:2,unit:'h',rule:v=>({kind:'max',key:'hours',value:v,text:`at most ${v} h per idea`,short:`≤${v}h`})});
+  else if(!G.asked.has('rank'))out.push({ask:'rank',type:'rank',prompt:'Order what pulls you most',items:['visual','history','social','math']});
+  out.forEach(e=>e.ask&&G.asked.add(e.ask));
+  out.push({type:'item',...pool[0]});G.seen.add(pool[0].id);
+  if(pool.length>=3&&n%2===1){out.push({type:'compare',a:pool[1],b:pool[2]});G.seen.add(pool[1].id);G.seen.add(pool[2].id)}
+  else if(pool[1]){out.push({type:'item',...pool[1]});G.seen.add(pool[1].id)}
+  const top=topTag(),side=EXPLORE_TAGS.find(t=>t!==top&&t!=='far'&&!active().some(r=>r.key===t)&&EXPLORE_ITEMS.some(i=>!G.seen.has(i.id)&&i.tags.includes(t)))||'reading';
+  out.push({type:'fork',prompt:'Where next?',opts:[
+    {label:`Deeper: more ${top}`,rule:{kind:'prefer',key:top}},
+    {label:`Sideways: try ${side}`,rule:{kind:'prefer',key:side}},
+    {label:'Somewhere unknown',rule:{kind:'prefer',key:'far'}}],pred:0});
+  return out.map(e=>({...e,bornAt:G.stretch,why:why()}));
+}
+function topTag(){const p=active().filter(r=>r.kind==='prefer');return p.length?p[p.length-1].key:'outdoors'}
+function decideStretch(){
+  const s=new Set(G.segs.map(x=>x.e.stage).filter(v=>v!=null)).size,out=[];const spare=active().find(r=>r.key==='spare');const aim=active().find(r=>r.kind==='require'&&['emergency','trip','home','long'].includes(r.key));
+  if(s===0){out.push({type:'slider',key:'spare',prompt:'What can you spare each month?',min:0,max:600,step:25,v:150,unit:'$',rule:v=>({kind:'max',key:'spare',value:v,text:`never plan more than $${v} a month`,short:`≤$${v}/mo`})});
+    out.push({type:'thisthat',prompt:'If it dipped for a year, would you…',a:{label:'Lose sleep',sub:'keep it steady',rule:{kind:'avoid',key:'growth'}},b:{label:'Wait it out',sub:'I can ride a dip',rule:{kind:'prefer',key:'growth'}}});
+    out.push({type:'fork',prompt:'What is this money for?',opts:[{label:'A safety cushion',rule:{kind:'require',key:'emergency'}},{label:'A first home',rule:{kind:'require',key:'home'}},{label:'Long-term, 10+ years',rule:{kind:'require',key:'long'}}],pred:0})}
+  else if(s===1){const fit=ACCOUNTS.filter(ok).sort((a,b)=>score(b)-score(a));
+    if(!fit.length)return[{type:'deadend'}];
+    out.push({type:'checkpoint',fact:'limits'});
+    if(fit.length>=2)out.push({type:'compare',a:fit[0],b:fit[1],rows:'account'});else out.push({type:'item',...fit[0]});
+    out.push({type:'fork',prompt:'Which one?',opts:fit.slice(0,3).map(a=>({label:a.title,rule:{kind:'require',key:a.id,acct:true}})),pred:0})}
+  else if(s===2){const acct=ACCOUNTS.find(a=>active().some(r=>r.key===a.id));
+    if(acct&&acct.tags.includes('growth')){out.push({type:'checkpoint',fact:'risk'});out.push({type:'checkpoint',fact:'fees'})}
+    out.push({type:'commit',acct:acct||ACCOUNTS[0],max:spare?spare.value:150})}
+  else if(s===3){out.push({type:'checkin',final:true})}
+  else return[];
+  return out.map(e=>({...e,stage:s,why:why()}));
+}
+
+/* ---------- road ---------- */
+function reset(goal,pipe){G=fresh(goal,pipe);track.innerHTML='';road.scrollTop=0;document.getElementById('log').innerHTML='';drawRules();
+  document.getElementById('goalText').textContent=goal;document.getElementById('pipeBadge').textContent=pipe==='decide'?'Decide':'Explore';
+  document.getElementById('router').textContent=`"${goal}" → ${pipe==='decide'?'Decide pipeline (ordered stages, has a destination)':'Explore pipeline (open-ended, checks back in)'}`;
+  log('pl',`goal routed to ${pipe}`);request()}
+function more(){if(G&&!G.pending&&track.offsetHeight-(road.scrollTop+road.clientHeight)<road.clientHeight*.8)request()}
+function request(){if(!G||G.pending||G.segs.some(x=>x.e.type==='deadend'))return;
+  if(G.pipe==='decide'){const gate=[...G.segs].reverse().find(x=>x.e.type==='fork'||x.e.type==='commit');if(gate&&!gate.answered)return}const els=stretch();if(!els.length)return;G.pending=true;const my=++G.token;
+  const ph=seg({type:'paving'});const ms=Math.round(latency*(.7+Math.random()*.6));
+  log('pl',`fill stretch ${G.stretch}: ${els.map(e=>e.type).join(' → ')} · obeying: ${why()}`);
+  setTimeout(()=>{if(my!==G.token)return;ph.el.remove();G.segs=G.segs.filter(s=>s!==ph);els.forEach(e=>seg(e));G.pending=false;if(els[0].type!=='deadend')more()},ms)}
+function replanAhead(reason){if(G.pipe==='decide')return;const bottom=road.scrollTop+road.clientHeight;
+  const drop=G.segs.filter(s=>s.el.offsetTop>bottom||s.e.type==='paving');if(!drop.length&&!G.pending)return;
+  drop.forEach(s=>{s.el.remove();if(s.e.ask)G.asked.delete(s.e.ask);if(s.e.id)G.seen.delete(s.e.id);if(s.e.a)G.seen.delete(s.e.a.id),G.seen.delete(s.e.b.id)});
+  G.segs=G.segs.filter(s=>!drop.includes(s));G.pending=false;G.token++;
+  log('pl',`re-paved ${drop.length} unseen piece(s) ahead after ${reason}`);request()}
+function seg(e){const s={e,id:nextId++,t:performance.now()};const el=document.createElement('div');el.className='seg enter';s.el=el;el.appendChild(render(s));track.appendChild(el);G.segs.push(s);return s}
+function box(cls,tag,html){const c=document.createElement('div');c.className='card '+cls;c.innerHTML=`<span class="tag">${tag}</span>`+html;return c}
+const gen=(e,slots)=>`GEN · ${e.type} · slots: ${slots} · obeying: ${e.why}`;
+
+function render(s){const e=s.e;let c;
+  switch(e.type){
+  case 'paving':c=box('gen paving','GEN · next stretch being filled','<div class="k">filling…</div><div class="bar"></div><div class="bar" style="width:60%"></div>');break;
+  case 'item':{c=box('gen',gen(e,'title, line, tags'),`<div class="k">idea</div><div class="img">image slot</div><h4>${e.title}</h4><div class="sub">${e.line}</div><div class="chips">${e.tags.map(t=>`<span class="chip">${t}</span>`).join('')}${e.hours?`<span class="chip">${e.hours} h</span>`:''}</div>
+    <div class="row2"><button data-a="save">Save</button><button data-a="nope">Not for me</button></div><div class="why chips" hidden></div>`);
+    c.querySelector('[data-a=save]').onclick=ev=>{ev.target.classList.add('sel');addRule({kind:'prefer',key:e.tags[0],text:`more like “${e.title}”`,short:`+${e.tags[0]}`});done(c)};
+    c.querySelector('[data-a=nope]').onclick=()=>{const w=c.querySelector('.why');w.hidden=false;w.innerHTML='<span class="sub">because…</span>'+e.tags.map(t=>`<button data-t="${t}">${t}</button>`).join('');
+      w.querySelectorAll('button').forEach(b=>b.onclick=()=>{b.classList.add('sel');addRule({kind:'avoid',key:b.dataset.t,text:`no ${b.dataset.t}`,short:`−${b.dataset.t}`});done(c)})};break}
+  case 'thisthat':c=box('gen',gen(e,'prompt, two sides'),`<div class="k">this or that</div><h4>${e.prompt}</h4><div class="row2">${[e.a,e.b].map((o,k)=>`<button class="big" data-k="${k}"><b>${o.label}</b><small>${o.sub}</small></button>`).join('')}</div>`);
+    c.querySelectorAll('button').forEach(b=>b.onclick=()=>{const o=b.dataset.k==='0'?e.a:e.b;b.classList.add('sel');addRule({...o.rule,text:`${o.rule.kind} ${o.rule.key} (picked “${o.label}”)`,short:`${o.rule.kind==='avoid'?'−':'+'}${o.rule.key}`});done(c)});break;
+  case 'slider':{c=box('gen',gen(e,'prompt, range'),`<div class="k">set it</div><h4>${e.prompt}</h4><input type="range" min="${e.min}" max="${e.max}" step="${e.step}" value="${e.v}"><div class="out" style="font-size:18px"></div><button>Use this</button>`);
+    const r=c.querySelector('input'),o=c.querySelector('.out');const fmt=v=>e.unit==='$'?`$${v} a month · $${v*12} a year`:`${v} h this week`;o.textContent=fmt(e.v);r.oninput=()=>o.textContent=fmt(+r.value);
+    c.querySelector('button').onclick=ev=>{ev.target.classList.add('sel');addRule(e.rule(+r.value));done(c)};break}
+  case 'rank':{c=box('gen',gen(e,'prompt, 4 labels'),`<div class="k">rank</div><h4>${e.prompt}</h4><div class="sub">Tap in order.</div><div class="row2">${e.items.map(t=>`<button data-t="${t}">${t}</button>`).join('')}</div>`);
+    const order=[];c.querySelectorAll('button').forEach(b=>b.onclick=()=>{if(order.includes(b.dataset.t))return;order.push(b.dataset.t);b.classList.add('sel');b.textContent=`${order.length}. ${b.dataset.t}`;
+      if(order.length===2){addRule({kind:'prefer',key:order[0],text:`${order[0]} first, then ${order[1]}`,short:`+${order[0]}`});done(c)}});break}
+  case 'compare':{const acct=e.rows==='account';c=box('gen',gen(e,'two items'),`<div class="k">compare</div><table><tr><th></th><th>${e.a.title}</th><th>${e.b.title}</th></tr>
+    <tr><th>what</th><td>${e.a.line}</td><td>${e.b.line}</td></tr><tr><th>${acct?'traits':'tags'}</th><td>${e.a.tags.join(', ')}</td><td>${e.b.tags.join(', ')}</td></tr>${acct?'':`<tr><th>time</th><td>${e.a.hours} h</td><td>${e.b.hours} h</td></tr>`}</table>
+    <div class="row2"><button data-k="a">This one</button><button data-k="b">This one</button></div>`);
+    c.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=e[b.dataset.k];b.classList.add('sel');addRule({kind:'prefer',key:it.tags[0],text:`picked “${it.title}”`,short:`+${it.tags[0]}`});done(c)});break}
+  case 'fork':{c=box('gen fork',gen(e,'prompt, 2–3 directions, each with a rule'),`<div class="k">fork in the road</div><h4>${e.prompt}</h4>${e.opts.map((o,k)=>`<button data-k="${k}" class="${k===e.pred?'pred':''}">${o.label}</button>`).join('')}<div class="sub">${G.pipe==='decide'?'Pick one to continue.':'Scroll past to take the dashed one. No rule is added unless you tap.'}</div>`);
+    c.querySelectorAll('button').forEach(b=>b.onclick=()=>{const o=e.opts[+b.dataset.k];b.classList.add('sel');
+      addRule({...o.rule,text:`took “${o.label}”`,short:o.rule.kind==='require'?`=${o.rule.key}`:`+${o.rule.key}`});done(c)});break}
+  case 'checkpoint':c=box('fixed',`FIXED · checkpoint · vetted text, model only places it`,`<div class="k">checkpoint</div><h4>Before you go on</h4><div>${FACTS[e.fact]}</div>`);break;
+  case 'commit':{c=box('fixed',`FIXED · commit · amount capped by your rule, nothing moves without a tap`,`<div class="k">destination</div><h4>Set up ${e.acct.title}</h4><input type="range" min="0" max="${e.max}" step="25" value="${Math.min(100,e.max)}"><div class="out" style="font-size:18px"></div><button>Confirm (simulated)</button>`);
+    const r=c.querySelector('input'),o=c.querySelector('.out');const f=()=>o.textContent=`$${r.value} a month (cap $${e.max})`;f();r.oninput=f;
+    c.querySelector('button').onclick=ev=>{ev.target.classList.add('sel');log('ev',`commit $${r.value}/mo to ${e.acct.title}`);done(c)};break}
+  case 'checkin':{const picks=G.rules.filter(r=>!r.erased);c=box('fixed',`FIXED · check-in · comes back to you`,`<div class="k">${e.final?'you arrived':'check-in'}</div><h4>${e.final?'Plan set.':'Here is your road so far'}</h4><div class="chips">${picks.map(r=>`<span class="chip">${r.short}</span>`).join('')||'<span class="sub">no picks yet</span>'}</div><div class="row2"><button data-a="go">${e.final?'Explore more':'Keep going'}</button><button data-a="goal">New goal</button></div>`);
+    c.querySelector('[data-a=go]').onclick=()=>{if(e.final){reset('More on: '+G.goal,'explore')}else done(c)};c.querySelector('[data-a=goal]').onclick=showGoal;break}
+  case 'deadend':{const unseen=EXPLORE_ITEMS.filter(i=>!G.seen.has(i.id)).length;e.reason=unseen<2&&G.pipe==='explore'?'pool':'rules';c=box('fixed',`FIXED · dead end · nothing fits every rule`,`<div class="k">road ends</div><h4>Nothing fits all your rules</h4><div class="sub">Erase one to open the road.</div>${active().filter(r=>r.kind!=='prefer').map(r=>`<div class="rule">${r.text}<button data-id="${r.id}">×</button></div>`).join('')}`);
+    c.querySelectorAll('button').forEach(b=>b.onclick=()=>{s.el.remove();G.segs=G.segs.filter(x=>x!==s);eraseRule(+b.dataset.id)});log('bad',e.reason==='pool'?'dead end: mock pool used up (a real model would not run out)':'dead end: no content satisfies the active rules');c.dataset.reason=e.reason;break}
+  }
+  return c}
+function done(c){const s=G.segs.find(x=>x.el.contains(c));if(s)s.answered=true;setTimeout(more,0);c.classList.add('done');c.querySelectorAll('button').forEach(b=>b.disabled=true)}
+
+/* ---------- chrome ---------- */
+function drawRules(){const R=G?G.rules.filter(r=>!r.erased):[];const A=G?active():[];
+  document.getElementById('ruleCount').textContent=`rules ${A.length}${R.length>A.length?` (+${R.length-A.length} faded)`:''}`;
+  document.getElementById('rules').innerHTML=R.map(r=>`<div class="rule ${A.includes(r)?'':'off'}"><span>${r.text}</span><button data-id="${r.id}" aria-label="erase">×</button></div>`).join('')||'<span class="sub">Your picks show up here.</span>';
+  document.querySelectorAll('#rules button').forEach(b=>b.onclick=()=>eraseRule(+b.dataset.id));
+  document.getElementById('active').textContent=JSON.stringify(A.map(({kind,key,value})=>value!=null?{kind,key,value}:{kind,key}),null,1)}
+function log(c,m){const d=document.createElement('div');d.className=c;d.textContent=`${(performance.now()/1000).toFixed(1)}s ${m}`;const L=document.getElementById('log');L.prepend(d)}
+function route(goal){return /save|saving|money|invest|tfsa|fhsa|budget|\$|debt|spend|retire|home/i.test(goal)?'decide':'explore'}
+function showGoal(){document.getElementById('goalScreen').classList.remove('hide');document.getElementById('goalIn').focus()}
+function start(goal){goal=goal.trim();if(!goal)return;document.getElementById('goalScreen').classList.add('hide');reset(goal,route(goal))}
+['Start saving $150 a month','Get into astronomy'].forEach(g=>{const b=document.createElement('button');b.textContent=g;b.onclick=()=>start(g);document.getElementById('examples').appendChild(b)});
+document.getElementById('goBtn').onclick=()=>start(document.getElementById('goalIn').value);
+document.getElementById('goalIn').onkeydown=e=>{if(e.key==='Enter')start(e.target.value)};
+document.getElementById('changeGoal').onclick=showGoal;
+document.getElementById('legendBtn').onclick=e=>{const l=document.getElementById('legend');l.classList.toggle('open');e.target.textContent=l.classList.contains('open')?'hide':'show'};
+Object.entries(POLICIES).forEach(([k,v])=>{const b=document.createElement('button');b.dataset.p=k;b.textContent=v.name;b.onclick=()=>setPolicy(k);document.getElementById('policies').appendChild(b)});
+function setPolicy(k){policy=k;document.querySelectorAll('#policies button').forEach(b=>b.classList.toggle('on',b.dataset.p===k));document.getElementById('pdesc').textContent=POLICIES[k].desc;if(G){drawRules();replanAhead('a policy switch')}}
+const bM=document.getElementById('bMarks');bM.onclick=()=>{phone.classList.toggle('marks');bM.classList.toggle('on')};
+document.getElementById('bReset').onclick=()=>G?reset(G.goal,G.pipe):showGoal();
+document.getElementById('lat').oninput=e=>{latency=+e.target.value;document.getElementById('latv').textContent=latency+'ms'};
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='1')setPolicy('keep');if(e.key==='2')setPolicy('last3');if(e.key==='3')setPolicy('keyed');if(e.key==='m')bM.click()});
+road.addEventListener('scroll',more);
+setPolicy('keyed');
+</script>
+</body></html>

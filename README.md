@@ -8,17 +8,6 @@ Pre-prototype phase. We try ideas fast in a shared **playground** web app and ke
 
 ## Teammates: get started
 
-### One-time
-1. Accept the GitHub invite to `Thomson-Lam/hw`. Ask Thomson for one if you have none.
-2. Get the playground password from Thomson in DMs. It is never in the repo.
-3. Optional, for a local dev setup: Node 24+, then:
-   ```bash
-   git clone https://github.com/Thomson-Lam/hw && cd hw/playground
-   npm install
-   npx playwright install chromium   # only needed for thumbnail/OG scripts
-   npm run dev                       # http://localhost:3000. Local dev has no password gate
-   ```
-
 ### Make a prototype (laptop or phone)
 You don't write the boilerplate. A coding agent does, by following `playground/AGENTS.md`.
 

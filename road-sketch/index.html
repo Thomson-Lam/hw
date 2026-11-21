@@ -1,0 +1,245 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>road sketch (throwaway)</title>
+<style>
+:root{--bg:#101010;--fg:#ddd;--mut:#777;--line:#3a3a3a;--gen:#4aa8ff;--fix:#8a8a8a;--card:#181818}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.35 ui-monospace,Menlo,monospace;display:flex;gap:20px;padding:16px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+#phone{width:375px;height:740px;border:2px solid var(--line);border-radius:28px;position:relative;overflow:hidden;flex:none;background:#0c0c0c}
+#top{position:absolute;top:0;left:0;right:0;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid var(--line);background:#0c0c0c;z-index:5}
+#road{position:absolute;top:48px;left:0;right:0;bottom:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
+#road::-webkit-scrollbar{display:none}
+#track{position:relative}
+.seg{position:relative}
+.seg svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.edge{fill:none;stroke:#262626;stroke-width:30;stroke-linecap:round}
+.mid{fill:none;stroke:#555;stroke-width:2;stroke-dasharray:6 9}
+.faded .edge{stroke:#181818}.faded .mid{stroke:#2a2a2a}
+.tile{position:absolute;border:1px solid var(--fix);border-radius:10px;padding:10px;background:var(--card);transition:all .35s cubic-bezier(.2,.8,.2,1);z-index:2}
+.tile b{display:block;color:var(--mut);font-weight:normal;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.tile p{margin:0}
+.tile input[type=range]{width:100%;height:32px}
+.tile label{display:flex;gap:8px;align-items:center;min-height:32px}
+.tile input[type=checkbox]{width:20px;height:20px}
+.out{font-size:16px;margin-top:2px}
+.tag{display:none;position:absolute;top:-9px;left:8px;font-size:9px;padding:1px 5px;border-radius:4px;background:var(--bg);white-space:nowrap;max-width:calc(100% - 16px);overflow:hidden;text-overflow:ellipsis}
+.marks .tag{display:block}
+.marks .gen{outline:1.5px dashed var(--gen);outline-offset:3px}
+.marks .gen>.tag{color:var(--gen);border:1px solid var(--gen)}
+.marks .fixed>.tag{color:var(--fix);border:1px solid var(--fix)}
+.marks #top{outline:1.5px solid var(--fix);outline-offset:-3px}
+#top .tag{top:2px;left:auto;right:6px}
+.paving{border-style:dashed;color:var(--mut)}
+.paving .bar{height:10px;border-radius:4px;background:#222;margin:8px 0;animation:pulse 1s ease-in-out infinite alternate}
+@keyframes pulse{to{background:#2e2e2e}}
+.replanned{animation:flash .8s ease-out}
+@keyframes flash{from{border-color:var(--gen);box-shadow:0 0 0 4px #4aa8ff55}}
+.forkbtn{position:absolute;transform:translate(-50%,-50%);min-height:44px;min-width:96px;padding:6px 10px;border-radius:22px;border:1px solid var(--fix);background:var(--card);color:var(--fg);font:inherit;z-index:3}
+.forkbtn.pred{border-style:dashed}
+.forkbtn.chosen{border-color:var(--fg);border-width:2px}
+.forkbtn.other{opacity:.4}
+.forkbtn:disabled{opacity:.25}
+/* variant C: pins bloom into cards */
+.v-c .tile.pin{width:40px!important;height:40px;padding:0;border-radius:20px;overflow:hidden;color:transparent}
+.v-c .tile.pin *{visibility:hidden}
+.v-c .tile.pin .tag{visibility:visible}
+#dbg{width:340px;flex:none;display:flex;flex-direction:column;gap:10px}
+#dbg h3{margin:6px 0 0;font-size:11px;color:var(--mut);font-weight:normal;text-transform:uppercase;letter-spacing:.08em}
+#dbg button{font:inherit;background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;min-height:36px}
+#dbg button.on{border-color:var(--fg)}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.w{display:grid;grid-template-columns:70px 1fr 40px 30px;gap:6px;align-items:center}
+.w i{display:block;height:8px;background:var(--fg);border-radius:4px;transition:width .3s}
+#log{height:240px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:6px;font-size:11px;white-space:pre-wrap}
+#log div{border-bottom:1px solid #1d1d1d;padding:2px 0}
+.ev{color:#fc6}.pl{color:var(--gen)}
+@media (max-width:520px){body{padding:0;gap:0}#phone{width:100vw;height:100dvh;border:0;border-radius:0}#dbg{width:100%;padding:12px}}
+</style></head>
+<body>
+<div id="phone" class="marks">
+  <div id="top" class="fixed"><span class="tag">FIXED · status bar</span><span id="dist">0 m</span><span id="pace">stopped</span></div>
+  <div id="road"><div id="track"></div></div>
+</div>
+<div id="dbg">
+  <div><b>Road sketch</b> (throwaway, no LLM: a rule-based fake generator)</div>
+  <h3>layout (keys 1 2 3)</h3>
+  <div class="row" id="variants"></div>
+  <div id="vdesc" style="color:var(--mut)"></div>
+  <h3>toggles</h3>
+  <div class="row">
+    <button id="bMarks" class="on">markers (m)</button>
+    <button id="bReplan" class="on">re-plan unseen tiles</button>
+    <button id="bPave">while paving: skeleton</button>
+    <button id="bReset">reset</button>
+  </div>
+  <div class="row">paver latency <input id="lat" type="range" min="0" max="3000" step="100" value="900"><span id="latv">900ms</span></div>
+  <h3>what the engine believes about you</h3>
+  <div id="weights"></div>
+  <h3>feedback rules</h3>
+  <div style="color:var(--mut)">stop on a tile 1.5s = linger (+1, deeper) · fly past it = rush (-1) · use a slider or checkbox = +2, deeper · pick a fork = +3. Next tiles use the top topic, 20% explore.</div>
+  <h3>log (newest first)</h3>
+  <div id="log"></div>
+</div>
+<script>
+const TOPICS=['money','sleep','cooking','outdoors'];
+const CONTENT={
+  money:{1:["Where did last week's money go?","Small daily spends add up.","Your spare money this month"],
+    2:{label:'$ per day on small stuff',min:1,max:30,v:6,out:v=>`= $${v*365} a year`},
+    3:['Pick one spend to cut','Move that amount out weekly','Check in after a month']},
+  sleep:{1:['What time did you sleep last night?','The last hour before bed','Phone in bed?'],
+    2:{label:'bedtime',min:21,max:27,v:24,out:v=>`wind down at ${h(v-1)}`},
+    3:['Set a wind-down alarm','Phone charges outside the bedroom','Same wake time 5 days']},
+  cooking:{1:["What's in your fridge?",'One-pot dinners','Cooking for one'],
+    2:{label:'meals cooked a week',min:0,max:14,v:3,out:v=>`${14-v} meals bought`},
+    3:['Pick 3 recipes','Shop once for all 3','Cook double, save half']},
+  outdoors:{1:['When were you last outside?','A 10 minute walk','The nearest park'],
+    2:{label:'minutes outside a day',min:0,max:120,v:15,out:v=>`${v*7} min a week`},
+    3:['Pick a route','Walk after lunch','Bring someone']},
+};
+const h=v=>`${((v%24)+24)%24}:00`;
+const VARIANTS={
+  a:{name:'A · shoulders',desc:'Road down the middle. Small generated tiles sit on alternating sides, like signs on a highway.'},
+  b:{name:'B · stops',desc:'Road hugs the left edge. Each generated tile is a full-width stop the road passes through.'},
+  c:{name:'C · bloom',desc:'Road down the middle. Tiles are pins that only open into cards when you slow down near them; rushing leaves them closed.'},
+};
+const KINDS=['tile','plain','tile','tile','plain','fork'];
+const road=document.getElementById('road'),track=document.getElementById('track'),phone=document.getElementById('phone');
+let S,segs,variant='c',replan=true,paveMode='skeleton',latency=900,pending=false,token=0,nextId=0,kindIdx=0,speed=0;
+
+function reset(){
+  S={w:{},d:{},n:{}};TOPICS.forEach(t=>{S.w[t]=1;S.d[t]=1;S.n[t]=0});
+  segs=[];track.innerHTML='';pending=false;token++;kindIdx=0;road.scrollTop=0;
+  document.getElementById('log').innerHTML='';
+  add({id:nextId++,kind:'start',j:0,h:160});
+  log('pl','start: fixed opening, then the first stretch is requested');
+}
+function choose(exclude){
+  const sorted=TOPICS.filter(t=>t!==exclude).sort((a,b)=>(S.w[b]-S.w[a])||(Math.random()-.5));
+  if(Math.random()<.2){const t=sorted[1+Math.floor(Math.random()*(sorted.length-1))];return{t,why:'explore (20% random)'}}
+  return{t:sorted[0],why:`top weight (${sorted[0]} w=${S.w[sorted[0]]})`};
+}
+function plan(){
+  const kind=KINDS[kindIdx++%KINDS.length];
+  const s={id:nextId++,kind,j:Math.random()*2-1};
+  if(kind==='plain'){s.h=110;return s}
+  if(kind==='fork'){
+    const a=choose(),b=choose(a.t);s.h=300;s.opts=[a.t,b.t];s.pred=0;s.choice=null;s.why=`left = ${a.why}; right = ${b.why}`;return s}
+  fillTile(s);return s;
+}
+function fillTile(s,prev){
+  const c=choose();s.t=c.t;s.d=S.d[c.t];s.why=c.why;s.n=S.n[c.t]++;s.h=s.d===1?170:210;
+  s.state=s.d===2?CONTENT[s.t][2].v:s.d===3?[false,false,false]:null;
+  s.dwell=0;s.peak=0;s.lingered=false;
+  if(prev&&(prev.t!==s.t||prev.d!==s.d))s.flash=true;
+}
+function geom(s,i){
+  const W=road.clientWidth;const prev=segs[i-1];
+  const base=variant==='b'?30:W/2, amp=variant==='b'?4:18;
+  s.x1=s.kind==='fork'?forkXs(W)[s.choice??s.pred]:base+s.j*amp;
+  s.x0=prev?prev.x1:base;
+}
+function forkXs(W){return variant==='b'?[30,230]:[W*.24,W*.76]}
+function render(s,i){
+  geom(s,i);const W=road.clientWidth;const el=document.createElement('div');el.className='seg';el.style.height=s.h+'px';
+  const H=s.h;let svg='';
+  if(s.kind==='fork'){
+    const xs=forkXs(W),split=110;
+    svg=`<path class="edge" d="M${s.x0} 0 C${s.x0} 60,${W/2} 60,${W/2} ${split}"/><path class="mid" d="M${s.x0} 0 C${s.x0} 60,${W/2} 60,${W/2} ${split}"/>`;
+    xs.forEach((x,k)=>{const live=(s.choice??s.pred)===k;const d=`M${W/2} ${split} C${W/2} ${split+60},${x} ${split+40},${x} ${split+120} L${x} ${H}`;
+      svg+=`<g class="${live?'':'faded'}"><path class="edge" d="${d}"/><path class="mid" d="${d}"/></g>`});
+  }else{
+    const d=`M${s.x0} 0 C${s.x0} ${H*.5},${s.x1} ${H*.5},${s.x1} ${H}`;svg=`<path class="edge" d="${d}"/><path class="mid" d="${d}"/>`;
+  }
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${svg}</svg>`;
+  if(s.kind==='start'){el.appendChild(box('fixed','FIXED · opening',`<b>start</b><p>Scroll down. The road paves itself from what you do.</p>`,{left:W/2-130,top:20,width:260}))}
+  if(s.kind==='paving'){el.appendChild(box('gen paving','GEN · stretch being paved',`<b>paving…</b><div class="bar"></div><div class="bar" style="width:60%"></div>`,tilePos(s,W)))}
+  if(s.kind==='cap'){el.appendChild(box('gen paving','GEN · waiting for the paver',`<b>road ends here… paving</b><div class="bar"></div>`,{left:W/2-110,top:20,width:220}))}
+  if(s.kind==='tile'){const b=box('gen'+(variant==='c'?' pin':''),`GEN · tile · ${s.t} · depth ${s.d} · ${s.why}`,tileBody(s),tilePos(s,W));if(s.flash){b.classList.add('replanned');s.flash=false}s.box=b;el.appendChild(b)}
+  if(s.kind==='fork'){
+    const xs=forkXs(W);
+    s.opts.forEach((t,k)=>{const bt=document.createElement('button');
+      bt.className='forkbtn gen'+(s.choice==null&&k===s.pred?' pred':'')+(s.choice===k?' chosen':'')+(s.choice!=null&&s.choice!==k?' other':'');
+      bt.style.left=Math.min(Math.max(xs[k],60),W-60)+'px';bt.style.top='200px';bt.innerHTML=`<span class="tag">GEN · fork label · ${k?'right':'left'}</span>`+(k===s.pred?'more ':'try ')+t;bt.title=s.why;
+      bt.disabled=!!s.passed;bt.onclick=()=>pickFork(s,k);el.appendChild(bt)});
+  }
+  if(s.el)track.replaceChild(el,s.el);else track.appendChild(el);s.el=el;
+}
+function tilePos(s,W){
+  if(variant==='a'){const left=s.n%2===0;const w=146;return{left:left?8:W-8-w,top:24,width:w}}
+  if(variant==='b')return{left:62,top:20,width:W-76};
+  const bloom=s.bloom||s.kind==='paving';return bloom?{left:20,top:20,width:W-40}:{left:s.x1+(s.n%2?-62:22),top:40,width:40};
+}
+function box(cls,tag,html,p){const b=document.createElement('div');b.className='tile '+cls;Object.assign(b.style,{left:p.left+'px',top:p.top+'px',width:p.width+'px'});b.innerHTML=`<span class="tag">${tag}</span>`+html;return b}
+function tileBody(s){
+  const C=CONTENT[s.t];
+  if(s.d===1)return`<b>${s.t}</b><p>${C[1][s.n%3]}</p>`;
+  if(s.d===2)return`<b>${s.t} · tool</b><div>${C[2].label}: <span class="v">${s.state}</span></div><input type="range" min="${C[2].min}" max="${C[2].max}" value="${s.state}" data-id="${s.id}"><div class="out">${C[2].out(s.state)}</div>`;
+  return`<b>${s.t} · plan</b>`+C[3].map((x,k)=>`<label><input type="checkbox" data-id="${s.id}" data-k="${k}" ${s.state[k]?'checked':''}>${x}</label>`).join('');
+}
+track.addEventListener('input',e=>{const s=segs.find(x=>x.id==e.target.dataset.id);if(!s)return;
+  if(e.target.type==='range'){s.state=+e.target.value;s.box.querySelector('.v').textContent=s.state;s.box.querySelector('.out').textContent=CONTENT[s.t][2].out(s.state)}
+  else s.state[+e.target.dataset.k]=e.target.checked;
+  if(!s.used){s.used=true;signal('use',s.t,2,true)}});
+function add(s){segs.push(s);render(s,segs.length-1)}
+function signal(kind,t,dw,deeper){
+  const w0=S.w[t],d0=S.d[t];S.w[t]=Math.max(0,S.w[t]+dw);if(deeper)S.d[t]=Math.min(3,S.d[t]+1);
+  log('ev',`${kind} · ${t} · weight ${w0}→${S.w[t]}${deeper?` · depth ${d0}→${S.d[t]}`:''}`);
+  if(replan)replanUnseen();
+}
+function replanUnseen(){
+  const bottom=road.scrollTop+road.clientHeight;let n=0;
+  segs.forEach((s,i)=>{if(s.kind==='tile'&&!s.seen&&s.el.offsetTop>bottom){const prev={t:s.t,d:s.d};fillTile(s,prev);if(s.flash)n++;render(s,i)}});
+  if(n)log('pl',`re-planned ${n} unseen tile(s) ahead`);
+}
+function pickFork(s,k){
+  if(s.passed)return;s.choice=k;const t=s.opts[k];
+  const i=segs.indexOf(s);segs.splice(i+1).forEach(x=>x.el.remove());pending=false;token++;
+  render(s,i);signal('fork',t,3,false);log('pl',`fork → ${t}: road after the fork dropped and re-paved`);request();
+}
+function request(){
+  pending=true;const my=++token;const n=3;
+  const ph=paveMode==='skeleton'?[0,1,2].map(()=>({id:nextId++,kind:'paving',j:0,h:200,n:0})):[{id:nextId++,kind:'cap',j:0,h:120}];
+  ph.forEach(add);const specs=[];for(let i=0;i<n;i++)specs.push(plan());
+  const ms=Math.round(latency*(.7+Math.random()*.6));
+  log('pl',`request ${n} segs (${specs.map(x=>x.kind==='tile'?`${x.t}:d${x.d}`:x.kind).join(', ')}) · planned from what it knows now`);
+  setTimeout(()=>{if(my!==token)return;
+    const i=segs.indexOf(ph[0]);ph.forEach(p=>p.el.remove());segs.splice(i,ph.length);
+    specs.forEach(add);pending=false;log('pl',`paved in ${ms}ms`)},ms);
+}
+let last=performance.now(),lastTop=0;
+function loop(now){
+  const dt=Math.min(100,now-last);last=now;const top=road.scrollTop,vh=road.clientHeight;
+  const inst=Math.abs(top-lastTop)/dt*1000;lastTop=top;speed=speed*.85+inst*.15;
+  document.getElementById('pace').textContent=speed<40?'stopped':speed<400?'walk':speed<1200?'trot':'gallop';
+  document.getElementById('dist').textContent=Math.round(top/10)+' m';
+  let focus=null,best=vh*.3;
+  segs.forEach(s=>{if(s.el&&s.kind==='tile'){const d=Math.abs(s.el.offsetTop+s.h/2-(top+vh*.45));if(d<best){best=d;focus=s}}});
+  segs.forEach((s,i)=>{if(!s.el||s.kind!=='tile')return;
+    const a=s.el.offsetTop,b=a+s.h,inView=b>top&&a<top+vh;
+    if(inView){s.seen=true;s.peak=Math.max(s.peak,speed);
+      const inBand=s===focus;
+      if(inBand&&speed<120){s.dwell+=dt;if(s.dwell>1500&&!s.lingered){s.lingered=true;signal('linger',s.t,1,true)}}
+      if(variant==='c'){const want=inBand&&speed<250;if(want!==!!s.bloom){s.bloom=want;setPos(s)}}}
+    else if(variant==='c'&&s.bloom){s.bloom=false;setPos(s)}
+    if(b<top&&!s.left){s.left=true;if(s.dwell<300&&s.peak>900)signal('rush',s.t,-1,false)}});
+  segs.forEach(s=>{if(s.kind==='fork'&&!s.passed&&s.el.offsetTop+s.h<top){s.passed=true;render(s,segs.indexOf(s))}});
+  if(!pending&&track.offsetHeight-(top+vh)<vh*1.2)request();
+  requestAnimationFrame(loop);
+}
+function setPos(s){const p=tilePos(s,road.clientWidth);s.box.classList.toggle('pin',!s.bloom);Object.assign(s.box.style,{left:p.left+'px',top:p.top+'px',width:p.width+'px'})}
+function drawWeights(){document.getElementById('weights').innerHTML=TOPICS.map(t=>`<div class="w"><span>${t}</span><i style="width:${Math.min(100,S.w[t]*12)}%"></i><span>w ${S.w[t]}</span><span>d${S.d[t]}</span></div>`).join('')}
+function log(c,m){const d=document.createElement('div');d.className=c;d.textContent=`${(performance.now()/1000).toFixed(1)}s ${m}`;const L=document.getElementById('log');L.prepend(d);while(L.children.length>80)L.lastChild.remove()}
+function setVariant(v){variant=v;phone.classList.remove('v-a','v-b','v-c');phone.classList.add('v-'+v);
+  document.querySelectorAll('#variants button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.getElementById('vdesc').textContent=VARIANTS[v].desc;segs&&segs.forEach((s,i)=>render(s,i))}
+Object.entries(VARIANTS).forEach(([k,v])=>{const b=document.createElement('button');b.dataset.v=k;b.textContent=v.name;b.onclick=()=>setVariant(k);document.getElementById('variants').appendChild(b)});
+const bM=document.getElementById('bMarks'),bR=document.getElementById('bReplan'),bP=document.getElementById('bPave');
+bM.onclick=()=>{phone.classList.toggle('marks');bM.classList.toggle('on')};
+bR.onclick=()=>{replan=!replan;bR.classList.toggle('on',replan)};
+bP.onclick=()=>{paveMode=paveMode==='skeleton'?'end':'skeleton';bP.textContent='while paving: '+(paveMode==='skeleton'?'skeleton':'road ends')};
+document.getElementById('bReset').onclick=reset;
+document.getElementById('lat').oninput=e=>{latency=+e.target.value;document.getElementById('latv').textContent=latency+'ms'};
+addEventListener('keydown',e=>{if(e.key==='1')setVariant('a');if(e.key==='2')setVariant('b');if(e.key==='3')setVariant('c');if(e.key==='m')bM.click()});
+setVariant('c');reset();setInterval(drawWeights,200);requestAnimationFrame(loop);
+</script>
+</body></html>

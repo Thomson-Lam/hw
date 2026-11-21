@@ -6,6 +6,8 @@ import { loadRootEnv } from "./app/prototypes/road-lab/server/env";
 loadRootEnv();
 
 const nextConfig: NextConfig = {
+  // Let phones on the local network (e.g. an iPhone hotspot, 172.20.10.x) load dev resources.
+  allowedDevOrigins: ["172.20.10.*", "192.168.*.*", "10.*.*.*"],
   reactCompiler: true,
   turbopack: {
     rules: {
