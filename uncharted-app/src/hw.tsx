@@ -33,7 +33,7 @@ export function Mountains({ anchor = "center" }: { anchor?: "center" | "bottom" 
 function Dots() {
   const id = useId().replace(/:/g, "");
   return (
-    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Svg width="100%" height="100%" style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <Pattern id={id} width={12} height={12} patternUnits="userSpaceOnUse">
           <Rect x={5} y={5} width={1.2} height={1.2} fill={C.dot} />
@@ -94,6 +94,24 @@ export function Chip({ text, onPress, testID }: { text: string; onPress?: () => 
   return (
     <Pressable testID={testID} onPress={onPress} disabled={!onPress} style={s.chip} hitSlop={6}>
       <Text style={s.chipText}>{text}{onPress ? "  ×" : ""}</Text>
+    </Pressable>
+  );
+}
+
+// Desktop folder like Hack Western: icon + pill label. Opens a Window when tapped.
+export function Folder({ label, onPress, testID }: { label: string; onPress: () => void; testID?: string }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Open ${label}`}
+      testID={testID}
+      style={({ pressed }) => [{ alignItems: "center", gap: 10, alignSelf: "flex-start", opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] }]}
+    >
+      <Image source={require("../assets/hw/folder.png")} style={{ width: 88, height: 88 }} contentFit="contain" />
+      <View style={{ backgroundColor: "rgba(30,36,44,0.88)", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 6, maxWidth: 160 }}>
+        <Text numberOfLines={1} style={{ fontFamily: F.head, fontSize: 15, lineHeight: 20, color: "#fff", textAlign: "center" }}>{label}</Text>
+      </View>
     </Pressable>
   );
 }

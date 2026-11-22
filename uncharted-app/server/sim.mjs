@@ -82,8 +82,8 @@ function run(D, p, sc, weekly, dare) {
 }
 
 const money = (v) => { const r = Math.round(v / 100) * 100; return `${r < 0 ? "−" : ""}$${Math.abs(r).toLocaleString("en-CA")}`; };
-// Rounding to $100 turns a small debt (−$37) into $0. Keep the exact dollar when that would hide the sign.
-const cash = (v) => { const r = Math.abs(v) < 50 ? Math.round(v) : Math.round(v / 100) * 100; return `${r < 0 ? "−" : ""}$${Math.abs(r).toLocaleString("en-CA")}`; };
+// Balances to the dollar: the card's chart labels the same number, so the sentence must match it.
+const cash = (v) => { const r = Math.round(v); return `${r < 0 ? "−" : ""}$${Math.abs(r).toLocaleString("en-CA")}`; };
 function story(p, other, weekly) {
   const { what, how } = storyParts(p, other, weekly);
   return `${what} ${how}`;
@@ -101,8 +101,8 @@ function storyParts(p, other, weekly) {
     : shocks.length ? `${shocks.length} surprise bill${shocks.length > 1 ? "s" : ""}, the biggest ${money(Math.max(...shocks.map((s) => s.amount)))}.`
     : "Nothing dramatic happened.";
   let how;
-  if (p.outcome === "fine") how = `You ended with ${money(p.end_balance)} and options.`;
-  else if (p.outcome === "rough_recovered") how = `${p.neg} month${p.neg > 1 ? "s" : ""} on credit, back above zero by month 60 with ${money(p.end_balance)}.`;
+  if (p.outcome === "fine") how = `You ended with ${cash(p.end_balance)} and options.`;
+  else if (p.outcome === "rough_recovered") how = `${p.neg} month${p.neg > 1 ? "s" : ""} on credit, back above zero by month 60 with ${cash(p.end_balance)}.`;
   // Hard means still in debt at month 60, or 6+ months in a row below zero. Name this path's own ending.
   // The weekly ending is a different line. Say so, or a chart of this path looks like it contradicts the sentence.
   else if (other && weekly) how = `${p.end_balance < 0 ? `Ends at ${cash(p.end_balance)}.` : `${p.longest} month${p.longest === 1 ? "" : "s"} in a row in debt.`} With $${weekly} a week, the same future ends at ${cash(other.end_balance)}.`;

@@ -33,7 +33,7 @@ export function ruleText(r) {
   if (r.kind === "max") return r.key === "hours" ? `at most ${v} h per idea` : `${r.key} at most ${v}`;
   if (r.key === "persona") return `using ${PERSONAS[v]?.name.split(",")[0] ?? v}'s numbers`;
   if (r.key === "weekly") return v ? `$${v} a week buffer` : "no buffer for now";
-  if (r.key === "reminder") return v === "on" ? "remind me to set it up" : "no reminder";
+  if (r.key === "reminder") return v === "on" ? "remind after payday" : v === "done" ? "set up" : "no reminder";
   if (r.key === "kind") return v === "worry" ? "a worry about money" : v === "dare" ? "a dare" : "something I'm curious about";
   if (r.key === "goal") return `goal: ${v}`;
   if (r.key === "concept") return `learning: ${v}`;
@@ -76,7 +76,11 @@ function rulesOf(el, payload) {
     if (!it) throw new Error("option_index out of range");
     return { label: it.name, option_index: payload.option_index, rules: [{ kind: "set", key: "pick", value: it.name }, { kind: "set", key: "target", value: Math.round(it.price_cad) }] };
   }
-  if (el.type === "action") { const on = payload.verdict === "remind"; return { label: on ? "remind" : "not now", rules: [{ kind: "set", key: "reminder", value: on ? "on" : "off" }], value: on }; }
+  if (el.type === "action") {
+    if (payload.verdict === "done") return { label: "set up", rules: [{ kind: "set", key: "reminder", value: "done" }], value: "done" };
+    if (payload.verdict === "remind") return { label: "remind after payday", rules: [{ kind: "set", key: "reminder", value: "on" }], value: true };
+    return { label: "not now", rules: [{ kind: "set", key: "reminder", value: "off" }], value: false };
+  }
   throw new Error(`${el.type} takes no answer`);
 }
 
@@ -166,7 +170,9 @@ export function createTree(db, log = () => {}) {
     if (!has("action")) {
       const s = body.find((x) => x.element.type === "savings").element;
       const rec = s.rows.find((r) => r.weekly > 0 && r.reached >= 0.8 * s.total) ?? s.rows.filter((r) => r.weekly > 0).at(-1) ?? { weekly: 10 };
-      return { element: { type: "action", weekly: rec.weekly }, message: "One step makes the plan real.", source: "fixed" };
+      const base = s.rows.find((r) => r.weekly === 0);
+      const payoff = rec.reached != null && base ? { before: base.reached, after: rec.reached, total: s.total, what: `reach ${s.goal} within ${s.horizon} months` } : undefined;
+      return { element: { type: "action", weekly: rec.weekly, payoff }, message: "Set up the transfer that makes the plan real.", source: "fixed" };
     }
     return { element: { type: "checkin", final: true }, message: "That is your plan.", source: "fixed" };
   }
@@ -251,12 +257,12 @@ export function createTree(db, log = () => {}) {
       return {
         at: r.weekly,
         caption: r.weekly === 0
-          ? (p.saving ? `With nothing extra set aside, a big enough gap still goes onto credit, at about 20% interest. ${sh.fine}% of futures end fine.` : `With nothing set aside, any gap in income goes onto credit, at about 20% interest. ${sh.fine}% of futures end fine.`)
-          : `$${r.weekly} a week is $${r.year.toLocaleString("en-CA")} in a year: about ${r.weeks} week${r.weeks === 1 ? "" : "s"} of ${name}'s rent and groceries if the income stops. ${sh.fine}% of futures end fine.`,
+          ? (p.saving ? `With nothing extra set aside, a big enough gap still goes onto credit, at about 20% interest. ${name} is never in debt in ${sh.fine}% of futures.` : `With nothing set aside, any gap in income goes onto credit, at about 20% interest. ${name} is never in debt in ${sh.fine}% of futures.`)
+          : `$${r.weekly} a week is $${r.year.toLocaleString("en-CA")} in a year: about ${r.weeks} week${r.weeks === 1 ? "" : "s"} of ${name}'s rent and groceries if the income stops. ${name} is never in debt in ${sh.fine}% of futures.`,
         viz: { kind: "bars", unit: "%", items: [
-          { label: "Fine", value: sh.fine },
-          { label: "Rough", value: sh.rough_recovered },
-          { label: "Hard", value: sh.hard },
+          { label: "Never in debt", value: sh.fine, tone: "fine" },
+          { label: "Recovered", value: sh.rough_recovered, tone: "rough_recovered" },
+          { label: "Stuck in debt", value: sh.hard, tone: "hard" },
         ] },
       };
     });
@@ -300,7 +306,11 @@ export function createTree(db, log = () => {}) {
       const choices = body.filter((x) => leverOf(x.element) && activeAnswer(x.id)).map((x) => activeAnswer(x.id).label);
       return { element: { type: "moneyplan", worry: r.scenario, choices, ...r }, message: plan.weekly > 0 ? "The same 5,000 futures and the same luck, now with your plan." : "Nothing set aside, so these futures stay as they were.", source: "sim" };
     }
-    if (plan.weekly > 0 && !has("action")) return { element: { type: "action", weekly: plan.weekly }, message: "One step makes it real.", source: "fixed" };
+    if (plan.weekly > 0 && !has("action")) {
+      const mp = body.find((x) => x.element.type === "moneyplan").element;
+      const payoff = { before: mp.before.fine, after: mp.after.fine, total: mp.total, what: "never go into debt" };
+      return { element: { type: "action", weekly: plan.weekly, payoff }, message: "Set up the transfer that makes the plan real.", source: "fixed" };
+    }
     return { element: { type: "checkin", final: true, money: true }, message: plan.weekly > 0 ? "That is your plan." : "You can come back and add a buffer any time.", source: "fixed" };
   }
 

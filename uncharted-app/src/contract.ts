@@ -14,7 +14,7 @@ export type Choice = { label: string; sub?: string; rule: Rule };
 // Small visuals the agent fills with data; the app draws them. One per frame or step.
 export type Viz =
   | { kind: "chips"; items: string[]; highlight?: number[] } // e.g. tokens, with some lit up
-  | { kind: "bars"; items: { label: string; value: number }[]; unit?: "%" | "" } // e.g. next-word probabilities
+  | { kind: "bars"; items: { label: string; value: number; tone?: Outcome }[]; unit?: "%" | "" } // e.g. next-word probabilities; tone colours a simulator outcome
   | { kind: "flow"; items: string[] } // A → B → C
   | { kind: "number"; value: string; label: string }; // one big figure
 
@@ -54,7 +54,8 @@ export type Element =
   | { type: "tally"; baseline: Tally; lever?: Tally; weekly?: number; total: number }
   | { type: "assumptions"; lines: string[] }
   // Fixed copy, never model text.
-  | { type: "action"; weekly: number }
+  // payoff: the simulator's share of futures that hit `what` without the weekly amount (before) and with it (after).
+  | { type: "action"; weekly: number; payoff?: { before: number; after: number; total: number; what: string } }
   | { type: "checkin"; final?: boolean; money?: boolean } // money: end of the money road
   | { type: "deadend"; reason: string };
 

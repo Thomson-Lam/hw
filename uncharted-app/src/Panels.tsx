@@ -29,7 +29,7 @@ export function Drawer({ side, title, onClose, children, testID }: { side: "left
             <IconClose />
           </Pressable>
         </View>
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32, gap: 24 }}>{children}</ScrollView>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 40, gap: 40 }}>{children}</ScrollView>
       </Animated.View>
     </View>
   );
@@ -37,8 +37,8 @@ export function Drawer({ side, title, onClose, children, testID }: { side: "left
 
 function Section({ heading, children }: { heading: string; children: ReactNode }) {
   return (
-    <View style={{ gap: 8 }}>
-      <Text style={s.h}>{heading}</Text>
+    <View style={{ gap: 16 }}>
+      <Text style={s.section}>{heading}</Text>
       {children}
     </View>
   );
@@ -129,6 +129,7 @@ export function PathsPanel({ nodes, roadIds, onOpen, onSwitch, onHome }: { nodes
 }
 
 // ---------- Profile ----------
+// Hierarchy: Profile title (drawer) → quiet section labels → one primary block per section (Chime / Wealthsimple).
 
 export function ProfilePanel({ meta, personaId, personaSeg, onPersona, scenario, goal, weekly, mode, setMode }: {
   meta: Meta | null; personaId: string | null; personaSeg: Segment | null; onPersona: (j: number) => void;
@@ -138,14 +139,17 @@ export function ProfilePanel({ meta, personaId, personaSeg, onPersona, scenario,
   const opts = personaSeg && personaSeg.el.type === "fork" ? personaSeg.el.opts : [];
   const [who, age, job, ...place] = (p?.name ?? "").split(",").map((x) => x.trim());
   const spare = p ? p.income - p.essentials - p.saving : 0;
+  const exploring = (scenario && meta?.scenarios[scenario]?.label) || goal || "Nothing yet";
   return (
     <>
       <Section heading="Whose numbers">
         {p ? (
-          <View style={s.card} testID="profile-person">
-            <Text style={[s.rowTitle, { fontFamily: F.head, fontSize: 18, lineHeight: 24 }]}>{who}, {age}</Text>
-            <Text style={s.p}>{job}{place.length ? `, ${place.join(", ")}` : ""}</Text>
-            <View style={{ gap: 4, marginTop: 8 }}>
+          <View style={[s.card, { gap: 16 }]} testID="profile-person">
+            <View style={{ gap: 4 }}>
+              <Text style={s.heroName}>{who}, {age}</Text>
+              <Text style={s.meta}>{job}{place.length ? `, ${place.join(", ")}` : ""}</Text>
+            </View>
+            <View style={{ gap: 12, borderTopWidth: 1, borderTopColor: "#e3e5e8", paddingTop: 16 }}>
               <Fact k="Take-home pay" v={`${money(p.income)} a month`} />
               <Fact k="Essentials" v={`${money(p.essentials)} a month`} />
               <Fact k="Left over" v={`${money(spare)} a month`} />
@@ -154,38 +158,64 @@ export function ProfilePanel({ meta, personaId, personaSeg, onPersona, scenario,
               <Fact k="EI if laid off" v={p.ei ? "Yes" : "No"} />
             </View>
           </View>
-        ) : <Text style={s.p}>{personaSeg ? "Nobody picked yet. Pick a person below or at the first fork." : "This road doesn't use money numbers yet."}</Text>}
+        ) : (
+          <Text style={[s.meta, { lineHeight: 22 }]}>
+            {personaSeg ? "Nobody picked yet. Choose a sample person below, or at the first fork on the road." : "This road doesn’t use money numbers yet."}
+          </Text>
+        )}
         {opts.length ? (
-          <View style={{ gap: 8 }} accessibilityRole="radiogroup">
-            <Text style={s.k}>{p ? "Switch person" : "Pick a person"}</Text>
-            {opts.map((o, j) => {
-              const on = personaSeg?.answer?.option_index === j;
-              return (
-                <Pressable key={j} onPress={() => !on && onPersona(j)} accessibilityRole="radio" accessibilityState={{ checked: on }} testID={`profile-persona-${j}`}
-                  style={({ pressed }) => [s.radio, on && { borderColor: C.sel, borderWidth: 2 }, pressed && { backgroundColor: "#e6e8eb" }]}>
-                  <View style={[s.dot, on && { borderColor: C.sel }]}>{on ? <View style={s.dotIn} /> : null}</View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[s.rowTitle, { fontFamily: on ? F.head : F.body }]}>{o.label}</Text>
-                    {o.sub ? <Text style={s.rowSub}>{o.sub}</Text> : null}
-                  </View>
-                </Pressable>
-              );
-            })}
-            <Text style={s.small}>Sample people with illustrative numbers.</Text>
+          <View style={{ gap: 12, marginTop: p ? 8 : 4 }}>
+            <Text style={s.k}>{p ? "Switch person" : "Sample people"}</Text>
+            <View style={s.list} accessibilityRole="radiogroup">
+              {opts.map((o, j) => {
+                const on = personaSeg?.answer?.option_index === j;
+                // Money fork: "$3,400/mo\n$1,200 saved" — income leads, savings is secondary.
+                const parts = (o.sub ?? "").split(/\n| · /).map((x) => x.trim()).filter(Boolean);
+                const income = parts[0] ?? null;
+                const saved = parts[1] ?? null;
+                return (
+                  <Pressable
+                    key={j}
+                    onPress={() => !on && onPersona(j)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: on }}
+                    testID={`profile-persona-${j}`}
+                    style={({ pressed }) => [s.listRow, j > 0 && s.listRule, on && s.listRowOn, pressed && { backgroundColor: "#eef0f2" }]}
+                  >
+                    <View style={{ flex: 1, gap: 4, minWidth: 0 }}>
+                      <Text style={[s.rowTitle, { fontFamily: F.head }]}>{o.label}</Text>
+                      {saved ? <Text style={s.meta}>{saved}</Text> : null}
+                      {!income && o.sub ? <Text style={s.figure}>{o.sub.replace(/\n/g, " · ")}</Text> : null}
+                    </View>
+                    {income ? <Text style={s.figure}>{income}</Text> : null}
+                    <View style={[s.dot, on && { borderColor: C.sel }]}>{on ? <View style={s.dotIn} /> : null}</View>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={[s.fine, { marginTop: 4 }]}>Illustrative numbers for demos — not real accounts.</Text>
           </View>
         ) : null}
       </Section>
 
       <Section heading="What you're exploring">
-        <Fact k={scenario ? "What-if" : "Goal"} v={(scenario && meta?.scenarios[scenario]?.label) || goal || "Nothing yet"} />
-        {weekly ? <Fact k="Weekly buffer" v={weekly.replace(" buffer", "")} /> : null}
+        <View style={[s.card, { gap: 14, paddingVertical: 18 }]}>
+          <Fact k={scenario ? "What-if" : "Goal"} v={exploring} />
+          {weekly ? <Fact k="Weekly buffer" v={weekly.replace(" buffer", "")} /> : null}
+        </View>
       </Section>
 
       <Section heading="Road style">
-        <View style={{ flexDirection: "row", gap: 8 }} accessibilityRole="radiogroup">
+        <View style={{ flexDirection: "row", gap: 12 }} accessibilityRole="radiogroup">
           {(["trail", "stream"] as const).map((m) => (
-            <Pressable key={m} onPress={() => setMode(m)} accessibilityRole="radio" accessibilityState={{ checked: mode === m }} testID={`mode-${m}`}
-              style={[s.seg, mode === m && { backgroundColor: C.sel, borderColor: C.sel }]}>
+            <Pressable
+              key={m}
+              onPress={() => setMode(m)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: mode === m }}
+              testID={`mode-${m}`}
+              style={[s.seg, mode === m && { backgroundColor: C.sel, borderColor: C.sel }]}
+            >
               <Text style={[s.btnText, mode === m && { color: "#fff" }]}>{mode === m ? "✓ " : ""}{m === "trail" ? "Trail" : "Stream"}</Text>
             </Pressable>
           ))}
@@ -197,30 +227,39 @@ export function ProfilePanel({ meta, personaId, personaSeg, onPersona, scenario,
 
 function Fact({ k, v }: { k: string; v: string }) {
   return (
-    <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 16 }}>
-      <Text style={s.p}>{k}</Text>
-      <Text style={[s.p, { color: ink, fontFamily: F.head, flexShrink: 1, textAlign: "right" }]}>{v}</Text>
+    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", gap: 16, minHeight: 24 }}>
+      <Text style={s.meta}>{k}</Text>
+      <Text style={{ fontFamily: F.head, fontSize: 15, lineHeight: 20, color: ink, flexShrink: 1, textAlign: "right" }}>{v}</Text>
     </View>
   );
 }
 
 const s = StyleSheet.create({
   drawer: { position: "absolute", top: 0, bottom: 0, backgroundColor: C.surface, shadowColor: "#1e283c", shadowOpacity: 0.3, shadowRadius: 20, elevation: 12 },
-  head: { flexDirection: "row", alignItems: "center", paddingLeft: 16, paddingRight: 4, paddingBottom: 8 },
+  head: { flexDirection: "row", alignItems: "center", paddingLeft: 16, paddingRight: 4, paddingBottom: 16 },
   title: { flex: 1, fontFamily: F.head, fontSize: 24, lineHeight: 32, color: ink },
   iconBtn: { width: 48, height: 48, alignItems: "center", justifyContent: "center", borderRadius: 999 },
+  section: { fontFamily: F.label, fontSize: 12, lineHeight: 16, letterSpacing: 1, textTransform: "uppercase", color: C.faint },
   h: { fontFamily: F.head, fontSize: 18, lineHeight: 24, color: ink },
-  k: { fontFamily: F.head, fontSize: 14, lineHeight: 20, color: sub },
+  k: { fontFamily: F.head, fontSize: 13, lineHeight: 18, color: sub },
   p: { fontFamily: F.body, fontSize: 15, lineHeight: 22, color: sub },
+  meta: { fontFamily: F.body, fontSize: 14, lineHeight: 20, color: sub },
+  fine: { fontFamily: F.body, fontSize: 12, lineHeight: 16, color: C.faint },
+  heroName: { fontFamily: F.head, fontSize: 20, lineHeight: 26, color: ink },
+  figure: { fontFamily: F.head, fontSize: 16, lineHeight: 22, color: ink },
   small: { fontFamily: F.body, fontSize: 14, lineHeight: 20, color: sub },
   row: { minHeight: 48, justifyContent: "center", paddingVertical: 6, paddingRight: 8, borderRadius: 8 },
   rowTitle: { fontFamily: F.body, fontSize: 15, lineHeight: 20, color: ink },
   rowSub: { fontFamily: F.body, fontSize: 14, lineHeight: 20, color: sub },
-  card: { backgroundColor: "#fff", borderRadius: 16, borderWidth: 1, borderColor: "#d5d8dc", padding: 16 },
+  card: { backgroundColor: "#fff", borderRadius: 14, borderWidth: 1, borderColor: "#e3e5e8", padding: 18 },
+  list: { backgroundColor: "#fff", borderRadius: 14, borderWidth: 1, borderColor: "#e3e5e8", overflow: "hidden" },
+  listRow: { minHeight: 72, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 16 },
+  listRowOn: { backgroundColor: "#f4f5f8" },
+  listRule: { borderTopWidth: 1, borderTopColor: "#e3e5e8" },
   radio: { minHeight: 56, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: "#8a8f96", backgroundColor: "#fff" },
-  dot: { width: 20, height: 20, borderRadius: 999, borderWidth: 2, borderColor: "#6b7078", alignItems: "center", justifyContent: "center" },
-  dotIn: { width: 10, height: 10, borderRadius: 999, backgroundColor: C.sel },
-  seg: { flex: 1, minHeight: 48, borderRadius: 999, borderWidth: 1, borderColor: "#8a8f96", backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
+  dot: { width: 22, height: 22, borderRadius: 999, borderWidth: 2, borderColor: "#9aa0a8", alignItems: "center", justifyContent: "center" },
+  dotIn: { width: 12, height: 12, borderRadius: 999, backgroundColor: C.sel },
+  seg: { flex: 1, minHeight: 52, borderRadius: 999, borderWidth: 1, borderColor: "#c3c7cd", backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
   btn: { minHeight: 48, borderRadius: 999, borderWidth: 2, borderColor: C.sel, alignItems: "center", justifyContent: "center", paddingHorizontal: 16 },
   btnText: { fontFamily: F.head, fontSize: 15, color: C.sel },
 });

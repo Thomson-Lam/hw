@@ -24,5 +24,6 @@ for i in $(seq 1 30); do curl -s -o /dev/null -m 2 http://$IP:8081/status && bre
 HOST=$(curl -s -m 5 -H "expo-platform: ios" http://$IP:8081/ | grep -o '"hostUri":"[^"]*"' | head -1)
 [[ $HOST == *"$IP:8081"* ]] || { echo "FAIL: Expo manifest points at $HOST, expected $IP:8081"; exit 1; }
 echo "metro ok, manifest $HOST, road server ok"
-/tmp/ftv/bin/python -I -c "import qrcode,sys;qrcode.make(sys.argv[1]).save('/tmp/uncharted-check/expo-go-qr.png')" "exp://$IP:8081" && open /tmp/uncharted-check/expo-go-qr.png
+mkdir -p /tmp/uncharted-check
+npx -y qrcode -w 400 -o /tmp/uncharted-check/expo-go-qr.png "exp://$IP:8081" >/dev/null && open /tmp/uncharted-check/expo-go-qr.png
 echo "READY: scan the QR with the iPhone Camera, or type exp://$IP:8081 in Expo Go"
