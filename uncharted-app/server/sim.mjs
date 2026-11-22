@@ -3,7 +3,7 @@
 
 export const PERSONAS = {
   maya: { name: "Maya, 23, contract analyst, Toronto", income: 3400, essentials: 2600, savings: 1200, saving: 0, ei: false },
-  dev: { name: "Dev, 21, student with a part-time job, London ON", income: 1400, essentials: 1150, savings: 400, saving: 0, ei: false },
+  dev: { name: "Emma, 21, student with a part-time job, London ON", income: 1400, essentials: 1150, savings: 400, saving: 0, ei: false },
   sam: { name: "Sam, 26, full-time nurse, Halifax", income: 4300, essentials: 3000, savings: 6500, saving: 150, ei: true },
 };
 

@@ -404,8 +404,9 @@ const LEVERS = {
   income: { key: "lever_income", ask: "a way to add income or a one-time boost", unit: "$ per month added", hint: "0 (no) plus 2 realistic options, each at most 15% of income a month" },
 };
 const MONEY_DECISION = `You help one young person make money decisions about a worry, while they scroll. Ask ONE concrete decision on the given LEVER.
-Return JSON only: {"tile":{"type":"fork","prompt":string<=9 words,"opts":[3 options, each {"label":string<=3 words,"sub":string<=4 words,"amount":number}]},"message":string}.
+Return JSON only: {"tile":{"type":"fork","prompt":string<=9 words,"opts":[3 options, each {"label":string<=4 words,"sub":string<=4 words,"amount":number}]},"message":string}.
 amount is the option's number on the lever (see UNIT). The first option must be the "keep as is" choice with amount 0.
+For non-zero options, label MUST show the dollar amount (e.g. "$15/week"); put the soft vibe in sub (e.g. "small buffer"). Never hide the number.
 Options must be specific to this person's life (their job, city, income) and realistic. No investment products, no advice beyond the decision.
 The message is one calm sentence of at most 18 words saying why this decision matters for their worry. Write money as $150, never bare numbers.`;
 
@@ -413,18 +414,36 @@ export async function moneyDecision(db, nodeId, ctx) {
   const L = LEVERS[ctx.lever];
   const p = ctx.persona;
   const cap = ctx.lever === "weekly" ? ctx.weeklyCap : ctx.lever === "spend" ? Math.round(p.essentials * 0.15) : Math.round(p.income * 0.15);
-  const user = `WORRY: ${ctx.worry}\nPERSON: ${p.name}; net income $${p.income}/month; essentials $${p.essentials}/month; savings $${p.savings}; saves $${p.saving}/month now.\nLEVER: ${L.ask}\nUNIT: ${L.unit}\nAMOUNTS: ${L.hint}; never above ${cap}.\nDECISIONS SO FAR: ${JSON.stringify(ctx.so_far)}\nAsk the decision.`;
+  const user = `WORRY: ${ctx.worry}\nPERSON: ${p.name}; net income $${p.income}/month; essentials $${p.essentials}/month; savings $${p.savings}; saves $${p.saving}/month now.\nLEVER: ${L.ask}\nUNIT: ${L.unit}\nAMOUNTS: ${L.hint}; never above ${cap}.\nDECISIONS SO FAR: ${JSON.stringify(ctx.so_far)}\nAsk the decision. Put the $ amount in every non-zero label.`;
   const check = (o) => {
     const t = o.tile, errs = [];
     if (t?.type !== "fork" || !Array.isArray(t.opts) || t.opts.length < 2 || t.opts.length > 3) return ["shape: a fork with 3 options"];
     if (words(t.prompt) > 11) errs.push("length: prompt");
     t.opts.forEach((x, i) => {
-      if (typeof x?.label !== "string" || words(x.label) > 4 || words(x?.sub) > 6) errs.push(`length: option ${i + 1}`);
+      if (typeof x?.label !== "string" || words(x.label) > 5 || words(x?.sub) > 6) errs.push(`length: option ${i + 1}`);
       const a = Number(x?.amount);
       if (!(a >= 0 && a <= cap)) errs.push(`range: option ${i + 1} amount ${x?.amount} must be 0 to ${cap}`);
     });
     if (Number(t.opts[0]?.amount) !== 0) errs.push("order: the first option is keep-as-is with amount 0");
-    if (!errs.length) t.opts.forEach((x) => { x.rule = { kind: "set", key: L.key, value: Math.round(Number(x.amount)) }; delete x.amount; });
+    if (!errs.length) {
+      t.opts.forEach((x) => {
+        const v = Math.round(Number(x.amount));
+        x.rule = { kind: "set", key: L.key, value: v };
+        // Always surface the number on the lane — vibe-only labels made $15 appear out of nowhere later.
+        if (L.key === "lever_weekly") {
+          if (v === 0) { x.label = x.label?.includes("$") ? x.label : "Keep as is"; x.sub = x.sub || "No change"; }
+          else {
+            const vibe = (x.sub && !String(x.sub).includes("$") ? x.sub : null) || (x.label && !String(x.label).includes("$") ? x.label : "a week");
+            x.label = `$${v}/week`;
+            x.sub = vibe;
+          }
+        } else if (v > 0 && !String(x.label).includes("$")) {
+          x.sub = x.sub || x.label;
+          x.label = L.key === "lever_spend" ? `−$${v}/mo` : `+$${v}/mo`;
+        }
+        delete x.amount;
+      });
+    }
     if (typeof o.message !== "string" || words(o.message) > 20) errs.push("message: one sentence, at most 20 words");
     errs.push(...checkMoneyWording(o.message));
     return errs;

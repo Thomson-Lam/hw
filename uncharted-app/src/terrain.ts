@@ -82,7 +82,10 @@ export const choiceOpts = (s: Segment) => (s.el.type === "fork" ? s.el.opts : s.
 
 export type Layout = { sections: Section[]; maxS: number; Hc: number; Z: number };
 export function layout(segs: Segment[], gate: number, paving: boolean, W: number, H: number): Layout {
-  const Hc = Math.max(H, (CH * W) / CW), Z = Hc; // one screen of scroll drives one fork zoom
+  // One viewport tall per stretch so cards at sec.T stay middle-screen at rest (and fork zoomEnd
+  // lands on the next card). Do not size stretches to chunk aspect — that made Hc > H on short
+  // windows and shoved every stop off-center.
+  const Hc = H, Z = H;
   const out: Section[] = [];
   let T = 0, next: Kind | null = null, k = 0;
   const upto = gate >= 0 ? segs.slice(0, gate + 1) : segs;

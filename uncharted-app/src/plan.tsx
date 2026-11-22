@@ -154,11 +154,11 @@ const MEANS: Record<Outcome, string> = {
 const small = { fontFamily: F.body, fontSize: 13, lineHeight: 18, color: C.sub } as const;
 
 // One 100% bar per plan, labelled in place, so the two rows compare segment by segment.
-function OutcomeBar({ label, t, total }: { label: string; t: Tally; total: number }) {
+function OutcomeBar({ label, t, total, warn }: { label: string; t: Tally; total: number; warn?: boolean }) {
   const pct = (k: Outcome) => Math.round((100 * t[k]) / total);
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }} accessible accessibilityLabel={`${label}: ${KEYS.map((k) => `${OUT[k].label} ${pct(k)}%`).join(", ")}`}>
-      <Text style={{ width: 72, fontFamily: F.head, fontSize: 14, lineHeight: 18, color: C.ink }}>{label}</Text>
+      <Text style={{ width: 72, fontFamily: F.head, fontSize: 14, lineHeight: 18, color: warn ? TONE.hard : C.ink }}>{label}</Text>
       <View style={{ flex: 1, flexDirection: "row", height: 24, gap: 2, borderRadius: 6, overflow: "hidden" }}>
         {KEYS.filter((k) => t[k] > 0).map((k) => (
           <View key={k} style={{ flexGrow: t[k], flexBasis: 0, minWidth: 3, backgroundColor: TONE[k], justifyContent: "center", alignItems: "center" }}>
@@ -288,7 +288,7 @@ export function MoneyPlan({ seg }: { seg: Segment }) {
       ) : (
         <View style={{ gap: 24 }}>
           <View style={{ gap: 8 }}>
-            <OutcomeBar label={planned ? "Now" : "As it is"} t={e.before} total={e.total} />
+            <OutcomeBar label={planned ? "Now" : "As it is"} t={e.before} total={e.total} warn />
             {planned ? <OutcomeBar label="Your plan" t={e.after} total={e.total} /> : null}
             <Legend />
           </View>

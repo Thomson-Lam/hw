@@ -1,6 +1,6 @@
 // A stop drawn as its full widget on its stretch of road, answerable in place (no pin to open first).
 import { memo } from "react";
-import Animated, { FadeIn, LinearTransition } from "react-native-reanimated";
+import { View } from "react-native";
 
 import { AnswerPayload } from "./api";
 import { Segment } from "./contract";
@@ -17,11 +17,11 @@ export type CardActions = {
 export const CardBody = memo(
   function CardBody({ seg, rulesNow, actions }: { seg: Segment; rulesNow: string; actions: React.RefObject<CardActions> }) {
     return (
-      <Animated.View entering={FadeIn.duration(220)} layout={LinearTransition.duration(220)} testID={`card-${seg.el.type}`}>
+      <View testID={`card-${seg.el.type}`}>
         <Widget seg={seg} rulesNow={rulesNow ? rulesNow.split("\n") : []}
           answer={(p) => actions.current.answer(seg, p)} change={() => actions.current.change(seg)} retry={() => actions.current.retry(seg)}
           onGoal={() => actions.current.home()} onExplore={() => actions.current.home()} />
-      </Animated.View>
+      </View>
     );
   },
   (a, b) => a.seg.id === b.seg.id && a.rulesNow === b.rulesNow && JSON.stringify(a.seg.answer) === JSON.stringify(b.seg.answer) && JSON.stringify(a.seg.el) === JSON.stringify(b.seg.el),
@@ -29,8 +29,8 @@ export const CardBody = memo(
 
 export const PavingCard = memo(function PavingCard() {
   return (
-    <Animated.View entering={FadeIn.duration(220)} style={{ opacity: 0.9 }}>
+    <View style={{ opacity: 0.9 }}>
       <Paving />
-    </Animated.View>
+    </View>
   );
 });

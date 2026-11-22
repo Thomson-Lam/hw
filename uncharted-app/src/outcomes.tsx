@@ -19,7 +19,7 @@ export const axisText = { fontFamily: F.body, fontSize: 12, lineHeight: 16, colo
 // One glance: where it starts, how low it goes, where it ends. Shaded = in debt.
 // With `b`, `a` is drawn as the grey "without" line and labelled `without`.
 export function Spark({ a, b, without, height = 110 }: { a: { series: number[] }; b?: { series: number[] }; without?: string; height?: number }) {
-  const W = 300, H = height, top = 24, bot = 24;
+  const W = 300, H = height, top = 24, bot = 28;
   const all = [...a.series, ...(b?.series ?? [])];
   const lo = Math.min(0, ...all), hi = Math.max(0, ...all);
   const span = hi - lo || 1;
@@ -36,10 +36,11 @@ export function Spark({ a, b, without, height = 110 }: { a: { series: number[] }
   const above = (v: number) => Math.max(0, y(v) - 20);
   const below = (v: number) => Math.min(H - 16, y(v) + 4);
   const described = `Cash on hand over 5 years. Starts at ${money(start)}, lowest ${money(low)}, ends at ${money(end)}. Below $0 is debt.`;
-  // The end value goes on the side of the end point the line is not on just before it ends, right-aligned to the edge.
-  const tail = s.slice(Math.floor((n - 1) * 0.8));
-  const fromAbove = Math.max(...tail) > end;
-  const endTop = fromAbove ? (y(end) + 26 <= H ? y(end) + 8 : y(end) - 26) : (y(end) - 26 >= 0 ? y(end) - 26 : y(end) + 8);
+  // End value: debt endings stay above the tip (below jammed the stroke + Year 5). Clear of the chart floor.
+  const endLabelH = 18;
+  const aboveTop = Math.max(0, y(end) - 24);
+  const belowTop = Math.min(H - endLabelH - 2, y(end) + 10);
+  const endTop = end < 0 || y(end) > H * 0.62 ? aboveTop : (y(end) - 22 >= 0 ? y(end) - 22 : belowTop);
   return (
     <View accessible accessibilityLabel={described} style={{ gap: 4 }}>
       <View style={{ height: H }}>
@@ -56,7 +57,7 @@ export function Spark({ a, b, without, height = 110 }: { a: { series: number[] }
         {low < 0 && lowI > (n - 1) * 0.2 && lowI < (n - 1) * 0.75 ? (
           <Text numberOfLines={1} style={[label, { left: pct(lowI), width: 72, marginLeft: -36, textAlign: "center", top: below(low), color: "#8a2b20" }]}>{money(low)}</Text>
         ) : null}
-        <Text numberOfLines={1} style={[label, { right: 0, top: endTop, fontSize: 14, lineHeight: 18, color: end < 0 ? "#8a2b20" : C.ink }]}>{money(end)}</Text>
+        <Text numberOfLines={1} style={[label, { right: 2, top: endTop, fontSize: 14, lineHeight: 18, color: end < 0 ? TONE.hard : C.ink }]}>{money(end)}</Text>
       </View>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         <Text style={axisText}>Now</Text>
