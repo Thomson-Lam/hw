@@ -1,23 +1,32 @@
 # Uncharted
 
-We wanted to a) experiment with a new way to interact with and use LLMs to power the user experience, b) arrive at a same goal but through different processes and see what would happen, c) maybe not watch reels while Clauding and enrich ourselves organically without forcing ourselves to do so mentally.
+We wanted to a) experiment with a new way to interact with and use LLMs to power the user experience, b) arrive at a same goal but through different processes and see what would happen, c) maybe not watch reels while Clauding and enrich ourselves organically without forcing ourselves to do so.
 
 1. you enter something you want to do.
 2. you scroll and make decisions.
 3. you see the result of your decisions. If you don't like it and want to see more, keep scrolling.
 4. you explore other ways you could have gotten to the same goal and try different things.
 
-Is the gist of Uncharted. We combined 2 favorites things for hackers: prompting and doom scrolling, into one thing; for hackers, by hackers. And once in a while, a nice, random surprise from Wikipedia pops out.
+Is the gist of Uncharted. We combined the 2 things every hacker did this weekend, prompting and doom scrolling, into one thing, and let our choices take us down the new roads we make.
 
-**Canada Life track**: Uncharted is also an app that simulate scenarios that forces you to make good investment decisions through simulations, with the fun of doom scrolling (if you can't fight it, join it!) and the randomness of LLMs.
+Uncharted can be used for:
 
-> WARNING: Our harness is designed to force Gemini to be **creative**; it never repeats and has to keep exploring, so it gets desperate to make a good idea the more you scroll. You may run into *fun* ideas if you keep scrolling, so scroll with caution.
+- exploring ideas
+- finding things
+- learning things
+- training long-term financial planning
+
+**Canada Life track**: Uncharted is also an app that simulate scenarios that teaches you to make good investment decisions through simulations, with scrolling free of charge (if you can't fight it, join it!) and the randomness of LLMs.
+
+> WARNING: Our harness is designed to force Gemini to be **creative** for the ideation scenario; it never repeats and has to keep exploring, so it gets desperate to make a good idea the more you scroll. You may run into *fun* ideas if you keep scrolling, so scroll with caution.
 
 <p align="center">
   <img src="docs/screenshots/IMG_6415.jpg" width="250" alt="Idea card: Dark Beat Singletrack, a rhythmic nighttime mountain bike descent. Your choices: 25." />
   <img src="docs/screenshots/IMG_6416.jpg" width="250" alt="Idea card: Data Trail Chart Stream, review digital charts for the trail ahead. Your choices: 47." />
   <img src="docs/screenshots/IMG_6417.jpg" width="250" alt="Idea card: Visual Fauna Log Feed, read animal data tracks in the dark. Your choices: 48." />
 </p>
+
+Once in a while, a nice surprise from Wikipedia pops out when exploring ideas.
 
 ## Scroll yourself 
 
