@@ -254,7 +254,7 @@ const s = StyleSheet.create({
   card: { backgroundColor: "#fff", borderRadius: 14, borderWidth: 1, borderColor: "#e3e5e8", padding: 18 },
   list: { backgroundColor: "#fff", borderRadius: 14, borderWidth: 1, borderColor: "#e3e5e8", overflow: "hidden" },
   listRow: { minHeight: 72, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 16 },
-  listRowOn: { backgroundColor: "#f4f5f8" },
+  listRowOn: { backgroundColor: "#fafbfc" },
   listRule: { borderTopWidth: 1, borderTopColor: "#e3e5e8" },
   radio: { minHeight: 56, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: "#8a8f96", backgroundColor: "#fff" },
   dot: { width: 22, height: 22, borderRadius: 999, borderWidth: 2, borderColor: "#9aa0a8", alignItems: "center", justifyContent: "center" },

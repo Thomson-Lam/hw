@@ -52,24 +52,19 @@ function Item({ seg }: WidgetProps) {
   );
 }
 
-function Ask({ seg, answer, change, onGoal }: WidgetProps) {
+function Ask({ seg, answer, change }: WidgetProps) {
   const e = seg.el as Of<"ask">;
   const [text, setText] = useState("");
   const go = (g: string) => g.trim() && answer({ text: g.trim() });
-  // A money worry only shows the worry (a new worry means a new road); other roads keep "change" on their goal.
+  // Money worry is locked once chosen — a new worry means Home and a new road. Other roads keep "change".
   const money = !!seg.answer?.rules.some((r) => r.key === "kind" || r.key === "scenario");
   return (
     <Window title={title(seg, money ? "your worry" : "your goal")}>
       {seg.answer && money ? (
-        <>
-          <View style={{ gap: 6 }}>
-            <Text style={{ fontFamily: F.body, fontSize: 14, lineHeight: 20, color: C.sub }}>{e.prompt}</Text>
-            <Text style={T.h} testID="worry">“{seg.answer.label}”</Text>
-          </View>
-          <Pressable onPress={onGoal} accessibilityRole="button" testID="new-worry" style={{ minHeight: 48, justifyContent: "center", alignSelf: "flex-start", marginTop: -8, marginBottom: -12 }}>
-            <Text style={[T.link, { paddingVertical: 0 }]}>Pick a different worry</Text>
-          </Pressable>
-        </>
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontFamily: F.body, fontSize: 14, lineHeight: 20, color: C.sub }}>{e.prompt}</Text>
+          <Text style={T.h} testID="worry">“{seg.answer.label}”</Text>
+        </View>
       ) : seg.answer ? (
         <>
           <Text style={T.h2}>{e.prompt}</Text>
@@ -277,7 +272,7 @@ function Checkin({ seg, onGoal, onExplore }: WidgetProps) {
       <PickList />
       {e.final ? (
         <View style={{ flexDirection: "row", gap: 8 }}>
-          {e.money ? <Pill flex label="Try another worry" onPress={onGoal} /> : (
+          {e.money ? <Pill flex label="Start a new road" onPress={onGoal} /> : (
             <>
               <Pill flex label="Explore more" onPress={onExplore} />
               <Pill flex label="New goal" onPress={onGoal} />

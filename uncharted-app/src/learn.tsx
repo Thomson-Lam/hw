@@ -90,6 +90,12 @@ function frameAt(frames: DialFrame[], v: number): { caption: string; viz?: Viz }
   return near;
 }
 
+function DialCaption({ text }: { text: string }) {
+  const m = text.match(/^(.*?)(never in debt in .+? of futures\.?)(.*)$/i);
+  if (!m) return <>{text}</>;
+  return <>{m[1]}<Text style={{ fontFamily: F.head, color: C.ink }}>{m[2]}</Text>{m[3]}</>;
+}
+
 export function Dial({ seg }: { seg: Segment }) {
   const e = seg.el as Of<"dial">;
   const [v, setV] = useState(e.frames[0]?.at ?? e.knob.min);
@@ -97,7 +103,7 @@ export function Dial({ seg }: { seg: Segment }) {
   const num = (x: number) => (Number.isInteger(e.knob.step) ? String(Math.round(x)) : x.toFixed(1));
   const fmt = (x: number) => (e.knob.unit === "$" ? `$${num(x)}` : `${num(x)}${e.knob.unit ? ` ${e.knob.unit}` : ""}`);
   return (
-    <Window title="Try it">
+    <Window title="Just exploring">
       <Text style={T.h2}>{e.title}</Text>
       <Text style={T.p}>{e.prompt}</Text>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -107,7 +113,7 @@ export function Dial({ seg }: { seg: Segment }) {
       <Slider minimumValue={e.knob.min} maximumValue={e.knob.max} step={e.knob.step} value={v} onValueChange={setV}
         minimumTrackTintColor={C.sel} maximumTrackTintColor="#c3c7cd" style={{ height: 48 }} accessibilityLabel={e.knob.label} testID="dial-knob" />
       {f.viz ? <VizView viz={f.viz} /> : null}
-      <Text style={[T.p, { color: C.ink }]} testID="dial-caption">{f.caption}</Text>
+      <Text style={[T.p, { color: C.ink, marginTop: 8 }]} testID="dial-caption"><DialCaption text={f.caption} /></Text>
     </Window>
   );
 }
@@ -183,7 +189,6 @@ export function Deck({ seg, progress, still }: { seg: Segment; progress: number;
           );
         })}
       </Pressable>
-      {top < n - 1 ? <Text style={{ fontFamily: F.body, fontSize: 14, lineHeight: 20, color: "#fff", textShadowColor: "rgba(0,0,0,0.6)", textShadowRadius: 6 }}>Tap for the next card</Text> : null}
     </View>
   );
 }

@@ -51,8 +51,6 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
   const [treeNodes, setTreeNodes] = useState<TreeNode[] | null>(null);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [peek, setPeek] = useState<TreeNode | null>(null);
-  // After picking a person from Profile, open the next result in a centered sheet.
-  const [openAfterPick, setOpenAfterPick] = useState(false);
   const scroller = useRef<ScrollViewInstance>(null);
   const anim = useRef(0);
 
@@ -103,15 +101,6 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
     glide(Math.min(L.maxS, zoomEnd(L, sec, H)));
   }, [follow, L]);
 
-  // Profile persona pick: once the next stop is paved, show it centered (not stuck on the road edge).
-  useEffect(() => {
-    if (!openAfterPick || !road || road.paving) return;
-    const next = [...shown].reverse().find((x) => x.el.type !== "fork" && x.el.type !== "ask");
-    if (!next) return;
-    setOpenAfterPick(false);
-    setOpen(next.id);
-  }, [openAfterPick, road, shown]);
-
   const pickLane = async (seg: Segment, j: number) => {
     const cur = seg.answer?.option_index ?? -1;
     if (cur === j) return setFollow(seg.id);
@@ -155,8 +144,14 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
   const personaId = personaRule && personaRule.kind === "set" ? String(personaRule.value) : null;
   const roadIds = useMemo(() => new Set(shown.map((x) => x.id)), [shown]);
   // Each choice on the road, in order. Tapping one glides back to the exact stop where it was made, to choose differently.
-  const picks: Pick[] = useMemo(() => shown.filter((x) => x.answer && ["fork", "thisthat", "compare", "ask"].includes(x.el.type))
-    .map((x) => ({ id: x.id, prompt: "prompt" in x.el ? x.el.prompt : "title" in x.el ? x.el.title : "", label: x.answer!.label })), [shown]);
+  const picks: Pick[] = useMemo(() => shown.filter((x) => x.answer && ["fork", "thisthat", "compare", "ask", "action"].includes(x.el.type))
+    .map((x) => {
+      if (x.el.type === "action") {
+        const done = x.answer!.label === "set up" || x.answer!.label === "done";
+        return { id: x.id, prompt: "One next step", label: done ? `$${x.el.weekly}/week set up` : x.answer!.label };
+      }
+      return { id: x.id, prompt: "prompt" in x.el ? x.el.prompt : "title" in x.el ? x.el.title : "", label: x.answer!.label };
+    }), [shown]);
   const jumpTo = (id: string) => {
     const sec = L.sections.find((x) => x.seg?.id === id);
     if (sec) glide(Math.max(0, Math.min(L.maxS, sec.T)));
@@ -166,7 +161,8 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
   useLayoutEffect(() => { jumpRef.current = jumpTo; });
   const picksCtx = useMemo(() => ({ picks, jump: (id: string) => jumpRef.current(id) }), [picks]);
   const [choicesOpen, setChoicesOpen] = useState(false);
-  const barBtn = { minHeight: 48, minWidth: 48, paddingHorizontal: 14, borderRadius: 999, backgroundColor: "rgba(244,245,248,0.95)", borderWidth: 1, borderColor: C.border, flexDirection: "row" as const, alignItems: "center" as const, gap: 6 };
+  const barBtn = { minHeight: 48, minWidth: 48, paddingHorizontal: 14, borderRadius: 999, backgroundColor: "rgba(244,245,248,0.95)", borderWidth: 1, borderColor: C.border, flexDirection: "row" as const, alignItems: "center" as const, justifyContent: "center" as const, gap: 6 };
+  const iconBtn = { ...barBtn, paddingHorizontal: 0, width: 48 };
 
   const marks = placed.flatMap((p: Placed) => {
     const sec = p.sec, seg = sec.seg, out: React.ReactNode[] = [];
@@ -202,7 +198,7 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
             {chosen < 0 ? <Ring size={30} left={q.x - left} top={8} /> : null}
             <Image source={PIN} style={{ width: 23, height: 58, marginLeft: q.x - left - 11.5 }} />
             <View style={{ marginTop: 4, backgroundColor: picked ? "#2f3a4a" : "rgba(244,245,248,0.96)", borderRadius: 8, borderWidth: 0.9, borderColor: C.border, paddingHorizontal: 8, paddingVertical: 8, minHeight: 48, width: lw, justifyContent: "center", gap: 4 }}>
-              <Text numberOfLines={2} style={{ fontFamily: F.head, fontSize: 16, lineHeight: 20, color: picked ? "#fff" : C.ink, textAlign: "center" }}>{j === chosen ? "✓ " : ""}{o.label}</Text>
+              <Text numberOfLines={2} style={{ fontFamily: F.head, fontSize: 16, lineHeight: 20, color: picked ? "#fff" : C.ink, textAlign: "center" }}>{o.label}</Text>
               {o.sub ? <Text numberOfLines={3} style={{ fontFamily: F.body, fontSize: 13, lineHeight: 16, color: picked ? "#d7dde5" : C.sub, textAlign: "center" }}>{o.sub}</Text> : null}
             </View>
           </Pressable>,
@@ -213,24 +209,17 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
     return out;
   });
 
-  // Straight stretches carry their stop as a full card, centred on the stretch. Cards live inside the ScrollView
-  // (content coordinates), so a drag that starts on a card still scrolls the road. A stretch rests at content y = sec.T
-  // (fork windows are square and bottom-aligned, so a finished zoom lands it there too), so a card's position never
-  // changes with scroll: the browser moves it natively, with no one-frame lag. Cards mount a screen ahead, off screen.
+  // Cards live in the ScrollView so they scroll away. One viewport-tall band at sec.T → middle at rest.
   const rulesNow = active.map((r) => r.text).join("\n");
+  const chrome = Math.max(insets.top, insets.bottom) + 56;
   const cards = L.sections.flatMap((sec, i) => {
     const seg = sec.seg;
     if (sec.n) return [];
-    if (sec.T + L.Hc < cs - H || sec.T > cs + 2 * H) return [];
-    // Scroll-linked arrival: a card fades and grows in as its centre rises through the bottom half of the screen.
-    const c = sec.T + L.Hc / 2 - cs;
-    const v = reduceMotion ? 1 : Math.max(0, Math.min(1, (H * 1.05 - c) / (H * 0.45)));
+    if (sec.T + H < cs - H || sec.T > cs + 2 * H) return [];
     const key = sec.ghost ? `ghost${i}` : seg!.id;
     return [
-      <View key={key} pointerEvents="box-none" style={{ position: "absolute", top: sec.T, minHeight: L.Hc, left: 12, right: 12, justifyContent: "center" }}>
-        <View pointerEvents={v < 0.5 ? "none" : "box-none"} style={{ opacity: 0.15 + 0.85 * v, transform: [{ scale: 0.96 + 0.04 * v }] }}>
-          {sec.ghost ? <PavingCard /> : seg!.el.type === "deck" ? <Deck seg={seg!} progress={0} still={reduceMotion} /> : <CardBody seg={seg!} rulesNow={rulesNow} actions={cardActions} />}
-        </View>
+      <View key={key} pointerEvents="box-none" style={{ position: "absolute", top: sec.T, height: H, left: 12, right: 12, justifyContent: "center", paddingTop: chrome, paddingBottom: chrome }}>
+        {sec.ghost ? <PavingCard /> : seg!.el.type === "deck" ? <Deck seg={seg!} progress={0} still={reduceMotion} /> : <CardBody seg={seg!} rulesNow={rulesNow} actions={cardActions} />}
       </View>,
     ];
   });
@@ -249,15 +238,15 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
       </View>
 
       <View pointerEvents="box-none" style={{ position: "absolute", top: insets.top + 8, left: 12, right: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
-        <Pressable onPress={restart} testID="home" accessibilityRole="button" accessibilityLabel="Back to home" style={barBtn}>
-          <IconBack /><Text style={{ fontFamily: F.head, fontSize: 15, color: C.ink }}>Home</Text>
+        <Pressable onPress={restart} testID="home" accessibilityRole="button" accessibilityLabel="Back to home" style={iconBtn}>
+          <IconBack />
         </Pressable>
         <Pressable onPress={() => setPanel("variants")} testID="variants" accessibilityRole="button" accessibilityLabel="Show saved variants" style={barBtn}>
           <IconPaths /><Text style={{ fontFamily: F.head, fontSize: 15, color: C.ink }}>Variants</Text>
         </Pressable>
         <View style={{ flex: 1 }} pointerEvents="none" />
-        <Pressable onPress={() => setPanel("profile")} testID="profile" accessibilityRole="button" accessibilityLabel="Profile and settings" style={barBtn}>
-          <IconPerson /><Text style={{ fontFamily: F.head, fontSize: 15, color: C.ink }}>Profile</Text>
+        <Pressable onPress={() => setPanel("profile")} testID="profile" accessibilityRole="button" accessibilityLabel="Profile and settings" style={iconBtn}>
+          <IconPerson />
         </Pressable>
       </View>
 
@@ -279,9 +268,9 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
           <Animated.View entering={FadeIn.duration(180)} style={StyleSheet.absoluteFill}>
             <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10,20,30,0.35)" }]} onPress={() => setChoicesOpen(false)} testID="choices-backdrop" />
           </Animated.View>
-          <View style={[StyleSheet.absoluteFill, { justifyContent: "center", paddingHorizontal: 10, paddingVertical: insets.top + 24 }]} pointerEvents="box-none">
-            <Animated.View entering={ZoomIn.duration(220)} style={{ maxHeight: H * 0.8 }}>
-              <ScrollView testID="choices-sheet" bounces={false}>
+          <View style={[StyleSheet.absoluteFill, { justifyContent: "center", paddingHorizontal: 10, paddingTop: insets.top + 56, paddingBottom: insets.bottom + 56 }]} pointerEvents="box-none">
+            <Animated.View entering={ZoomIn.duration(220)} style={{ maxHeight: "80%" }}>
+              <ScrollView testID="choices-sheet" bounces={false} style={{ flexGrow: 0 }} contentContainerStyle={{ flexGrow: 0 }}>
                 <CloseCtx.Provider value={() => setChoicesOpen(false)}>
                   <Window title="Your choices">
                     <Text style={T.p}>Go back to any choice to pick differently. The road ahead repaves.</Text>
@@ -299,9 +288,9 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
           <Animated.View entering={FadeIn.duration(180)} style={StyleSheet.absoluteFill}>
             <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10,20,30,0.35)" }]} onPress={() => setOpen(null)} testID="sheet-backdrop" />
           </Animated.View>
-          <View style={[StyleSheet.absoluteFill, { justifyContent: "center", paddingHorizontal: 10, paddingVertical: insets.top + 24 }]} pointerEvents="box-none">
-            <Animated.View entering={ZoomIn.duration(220)} style={{ maxHeight: H * 0.8 }}>
-              <ScrollView testID="sheet" bounces={false} contentContainerStyle={{ paddingTop: 4 }}>
+          <View style={[StyleSheet.absoluteFill, { justifyContent: "center", paddingHorizontal: 10, paddingTop: insets.top + 56, paddingBottom: insets.bottom + 56 }]} pointerEvents="box-none">
+            <Animated.View entering={ZoomIn.duration(220)} style={{ maxHeight: "80%" }}>
+              <ScrollView testID="sheet" bounces={false} style={{ flexGrow: 0 }} contentContainerStyle={{ flexGrow: 0, paddingTop: 4 }}>
                 <CloseCtx.Provider value={() => setOpen(null)}>
                   <Widget seg={openSeg} rulesNow={active.map((r) => r.text)}
                     answer={(p: AnswerPayload) => {
@@ -321,9 +310,9 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
       {peek && peek.element ? (
         <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
           <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10,20,30,0.35)" }]} onPress={() => setPeek(null)} testID="peek-backdrop" />
-          <View style={[StyleSheet.absoluteFill, { justifyContent: "center", paddingHorizontal: 10, paddingVertical: insets.top + 24, gap: 8 }]} pointerEvents="box-none">
-            <View style={{ maxHeight: H * 0.75 }}>
-              <ScrollView testID="peek" bounces={false}>
+          <View style={[StyleSheet.absoluteFill, { justifyContent: "center", paddingHorizontal: 10, paddingTop: insets.top + 56, paddingBottom: insets.bottom + 56, gap: 8 }]} pointerEvents="box-none">
+            <View style={{ maxHeight: "75%" }}>
+              <ScrollView testID="peek" bounces={false} style={{ flexGrow: 0 }} contentContainerStyle={{ flexGrow: 0 }}>
                 <CloseCtx.Provider value={() => setPeek(null)}>
                   <MessageCtx.Provider value="A result from another set of choices. To get here again, open Your choices and change a pick.">
                     <View pointerEvents="none">
@@ -351,7 +340,6 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
           <ProfilePanel meta={meta} personaId={personaId} personaSeg={personaSeg} onPersona={(j) => {
             setPanel(null);
             if (!personaSeg) return;
-            setOpenAfterPick(true);
             void pickLane(personaSeg, j);
           }}
             scenario={t.scenario} goal={goalSeg?.answer?.label ?? t.goal} weekly={active.find((r) => r.key === "weekly")?.text ?? null} mode={mode} setMode={setMode} />

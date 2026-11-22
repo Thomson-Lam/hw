@@ -1,16 +1,17 @@
 // Last stop on a money road: name the step, show how to do it, then mark it done or defer.
 // Not a bank confirmation — this screen does not move money.
 // Hierarchy: action headline → plain sim note → numbered how-to → primary done / defer → edge case.
-import { useContext, useState } from "react";
+// After done: success state (Mobbin-style check + headline + next), how-to collapses.
+import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { AnswerPayload } from "./api";
 import { Element, Segment } from "./contract";
-import { C, F, PicksCtx, T, Window } from "./hw";
+import { C, F, T, Window } from "./hw";
 
 type Of<K extends Element["type"]> = Extract<Element, { type: K }>;
 const pct = (n: number, total: number) => Math.round((100 * n) / total);
 
-function Why({ e, onChangeAmount }: { e: Of<"action">; onChangeAmount?: () => void }) {
+function Why({ e }: { e: Of<"action"> }) {
   const p = e.payoff;
   const was = p ? pct(p.before, p.total) : null;
   const now = p ? pct(p.after, p.total) : null;
@@ -25,17 +26,6 @@ function Why({ e, onChangeAmount }: { e: Of<"action">; onChangeAmount?: () => vo
       <Text style={T.p} accessibilityLabel={p ? `${sub} Based on ${p.total.toLocaleString("en-CA")} simulated runs.` : sub}>
         {sub}
       </Text>
-      {onChangeAmount ? (
-        <Pressable
-          onPress={onChangeAmount}
-          accessibilityRole="button"
-          testID="action-change-amount"
-          hitSlop={8}
-          style={{ alignSelf: "flex-start", paddingVertical: 4 }}
-        >
-          <Text style={[T.link, { paddingVertical: 0 }]}>Change amount</Text>
-        </Pressable>
-      ) : null}
     </View>
   );
 }
@@ -74,7 +64,7 @@ function Help() {
         hitSlop={8}
         style={{ alignSelf: "flex-start", paddingVertical: 4 }}
       >
-        <Text style={[T.link, { paddingVertical: 0 }]}>{open ? "Hide" : "No savings account yet?"}</Text>
+        <Text style={{ fontFamily: F.body, fontSize: 15, lineHeight: 20, color: "#7a7f86", textDecorationLine: "underline", paddingVertical: 0 }}>{open ? "Hide" : "No savings account yet?"}</Text>
       </Pressable>
       {open ? (
         <Text style={T.p}>
@@ -85,21 +75,30 @@ function Help() {
   );
 }
 
-function Act({ seg, answer, change }: { seg: Segment; answer: (p: AnswerPayload) => void; change: () => void }) {
-  const picked = seg.answer?.label;
-  if (picked) {
-    const done = picked === "set up" || picked === "done";
-    return (
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-        <Text style={{ fontFamily: F.head, fontSize: 15, lineHeight: 20, color: C.ink, flexShrink: 1 }}>
-          {done ? "✓ Marked as set up" : picked === "remind" || picked.includes("remind") ? "✓ Reminder set for after payday" : `✓ ${picked}`}
-        </Text>
-        <Pressable onPress={change} accessibilityRole="button" testID={`change-${seg.id}`} hitSlop={8} style={{ paddingVertical: 8 }}>
-          <Text style={[T.link, { paddingVertical: 0 }]}>Change</Text>
-        </Pressable>
+function Done({ e, change, remind }: { e: Of<"action">; change: () => void; remind: boolean }) {
+  const p = e.payoff;
+  const now = p ? pct(p.after, p.total) : null;
+  return (
+    <View style={{ gap: 14, alignItems: "center", paddingTop: 16, paddingBottom: 8 }} testID="action-done-state">
+      <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: C.sel, alignItems: "center", justifyContent: "center" }}>
+        <Text style={{ fontFamily: F.head, fontSize: 28, lineHeight: 32, color: "#fff" }}>✓</Text>
       </View>
-    );
-  }
+      <Text style={[T.h, { textAlign: "center" }]}>{remind ? "We’ll remind you" : "You’re all set"}</Text>
+      <Text style={[T.p, { textAlign: "center", color: C.ink }]}>
+        {remind
+          ? `After payday, set aside $${e.weekly} a week — we’ll nudge you so it doesn’t slip.`
+          : now != null
+            ? <>That ${e.weekly} a week gives you a real shot: in <Text style={{ fontFamily: F.head, color: C.ink }}>{now}% of futures</Text>, you never fall into debt.</>
+            : `That $${e.weekly} a week is a solid buffer when money gets tight.`}
+      </Text>
+      <Pressable onPress={change} accessibilityRole="button" testID="change-action" hitSlop={8} style={{ paddingVertical: 4, marginTop: 4 }}>
+        <Text style={{ fontFamily: F.body, fontSize: 15, lineHeight: 20, color: C.faint, textDecorationLine: "underline" }}>Undo</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function Act({ seg, answer }: { seg: Segment; answer: (p: AnswerPayload) => void }) {
   return (
     <View style={{ gap: 4 }}>
       <Pressable
@@ -133,19 +132,29 @@ function Act({ seg, answer, change }: { seg: Segment; answer: (p: AnswerPayload)
 
 export function Action({ seg, answer, change }: { seg: Segment; answer: (p: AnswerPayload) => void; change: () => void }) {
   const e = seg.el as Of<"action">;
-  const { picks, jump } = useContext(PicksCtx);
-  const amountPick = picks.find((p) => p.label.includes(`$${e.weekly}`) && /week/i.test(p.label))
-    ?? picks.find((p) => /a week set aside|week buffer/i.test(p.label));
+  const picked = seg.answer?.label;
+  const done = !!picked && (picked === "set up" || picked === "done");
+  const remind = !!picked && (picked === "remind" || picked.includes("remind"));
+  const finished = done || remind;
+
   return (
-    <Window title="One next step">
-      <View style={{ gap: 16 }}>
-        <Why e={e} onChangeAmount={amountPick ? () => jump(amountPick.id) : undefined} />
-        <How weekly={e.weekly} />
-        <View style={{ gap: 8 }}>
-          <Act seg={seg} answer={answer} change={change} />
-          <Help />
+    <Window title={finished ? (remind ? "Reminder set" : "You’re set") : "One next step"}>
+      {finished ? (
+        <Done e={e} change={change} remind={remind} />
+      ) : (
+        <View style={{ gap: 16, paddingTop: 4, paddingBottom: 4 }}>
+          <Why e={e} />
+          <View style={{ gap: 16, marginTop: 8 }}>
+            <How weekly={e.weekly} />
+            <View style={{ gap: 8, marginTop: 8 }}>
+              <Act seg={seg} answer={answer} />
+              <View style={{ marginTop: 4 }}>
+                <Help />
+              </View>
+            </View>
+          </View>
         </View>
-      </View>
+      )}
     </Window>
   );
 }

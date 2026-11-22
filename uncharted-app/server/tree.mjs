@@ -267,7 +267,7 @@ export function createTree(db, log = () => {}) {
       };
     });
     const top = L.rows.at(-1)?.weekly ?? 0;
-    return { element: { type: "dial", title: "What a weekly buffer does", prompt: `Drag to set aside more each week. Same 5,000 futures, ${name}'s numbers.`, knob: { label: "Each week", min: 0, max: top, step, unit: "$" }, frames }, message: "Small amounts add up to a cushion.", source: "sim" };
+    return { element: { type: "dial", title: "What a weekly buffer does", prompt: `Drag to preview amounts — same 5,000 futures, ${name}'s numbers. You'll pick for real next.`, knob: { label: "Each week", min: 0, max: top, step, unit: "$" }, frames }, message: "This is only a preview. Your real pick comes on the next stop.", source: "sim" };
   }
   // Checked against canada.ca (TFSA: contributing, withdrawing; 2026 dollar limit $7,000). Keep each card short: it is set at 22 pt.
   const DECK = { type: "deck", title: "Where to keep it", cards: [
