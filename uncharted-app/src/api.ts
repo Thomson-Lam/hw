@@ -19,7 +19,7 @@ export type NodeView = { id: string; element: Element; message: string; source: 
 export type Road = { session_id: string; trip: { pipe: "intro" | "explore" | "finance" | "concept" | "find"; goal: string; scenario: string | null }; paving: boolean; stopped: string | null; rules: RuleView[]; nodes: NodeView[]; log: string };
 
 // What a pick sends. The server turns it into rules, so the client never writes a rule itself.
-export type AnswerPayload = { option_index: number } | { value: number } | { verdict: "save" } | { verdict: "skip" } | { verdict: "nope"; tag: string } | { text: string } | { verdict: "remind" | "not_now" };
+export type AnswerPayload = { option_index: number } | { value: number } | { verdict: "save" } | { verdict: "skip" } | { verdict: "nope"; tag: string } | { text: string } | { verdict: "done" | "remind" | "not_now" };
 
 export const startSession = (seed: Seed) => post<Road>("/api/session", { seed });
 export const fetchRoad = (sid: string) => get<Road>(`/api/session/${sid}/road`);

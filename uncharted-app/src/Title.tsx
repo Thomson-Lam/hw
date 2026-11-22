@@ -85,8 +85,10 @@ export function Title({ go, open }: { go: (seed: Seed) => void; open: (sessionId
             style={{ fontFamily: F.body, fontSize: 16, color: C.ink, backgroundColor: "#fff", borderWidth: 1, borderColor: "#b9bcc2", borderRadius: 10, paddingHorizontal: 12, minHeight: 48 }} />
           {text.trim() ? <Pill label="Start the road" onPress={submit} testID="start" /> : null}
           {err ? <Text style={[T.p, { color: "#8a2b20" }]}>{err}</Text> : null}
-          <Text style={[T.p, { fontSize: 13 }]}>Sample numbers, simulated futures. Educational, not financial advice.</Text>
         </Window>
+        <Text style={{ fontFamily: F.body, fontSize: 12, lineHeight: 16, color: "rgba(255,255,255,0.75)", textAlign: "center", textShadowColor: "rgba(0,0,0,0.35)", textShadowRadius: 6 }} testID="home-disclaimer">
+          Simulated outcomes. An educational tool, not financial advice. Nothing moves money.
+        </Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );

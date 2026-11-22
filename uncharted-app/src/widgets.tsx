@@ -2,6 +2,7 @@ import Slider from "@react-native-community/slider";
 import { useContext, useState } from "react";
 import { Image } from "expo-image";
 import { Linking, Pressable, Text, TextInput, View } from "react-native";
+import { Action } from "./action";
 import { AnswerPayload } from "./api";
 import { Element, Outcome, Segment, Tally } from "./contract";
 import { C, Chip, F, Pill, PicksCtx, T, Window } from "./hw";
@@ -245,27 +246,6 @@ function Assumptions({ seg }: WidgetProps) {
   );
 }
 
-function Action({ seg, answer, change }: WidgetProps) {
-  const e = seg.el as Of<"action">;
-  return (
-    <Window title={title(seg, "one next step")}>
-      <Text style={T.h2}>Set up ${e.weekly} a week, automatically</Text>
-      <Text style={T.p}>1. Open your bank app.{"\n"}2. If you don’t have one, open a high-interest savings account or a TFSA.{"\n"}3. Schedule ${e.weekly} to move there every week, the day after payday.</Text>
-      <Text style={[T.p, { fontSize: 13 }]}>A TFSA isn’t locked: you can take money out any time, tax-free. At work, your own plan contributions can go to nearer goals while an employer match builds for later.</Text>
-      <View style={{ flexDirection: "row", gap: 8 }}>
-        <Pill flex label="Remind me Monday" testID="remind" selected={seg.answer?.label === "remind"} disabled={!!seg.answer} onPress={() => answer({ verdict: "remind" })} />
-        <Pill flex label="Not now" selected={seg.answer?.label === "not now"} disabled={!!seg.answer} onPress={() => answer({ verdict: "not_now" })} />
-      </View>
-      {seg.answer ? (
-        <Pressable onPress={change} accessibilityRole="button" testID={`change-${seg.id}`} style={{ minHeight: 48, justifyContent: "center", alignSelf: "flex-start" }}>
-          <Text style={[T.link, { paddingVertical: 0 }]}>Change</Text>
-        </Pressable>
-      ) : null}
-      <Text style={[T.p, { fontSize: 12, color: C.faint }]}>Simulated outcomes. An educational tool, not financial advice. Nothing moves money.</Text>
-    </Window>
-  );
-}
-
 // Numbered, one row per choice: the question small, the answer large. A row goes back to that stop.
 export function PickList({ onJump }: { onJump?: () => void }) {
   const { picks, jump } = useContext(PicksCtx);
@@ -366,7 +346,7 @@ export function pinLabel(seg: Segment): { title: string; note: string } {
     case "future": { const s = e.lever ?? e.baseline; return { title: OUT[s.outcome].label, note: `${short2(s.end_balance)} · ${seg.message}` }; }
     case "tally": return { title: "How the next 5 years could go", note };
     case "assumptions": return { title: "How this was run", note };
-    case "action": return { title: "One next step", note };
+    case "action": return { title: "Set up auto-transfer", note };
     case "checkin": return { title: e.final ? "End of this road" : "Your road so far", note };
     case "deadend": return { title: "The road stops here", note };
     case "dial": return { title: e.title, note };

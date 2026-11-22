@@ -1,21 +1,18 @@
 // The three ways a simulated future can end, and the one-line balance chart. Shared by the future, tally and plan widgets.
 import { Text, View } from "react-native";
-import Svg, { Circle, ClipPath, Defs, Line, Polygon, Polyline, Rect } from "react-native-svg";
+import Svg, { ClipPath, Defs, Line, Polygon, Polyline, Rect } from "react-native-svg";
 import { Outcome } from "./contract";
 import { C, F } from "./hw";
 
 // Matches sim.mjs: fine = never below $0; hard = still in debt at month 60, or 6+ months in a row in debt.
 export const OUT: Record<Outcome, { label: string }> = {
   fine: { label: "Never in debt" },
-  rough_recovered: { label: "In debt, then recovered" },
+  rough_recovered: { label: "Recovered" },
   hard: { label: "Stuck in debt" },
 };
 
 // Hard is the outcome the headline is about, so it carries the one warm colour.
 export const TONE: Record<Outcome, string> = { fine: C.sel, rough_recovered: "#8a93a0", hard: "#b8573f" };
-// Text drawn on top of a TONE fill.
-export const ON_TONE: Record<Outcome, string> = { fine: "#fff", rough_recovered: C.ink, hard: "#fff" };
-
 export const money = (v: number) => `${v < 0 ? "−" : ""}$${Math.abs(Math.round(v)).toLocaleString("en-CA")}`;
 export const axisText = { fontFamily: F.body, fontSize: 12, lineHeight: 16, color: C.sub };
 
@@ -39,6 +36,10 @@ export function Spark({ a, b, without, height = 110 }: { a: { series: number[] }
   const above = (v: number) => Math.max(0, y(v) - 20);
   const below = (v: number) => Math.min(H - 16, y(v) + 4);
   const described = `Cash on hand over 5 years. Starts at ${money(start)}, lowest ${money(low)}, ends at ${money(end)}. Below $0 is debt.`;
+  // The end value goes on the side of the end point the line is not on just before it ends, right-aligned to the edge.
+  const tail = s.slice(Math.floor((n - 1) * 0.8));
+  const fromAbove = Math.max(...tail) > end;
+  const endTop = fromAbove ? (y(end) + 26 <= H ? y(end) + 8 : y(end) - 26) : (y(end) - 26 >= 0 ? y(end) - 26 : y(end) + 8);
   return (
     <View accessible accessibilityLabel={described} style={{ gap: 4 }}>
       <View style={{ height: H }}>
@@ -48,13 +49,14 @@ export function Spark({ a, b, without, height = 110 }: { a: { series: number[] }
           <Line x1={0} x2={W} y1={z} y2={z} stroke="#9aa0a8" strokeDasharray="4 4" strokeWidth={1} />
           {b ? <Polyline points={pts(a.series)} fill="none" stroke="#9aa0a8" strokeWidth={1.5} /> : null}
           <Polyline points={pts(s)} fill="none" stroke={C.sel} strokeWidth={2} />
-          <Circle cx={W - 3} cy={y(end)} r={3.5} fill={C.sel} />
         </Svg>
-        <Text style={[label, { left: 0, top: start >= 0 ? above(start) : below(start) }]}>{money(start)}</Text>
-        {low < 0 && lowI > 0 && lowI < s.length - 1 ? (
-          <Text style={[label, { left: pct(lowI), marginLeft: -24, top: below(low), color: "#8a2b20" }]}>{money(low)}</Text>
+        <View style={{ position: "absolute", right: -4, top: y(end) - 4, width: 8, height: 8, borderRadius: 4, backgroundColor: C.sel }} />
+        <Text numberOfLines={1} style={[label, { left: 0, top: start >= 0 ? above(start) : below(start) }]}>{money(start)}</Text>
+        {/* The low only gets a label clear of the start label and the end value. */}
+        {low < 0 && lowI > (n - 1) * 0.2 && lowI < (n - 1) * 0.75 ? (
+          <Text numberOfLines={1} style={[label, { left: pct(lowI), width: 72, marginLeft: -36, textAlign: "center", top: below(low), color: "#8a2b20" }]}>{money(low)}</Text>
         ) : null}
-        <Text style={[label, { right: 0, top: end >= 0 ? above(end) : below(end) }]}>{money(end)}</Text>
+        <Text numberOfLines={1} style={[label, { right: 0, top: endTop, fontSize: 14, lineHeight: 18, color: end < 0 ? "#8a2b20" : C.ink }]}>{money(end)}</Text>
       </View>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         <Text style={axisText}>Now</Text>

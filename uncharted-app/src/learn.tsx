@@ -6,8 +6,9 @@
 import Slider from "@react-native-community/slider";
 import { useRef, useState } from "react";
 import { Animated, Easing, Platform, Pressable, Text, View } from "react-native";
-import { DialFrame, Element, Segment, Viz } from "./contract";
+import { DialFrame, Element, Outcome, Segment, Viz } from "./contract";
 import { C, F, Pill, T, Window } from "./hw";
+import { OUT, TONE } from "./outcomes";
 
 type Of<K extends Element["type"]> = Extract<Element, { type: K }>;
 
@@ -31,13 +32,18 @@ export function VizView({ viz }: { viz: Viz }) {
   if (viz.kind === "bars") {
     // Percentages are drawn against 100%, so a 40% bar is 40% long. Other bars scale to the largest value.
     const max = viz.unit === "%" ? 100 : Math.max(1, ...viz.items.map((b) => b.value));
+    // Dials saved before outcome bars carried a tone still say Fine / Rough / Hard.
+    const LEGACY: Record<string, Outcome> = { Fine: "fine", Rough: "rough_recovered", Hard: "hard" };
+    const legacy = viz.items.length === 3 && viz.items.every((b) => LEGACY[b.label]);
+    const items = viz.items.map((b) => { const t = b.tone ?? (legacy ? LEGACY[b.label] : undefined); return t ? { ...b, tone: t, label: OUT[t].label } : b; });
+    const labelW = items.some((b) => b.label.length > 10) ? 150 : 84;
     return (
       <View style={{ gap: 8 }} testID="viz-bars">
-        {viz.items.map((b) => (
+        {items.map((b) => (
           <View key={b.label} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-            <Text numberOfLines={1} style={{ width: 84, fontFamily: F.body, fontSize: 14, lineHeight: 20, color: C.ink }}>{b.label}</Text>
+            <Text numberOfLines={1} style={{ width: labelW, fontFamily: F.body, fontSize: 14, lineHeight: 20, color: C.ink }}>{b.label}</Text>
             <View style={{ flex: 1, height: 12, borderRadius: 6, backgroundColor: "#dfe2e6", overflow: "hidden" }}>
-              <View style={{ height: 12, width: `${(Math.max(0, b.value) / max) * 100}%`, borderRadius: 6, backgroundColor: C.sel }} />
+              <View style={{ height: 12, width: `${(Math.max(0, b.value) / max) * 100}%`, borderRadius: 6, backgroundColor: b.tone ? TONE[b.tone] : C.sel }} />
             </View>
             <Text style={{ width: 44, textAlign: "right", fontFamily: F.head, fontSize: 14, lineHeight: 20, color: C.ink }}>{Math.round(b.value)}{viz.unit ?? ""}</Text>
           </View>
@@ -79,7 +85,7 @@ function frameAt(frames: DialFrame[], v: number): { caption: string; viz?: Viz }
   const near = t < 0.5 ? a : b;
   if (a.viz?.kind === "bars" && b.viz?.kind === "bars") {
     const other = new Map(b.viz.items.map((x) => [x.label, x.value]));
-    return { caption: near.caption, viz: { kind: "bars", unit: a.viz.unit, items: a.viz.items.map((x) => ({ label: x.label, value: x.value + ((other.get(x.label) ?? x.value) - x.value) * t })) } };
+    return { caption: near.caption, viz: { kind: "bars", unit: a.viz.unit, items: a.viz.items.map((x) => ({ ...x, value: x.value + ((other.get(x.label) ?? x.value) - x.value) * t })) } };
   }
   return near;
 }
@@ -172,7 +178,7 @@ export function Deck({ seg, progress, still }: { seg: Segment; progress: number;
                 opacity: last ? 1 : pos.interpolate({ inputRange: [i + 0.7, i + 1], outputRange: [1, 0], extrapolate: "clamp" }),
                 transform: [{ translateY: under([20, 0]) }, { scale: under([0.92, 1]) }, { translateX: away([0, -420]) }, { rotate: away(["0deg", "-14deg"]) }],
               }}>
-              <Text style={{ fontFamily: F.head, fontSize: 22, lineHeight: 30, color: C.ink }}>{text}</Text>
+              <Text style={{ fontFamily: F.body, fontSize: 22, lineHeight: 30, color: C.ink }}>{text}</Text>
             </Animated.View>
           );
         })}

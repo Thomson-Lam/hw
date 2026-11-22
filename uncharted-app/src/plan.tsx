@@ -5,10 +5,11 @@
 import { Image } from "expo-image";
 import { useState } from "react";
 import { Linking, Pressable, Text, View } from "react-native";
+import Svg, { ClipPath, Defs, Line, Polygon, Polyline, Rect } from "react-native-svg";
 import { AnswerPayload } from "./api";
 import { Element, Outcome, Product, Segment, Tally, WebSource } from "./contract";
 import { C, F, Pill, T, Window } from "./hw";
-import { money, ON_TONE, OUT, Spark, TONE } from "./outcomes";
+import { money, OUT, TONE } from "./outcomes";
 
 type Of<K extends Element["type"]> = Extract<Element, { type: K }>;
 const cad = (n: number) => `$${n.toLocaleString("en-CA", { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 })}`;
@@ -158,10 +159,10 @@ function OutcomeBar({ label, t, total }: { label: string; t: Tally; total: numbe
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }} accessible accessibilityLabel={`${label}: ${KEYS.map((k) => `${OUT[k].label} ${pct(k)}%`).join(", ")}`}>
       <Text style={{ width: 72, fontFamily: F.head, fontSize: 14, lineHeight: 18, color: C.ink }}>{label}</Text>
-      <View style={{ flex: 1, flexDirection: "row", height: 28, gap: 2, borderRadius: 6, overflow: "hidden" }}>
+      <View style={{ flex: 1, flexDirection: "row", height: 24, gap: 2, borderRadius: 6, overflow: "hidden" }}>
         {KEYS.filter((k) => t[k] > 0).map((k) => (
           <View key={k} style={{ flexGrow: t[k], flexBasis: 0, minWidth: 3, backgroundColor: TONE[k], justifyContent: "center", alignItems: "center" }}>
-            {pct(k) >= 9 ? <Text style={{ fontFamily: F.head, fontSize: 13, color: ON_TONE[k] }}>{pct(k)}%</Text> : null}
+            {pct(k) >= 9 ? <Text style={{ fontFamily: F.body, fontSize: 12, color: "#fff" }}>{pct(k)}%</Text> : null}
           </View>
         ))}
       </View>
@@ -171,26 +172,86 @@ function OutcomeBar({ label, t, total }: { label: string; t: Tally; total: numbe
 
 function Legend() {
   return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 14, rowGap: 4 }}>
+    <View style={{ flexDirection: "row", flexWrap: "wrap", columnGap: 12, rowGap: 2 }}>
       {KEYS.map((k) => (
-        <View key={k} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <View style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: TONE[k] }} />
-          <Text style={small}>{OUT[k].label}</Text>
+        <View key={k} style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+          <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: TONE[k] }} />
+          <Text style={{ fontFamily: F.body, fontSize: 12, lineHeight: 16, color: C.sub }}>{OUT[k].label}</Text>
         </View>
       ))}
     </View>
   );
 }
 
-function Ending({ label, line, f }: { label: string; line: string; f: { outcome: Outcome; end_balance: number } }) {
+// Two balance lines for one future, each labelled at its own end (no legend, no axis). Below the dashed line is debt.
+function TwoEndings({ without, withPlan }: { without: number[]; withPlan: number[] }) {
+  const W = 300, H = 88, pad = 8, LABEL = 34;
+  const all = [...without, ...withPlan];
+  const lo = Math.min(0, ...all), hi = Math.max(0, ...all), span = hi - lo || 1;
+  const y = (v: number) => pad + (1 - (v - lo) / span) * (H - 2 * pad);
+  const x = (i: number, n: number) => (i / Math.max(1, n - 1)) * W;
+  const pts = (s: number[]) => s.map((v, i) => `${x(i, s.length)},${y(v)}`).join(" ");
+  const z = y(0);
+  const endA = without[without.length - 1] ?? 0, endB = withPlan[withPlan.length - 1] ?? 0;
+  // Each label centres on its line's end; when the two ends are close, the labels are pushed apart.
+  let ta = y(endA) - LABEL / 2, tb = y(endB) - LABEL / 2;
+  if (Math.abs(ta - tb) < LABEL) { const m = (ta + tb) / 2, s = tb <= ta ? 1 : -1; ta = m + (s * LABEL) / 2; tb = m - (s * LABEL) / 2; }
+  const clamp = (t: number) => Math.max(-6, Math.min(H - LABEL + 6, t));
+  const dot = (v: number, color: string) => <View style={{ position: "absolute", right: -4, top: y(v) - 4, width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />;
   return (
-    <View style={{ flex: 1, gap: 2 }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-        <View style={{ width: 14, height: 2, backgroundColor: line }} />
-        <Text style={small}>{label}</Text>
+    <View style={{ flexDirection: "row", gap: 12 }} accessible accessibilityLabel={`Cash over 5 years. Without your plan it ends at ${money(endA)}; with it, ${money(endB)}. Below $0 is debt.`}>
+      <View style={{ flex: 1, height: H }}>
+        <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+          <Defs><ClipPath id="moneyplan-debt"><Rect x={0} y={z} width={W} height={H - z} /></ClipPath></Defs>
+          <Polygon points={`0,${z} ${pts(without)} ${W},${z}`} fill={TONE.hard} fillOpacity={0.18} clipPath="url(#moneyplan-debt)" />
+          <Line x1={0} x2={W} y1={z} y2={z} stroke="#9aa0a8" strokeDasharray="4 4" strokeWidth={1} />
+          <Polyline points={pts(without)} fill="none" stroke="#9aa0a8" strokeWidth={2} />
+          <Polyline points={pts(withPlan)} fill="none" stroke={C.sel} strokeWidth={2.5} />
+        </Svg>
+        {dot(endA, "#9aa0a8")}
+        {dot(endB, C.sel)}
       </View>
-      <Text style={{ fontFamily: F.head, fontSize: 14, lineHeight: 19, color: C.ink }}>{OUT[f.outcome].label}</Text>
-      <Text style={small}>Ends at {money(f.end_balance)}</Text>
+      <View style={{ width: 76, height: H }}>
+        <View style={{ position: "absolute", top: clamp(tb) }}>
+          <Text style={{ fontFamily: F.head, fontSize: 15, lineHeight: 18, color: C.ink }}>{money(endB)}</Text>
+          <Text style={{ fontFamily: F.body, fontSize: 12, lineHeight: 16, color: C.sub }}>with plan</Text>
+        </View>
+        <View style={{ position: "absolute", top: clamp(ta) }}>
+          <Text style={{ fontFamily: F.head, fontSize: 15, lineHeight: 18, color: endA < 0 ? "#8a2b20" : C.sub }}>{money(endA)}</Text>
+          <Text style={{ fontFamily: F.body, fontSize: 12, lineHeight: 16, color: C.sub }}>without</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function Method({ assumptions }: { assumptions: string[] }) {
+  return (
+    <View style={{ gap: 24 }} testID="moneyplan-method">
+      <View style={{ gap: 8 }}>
+        <Text style={T.k}>How it works</Text>
+        <Text style={[T.p, { color: C.ink }]}>
+          Each future is one run of the next 5 years with its own luck. Both plans get the same luck, so only your plan differs.
+        </Text>
+      </View>
+      <View style={{ gap: 12 }}>
+        <Text style={T.k}>What the labels mean</Text>
+        {KEYS.map((k) => (
+          <View key={k} style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
+            <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: TONE[k], marginTop: 5 }} />
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={{ fontFamily: F.head, fontSize: 15, lineHeight: 20, color: C.ink }}>{OUT[k].label}</Text>
+              <Text style={small}>{MEANS[k]}.</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+      <View style={{ gap: 8 }}>
+        <Text style={T.k}>What we assumed</Text>
+        {assumptions.map((a) => (
+          <Text key={a} style={small}>· {a}</Text>
+        ))}
+      </View>
     </View>
   );
 }
@@ -204,46 +265,41 @@ export function MoneyPlan({ seg }: { seg: Segment }) {
   const weekly = e.plan?.weekly ?? 0;
   const planned = weekly > 0 || e.monthly > 0;
   const moved = planned && now !== was;
-  const plan = weekly ? `$${weekly} a week, about $${e.monthly.toLocaleString("en-CA")} a month` : e.monthly ? `about $${e.monthly.toLocaleString("en-CA")} a month` : e.choices.join(", ");
+  const kicker = `${name} · ${!planned ? "nothing set aside yet" : weekly ? `$${weekly} a week` : e.monthly ? `about $${e.monthly.toLocaleString("en-CA")} a month` : e.choices.join(", ")}`;
+  const note = !planned ? "To test a plan, change your weekly amount in Your choices." : moved ? null : "About the same as now.";
   const x = e.examples.find((ex) => ex.before.outcome !== ex.after.outcome);
-  const headline = !planned ? "You haven't set anything aside yet"
-    : moved ? `${name} stays out of debt in ${now}% of futures, up from ${was}%`
-    : "Your plan barely changes the odds";
-  const sub = !planned ? `So nothing changes: ${name} stays out of debt in ${was}% of futures. To test a plan, change your weekly amount in Your choices.`
-    : moved ? `Your plan: ${plan}.`
-    : `Your plan (${plan}) leaves ${name} out of debt in ${now}% of futures, the same as now.`;
   return (
-    <Window title="What your plan changes" testID="moneyplan">
-      <View style={{ gap: 4 }}>
-        <Text style={T.h2} testID="moneyplan-headline">{headline}</Text>
-        <Text style={T.p}>{sub}</Text>
-        <Text style={small}>{e.worry} · {e.total.toLocaleString("en-CA")} simulated 5-year futures</Text>
+    <Window title={`What your plan changes · ${e.worry}`} testID="moneyplan">
+      <View style={{ gap: 8 }}>
+        <Text style={T.k}>{kicker}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Text style={{ fontFamily: F.head, fontSize: 40, lineHeight: 46, color: C.ink }} testID="moneyplan-headline">{now}%</Text>
+          {moved ? (
+            <Text style={{ fontFamily: F.head, fontSize: 14, lineHeight: 18, color: C.sel }}>
+              {now > was ? "▲" : "▼"} from {was}%
+            </Text>
+          ) : null}
+        </View>
+        <Text style={[T.p, { color: C.ink }]}>{`of ${e.total.toLocaleString("en-CA")} futures never go into debt.`}</Text>
+        {note ? <Text style={T.p}>{note}</Text> : null}
       </View>
       {why ? (
-        <View style={{ gap: 6 }} testID="moneyplan-method">
-          <Text style={[T.p, { color: C.ink }]}>Each future is one run of the next 5 years with its own luck: job loss, surprise bills, raises. Both plans get exactly the same luck, so only your plan differs.</Text>
-          {KEYS.map((k) => <Text key={k} style={small}><Text style={{ fontFamily: F.head, color: C.ink }}>{OUT[k].label}:</Text> {MEANS[k]}.</Text>)}
-          {e.assumptions.map((a) => <Text key={a} style={small}>· {a}</Text>)}
-        </View>
+        <Method assumptions={e.assumptions} />
       ) : (
-        <>
+        <View style={{ gap: 24 }}>
           <View style={{ gap: 8 }}>
             <OutcomeBar label={planned ? "Now" : "As it is"} t={e.before} total={e.total} />
             {planned ? <OutcomeBar label="Your plan" t={e.after} total={e.total} /> : null}
             <Legend />
           </View>
-          {x ? (
-            <View style={{ gap: 6, borderTopWidth: 1, borderTopColor: "#dfe2e6", paddingTop: 12 }} testID="moneyplan-example">
-              <Text style={{ fontFamily: F.head, fontSize: 15, lineHeight: 20, color: C.ink }}>One future, two endings</Text>
-              <Text style={small}>{x.what ? `${x.what} ` : ""}Same luck both times; only your plan differs.</Text>
-              {x.before.series && x.after.series ? <Spark a={{ series: x.before.series }} b={{ series: x.after.series }} height={84} /> : null}
-              <View style={{ flexDirection: "row", gap: 12 }}>
-                <Ending label="Without your plan" line="#9aa0a8" f={x.before} />
-                <Ending label="With your plan" line={C.sel} f={x.after} />
-              </View>
+          {x && x.before.series && x.after.series ? (
+            <View style={{ gap: 8, borderTopWidth: 1, borderTopColor: "#dfe2e6", paddingTop: 16 }} testID="moneyplan-example">
+              <Text style={{ fontFamily: F.head, fontSize: 15, lineHeight: 20, color: C.ink }}>Same future, two endings</Text>
+              {x.what ? <Text style={small}>{x.what}</Text> : null}
+              <TwoEndings without={x.before.series} withPlan={x.after.series} />
             </View>
           ) : null}
-        </>
+        </View>
       )}
       <Pressable onPress={() => setWhy(!why)} accessibilityRole="button" testID="moneyplan-why" style={{ minHeight: 48, justifyContent: "center", alignSelf: "flex-start", marginVertical: -8 }}>
         <Text style={[T.link, { paddingVertical: 0 }]}>{why ? "Back to the results" : "How this was worked out"}</Text>

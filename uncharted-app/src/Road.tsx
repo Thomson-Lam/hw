@@ -15,6 +15,13 @@ import { CardActions, CardBody, PavingCard } from "./RoadCard";
 import { Paving, PickList, Widget } from "./widgets";
 
 const PIN = require("../assets/hw/pin.svg");
+// A sign title longer than one line breaks at the space nearest its middle, so it never leaves one word alone on line two.
+const balanced = (t: string, fits = 24) => {
+  if (t.length <= fits) return t;
+  const mid = t.length / 2;
+  const at = [...t].reduce((best, ch, i) => (ch === " " && Math.abs(i - mid) < Math.abs(best - mid) ? i : best), -1);
+  return at < 0 ? t : `${t.slice(0, at)}\n${t.slice(at + 1)}`;
+};
 const ease = (u: number) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
 
 // Pulse rings run on a plain rAF clock (RN Animated stalls on web in this app).
@@ -161,8 +168,8 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
       if (scale < 1.15) out.push(
         <Pressable key={seg.id + "-sign"} onPress={() => show(seg.id)} testID="fork-sign" style={{ position: "absolute", left: Math.max(10, Math.min(W - signW - 10, sign.x - signW / 2)), top: sign.y, width: signW, alignItems: "center" }}>
           <View style={{ backgroundColor: "rgba(244,245,248,0.96)", borderRadius: 12, borderWidth: 0.9, borderColor: C.border, paddingHorizontal: 18, paddingVertical: 12, gap: 4, minHeight: 44, justifyContent: "center" }}>
-            <Text style={{ fontFamily: F.head, fontSize: 16, lineHeight: 20, color: C.ink, textAlign: "center" }}>{(seg.el as { prompt: string }).prompt}</Text>
-            <Text style={{ fontFamily: F.body, fontSize: 13, lineHeight: 16, color: C.sub, textAlign: "center" }}>{chosen >= 0 ? `✓ ${seg.answer!.label} · tap a lane to change` : sec.n === 3 ? "swipe left, right, or scroll down" : "swipe left or right"}</Text>
+            <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.85} style={{ fontFamily: F.head, fontSize: 16, lineHeight: 20, color: C.ink, textAlign: "center" }}>{balanced((seg.el as { prompt: string }).prompt)}</Text>
+            <Text style={{ fontFamily: F.body, fontSize: 13, lineHeight: 16, color: C.sub, textAlign: "center" }}>{chosen >= 0 ? `You picked ${seg.answer!.label}. Tap a lane to change.` : sec.n === 3 ? "Swipe left or right, or scroll down." : "Swipe left or right."}</Text>
           </View>
         </Pressable>,
       );

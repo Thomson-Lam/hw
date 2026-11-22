@@ -33,7 +33,7 @@ export function Mountains({ anchor = "center" }: { anchor?: "center" | "bottom" 
 function Dots() {
   const id = useId().replace(/:/g, "");
   return (
-    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+    <Svg width="100%" height="100%" style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <Pattern id={id} width={12} height={12} patternUnits="userSpaceOnUse">
           <Rect x={5} y={5} width={1.2} height={1.2} fill={C.dot} />
