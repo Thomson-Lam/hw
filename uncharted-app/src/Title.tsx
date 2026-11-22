@@ -6,6 +6,13 @@ import { C, F, Mountains, Pill, T, Window } from "./hw";
 import { fetchSessions, post, RoadSummary, Seed } from "./api";
 
 const PIPE: Record<RoadSummary["pipe"], string> = { finance: "Money futures", explore: "Choices", concept: "Lesson", find: "Finding", intro: "Not started" };
+// The demo path. Each chip maps straight to a scenario, so it works even when the Gemini router is down.
+const CHIPS = [
+  { label: "Prices keep rising", scenario: "inflation" },
+  { label: "My rent is going up", scenario: "rent_spike" },
+  { label: "Layoffs in my field", scenario: "layoff" },
+  { label: "My hours got cut", scenario: "hours_cut" },
+];
 function when(ms: number) {
   const d = new Date(ms), now = new Date();
   const time = d.toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit" });
@@ -21,12 +28,16 @@ export function Title({ go, open }: { go: (seed: Seed) => void; open: (sessionId
   const [all, setAll] = useState(false);
   useEffect(() => { fetchSessions().then(setRoads).catch(() => {}); }, []);
   const shownRoads = all ? roads : roads.slice(0, 4);
+  // Chips: the money road straight away (the demo path, works even when the Gemini router is down).
+  const worry = (label: string, scenario: string | null) =>
+    go({ label, rules: [{ kind: "set", key: "kind", value: "worry" }, ...(scenario ? [{ kind: "set", key: "scenario", value: scenario } as Rule] : [])] });
+  // Free text: the server's router (Gemini Decisions API) picks the road: money futures, lesson, finding, or choices.
   const submit = async () => {
     const goal = text.trim();
     if (!goal) return;
+    setErr("");
     try {
       const r = await post<{ pipe: "explore" | "finance" | "concept" | "find"; mode?: "find" | "make"; scenario: string | null; kind?: string }>("/api/route", { goal });
-      // The server's router (Gemini Decisions API) picks the road: lesson, choices, or money futures.
       const rules: Rule[] = r.pipe === "concept"
         ? [{ kind: "set", key: "concept", value: goal }]
         : r.pipe === "find"
@@ -41,7 +52,8 @@ export function Title({ go, open }: { go: (seed: Seed) => void; open: (sessionId
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <Mountains />
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "flex-end", paddingTop: insets.top + 40, paddingBottom: insets.bottom + 40, paddingHorizontal: 16, gap: 18 }} keyboardShouldPersistTaps="handled">
-        <Text style={{ fontFamily: F.head, fontSize: 48, lineHeight: 52, color: "#fff", textShadowColor: "rgba(0,0,0,0.35)", textShadowRadius: 12 }}>An Uncharted Demo</Text>
+        <Text style={{ fontFamily: F.head, fontSize: 48, lineHeight: 52, color: "#fff", textShadowColor: "rgba(0,0,0,0.35)", textShadowRadius: 12 }}>Uncharted</Text>
+        <Text style={{ fontFamily: F.body, fontSize: 18, lineHeight: 25, color: "#fff", textShadowColor: "rgba(0,0,0,0.45)", textShadowRadius: 10 }} testID="purpose">Money news got to you? See your own futures at their real odds, and what $25 a week would change.</Text>
         {roads.length ? (
           <Window title="Your roads" testID="your-roads">
             <View>
@@ -64,11 +76,16 @@ export function Title({ go, open }: { go: (seed: Seed) => void; open: (sessionId
           </Window>
         ) : null}
         <Window title="New road">
-          <Text style={T.h}>Where do you want to go?</Text>
-          <TextInput value={text} onChangeText={setText} onSubmitEditing={submit} placeholder="a goal, a worry, or a dare" placeholderTextColor={C.faint} testID="goal-input" returnKeyType="go"
+          <Text style={T.h}>What money news is stressing you out?</Text>
+          <View style={{ gap: 12 }}>
+            {CHIPS.map((c) => <Pill key={c.scenario} label={c.label} testID={`chip-${c.scenario}`} onPress={() => worry(c.label, c.scenario)} />)}
+          </View>
+          <Text style={T.k}>Or type anything</Text>
+          <TextInput value={text} onChangeText={setText} onSubmitEditing={submit} placeholder="a headline, a goal, or something to learn" placeholderTextColor={C.faint} testID="goal-input" returnKeyType="go"
             style={{ fontFamily: F.body, fontSize: 16, color: C.ink, backgroundColor: "#fff", borderWidth: 1, borderColor: "#b9bcc2", borderRadius: 10, paddingHorizontal: 12, minHeight: 48 }} />
-          <Pill label="Start the road" onPress={submit} testID="start" />
+          {text.trim() ? <Pill label="Start the road" onPress={submit} testID="start" /> : null}
           {err ? <Text style={[T.p, { color: "#8a2b20" }]}>{err}</Text> : null}
+          <Text style={[T.p, { fontSize: 13 }]}>Sample numbers, simulated futures. Educational, not financial advice.</Text>
         </Window>
       </ScrollView>
     </KeyboardAvoidingView>

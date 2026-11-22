@@ -8,10 +8,10 @@ export const PERSONAS = {
 };
 
 export const SCENARIOS = {
-  layoff: { kind: "fear", label: "Layoffs in your field", chip: "Layoffs in my field", match: /layoff|laid off|fired|lose my job|job/i },
-  hours_cut: { kind: "fear", label: "Your hours get cut", chip: "My hours get cut", match: /hours/i },
-  rent_spike: { kind: "fear", label: "Rent jumps", chip: "My rent jumps", match: /rent/i },
-  inflation: { kind: "fear", label: "Prices keep rising", chip: "Prices keep rising", match: /inflation|prices|groceries/i },
+  layoff: { kind: "fear", label: "Layoffs in your field", chip: "Layoffs in my field", match: /layoff|laid off|fired|lose my job|job|recession|economy|hiring/i },
+  hours_cut: { kind: "fear", label: "Your hours get cut", chip: "My hours get cut", match: /hours|shifts/i },
+  rent_spike: { kind: "fear", label: "Rent jumps", chip: "My rent jumps", match: /\brent|housing|landlord/i },
+  inflation: { kind: "fear", label: "Prices keep rising", chip: "Prices keep rising", match: /inflation|prices|groceries|cost of living|tariff/i },
   time_off: { kind: "dare", label: "Quit and travel for four months", chip: "Quit and travel for 4 months", match: /quit|travel|time off|sabbatical/i },
   back_to_school: { kind: "dare", label: "Go back to school", chip: "Go back to school", match: /school|tuition|degree/i },
 };
@@ -81,8 +81,16 @@ function run(D, p, sc, weekly, dare) {
   return paths;
 }
 
-const money = (v) => `${v < 0 ? "-" : ""}$${Math.abs(Math.round(v / 100) * 100).toLocaleString("en-CA")}`;
+const money = (v) => { const r = Math.round(v / 100) * 100; return `${r < 0 ? "−" : ""}$${Math.abs(r).toLocaleString("en-CA")}`; };
+// Rounding to $100 turns a small debt (−$37) into $0. Keep the exact dollar when that would hide the sign.
+const cash = (v) => { const r = Math.abs(v) < 50 ? Math.round(v) : Math.round(v / 100) * 100; return `${r < 0 ? "−" : ""}$${Math.abs(r).toLocaleString("en-CA")}`; };
 function story(p, other, weekly) {
+  const { what, how } = storyParts(p, other, weekly);
+  return `${what} ${how}`;
+}
+
+// What happened (the luck, shared by every plan on the same future) and how it ended (this path only).
+function storyParts(p, other, weekly) {
   const loss = p.events.find((e) => e.type === "job_loss"), dare = p.events.find((e) => e.type === "dare_start");
   const cut = p.events.find((e) => e.type === "hours_cut"), spike = p.events.find((e) => e.type === "rent_spike");
   const shocks = p.events.filter((e) => e.type === "shock");
@@ -95,10 +103,13 @@ function story(p, other, weekly) {
   let how;
   if (p.outcome === "fine") how = `You ended with ${money(p.end_balance)} and options.`;
   else if (p.outcome === "rough_recovered") how = `${p.neg} month${p.neg > 1 ? "s" : ""} on credit, back above zero by month 60 with ${money(p.end_balance)}.`;
-  // Hard means still in debt at month 60, or 6+ months in a row below zero. Say which, without contradicting the numbers.
-  else if (other && weekly) how = `It ended ${money(p.end_balance)}. With $${weekly} a week, this future ends at ${money(other.end_balance)}.`;
-  else how = p.end_balance < 0 ? `Still ${money(-p.end_balance)} in debt at month 60.` : `${p.longest} months in a row below zero, then back to ${money(p.end_balance)} by month 60.`;
-  return `${what} ${how}`;
+  // Hard means still in debt at month 60, or 6+ months in a row below zero. Name this path's own ending.
+  // The weekly ending is a different line. Say so, or a chart of this path looks like it contradicts the sentence.
+  else if (other && weekly) how = `${p.end_balance < 0 ? `Ends at ${cash(p.end_balance)}.` : `${p.longest} month${p.longest === 1 ? "" : "s"} in a row in debt.`} With $${weekly} a week, the same future ends at ${cash(other.end_balance)}.`;
+  else how = p.end_balance < 0
+    ? `${p.longest} month${p.longest === 1 ? "" : "s"} in a row in debt, ending at ${cash(p.end_balance)}.`
+    : `${p.longest} month${p.longest === 1 ? "" : "s"} in a row below zero, then back to ${cash(p.end_balance)} by month 60.`;
+  return { what, how };
 }
 
 function tally(paths) { const t = { fine: 0, rough_recovered: 0, hard: 0 }; for (const p of paths) t[p.outcome]++; return t; }
@@ -118,7 +129,7 @@ function sample(paths, seed) {
   return ids;
 }
 
-export function simulate({ persona = { id: "maya" }, scenario = { id: "layoff", intensity: "moderate" }, weekly_extra = 0, seed = 42, dare: dareIn }) {
+export function simulate({ persona = { id: "maya" }, scenario = { id: "layoff", intensity: "moderate" }, weekly_extra = 0, seed = 42, dare: dareIn, mention_buffer = true }) {
   const p = { ...PERSONAS[persona.id ?? "maya"], ...(persona.overrides ?? {}) };
   const sc = { intensity: "moderate", ...scenario };
   const meta = SCENARIOS[sc.id] ?? { kind: "none", label: "Your futures as they stand" };
@@ -128,7 +139,7 @@ export function simulate({ persona = { id: "maya" }, scenario = { id: "layoff", 
   const base = run(D, p, sc, 0, dare);
   const lever = weekly_extra > 0 ? run(D, p, sc, weekly_extra, dare) : null;
   const ids = sample(base, seed);
-  const side = (paths, id, other, w) => { const x = paths[id]; return { outcome: x.outcome, end_balance: x.end_balance, min_balance: x.min_balance, series: x.series, story: story(x, other, w) }; };
+  const side = (paths, id, other, w) => { const x = paths[id]; const compare = mention_buffer ? other : undefined; return { outcome: x.outcome, end_balance: x.end_balance, min_balance: x.min_balance, series: x.series, story: story(x, compare, compare ? w : undefined) }; };
   const room = Math.max(0, p.income - p.essentials - p.saving);
   return {
     sim_id: `${seed}-${sc.id}-${weekly_extra}`,
@@ -191,16 +202,20 @@ export function moneyPlan({ persona = { id: "sam" }, scenario = { id: "layoff", 
   const before = run(D, p0, sc, 0, null), after = run(D, p1, sc, weekly, null);
   const ids = sample(before, seed);
   const rank = { hard: 0, rough_recovered: 1, fine: 2 };
-  const changed = ids.filter((id) => rank[after[id].outcome] > rank[before[id].outcome]);
-  const pick = [...changed, ...ids.filter((id) => !changed.includes(id))].slice(0, 3);
-  const side = (x) => ({ outcome: x.outcome, end_balance: x.end_balance, story: story(x) });
+  const gain = (id) => rank[after[id].outcome] - rank[before[id].outcome];
+  // Only futures whose outcome got better are examples. The 20-card sample can miss a change the tally shows,
+  // so fall back to the first improved future in the whole set. No improvement means no example.
+  const changed = ids.filter((id) => gain(id) > 0).sort((a, b) => gain(b) - gain(a));
+  const anyId = changed.length ? -1 : before.findIndex((_, id) => gain(id) > 0);
+  const pick = changed.length ? changed.slice(0, 1) : anyId >= 0 ? [anyId] : [];
+  const side = (x) => ({ outcome: x.outcome, end_balance: x.end_balance, min_balance: x.min_balance, series: x.series });
   const room = Math.max(0, p0.income - p0.essentials - p0.saving);
   return {
     persona: p0.name, scenario: SCENARIOS[sc.id]?.label ?? "Your futures as they stand", total: N,
     plan: { weekly, spend, income, once }, monthly: Math.round((weekly * 52) / 12 + spend + income),
     weekly_cap: Math.floor((room * 12) / 52),
     before: tally(before), after: tally(after),
-    examples: pick.map((id) => ({ future_id: id, before: side(before[id]), after: side(after[id]) })),
+    examples: pick.map((id) => ({ future_id: id, what: storyParts(before[id]).what, before: side(before[id]), after: side(after[id]) })),
     assumptions: [
       `${p0.name}: $${p0.income} net income and $${p0.essentials} essentials a month, $${p0.savings} saved.`,
       `Your plan: ${[weekly && `$${weekly} a week set aside`, spend && `$${spend} a month less spending`, income && `$${income} a month more income`, once && `$${once} once into savings`].filter(Boolean).join(", ") || "no changes"}.`,
@@ -208,4 +223,20 @@ export function moneyPlan({ persona = { id: "sam" }, scenario = { id: "layoff", 
       "Demo defaults, not calibrated. Simulated outcomes for education, not financial advice.",
     ],
   };
+}
+
+// Lesson dial on the money road: the same 5,000 futures at each weekly amount, plus what that amount adds up to.
+// Every number on the dial comes from here, never from the model.
+export function bufferLesson({ persona = { id: "maya" }, scenario = { id: "layoff", intensity: "moderate" }, weeklies = [0, 10, 25, 50, 75, 100], seed = 42 }) {
+  const p = { ...PERSONAS[persona.id ?? "maya"], ...(persona.overrides ?? {}) };
+  const sc = { intensity: "moderate", ...scenario };
+  const room = Math.max(0, p.income - p.essentials - p.saving);
+  const cap = Math.floor((room * 12) / 52);
+  const D = draws(seed);
+  const rows = weeklies.filter((w) => w <= cap).map((weekly) => {
+    const t = tally(run(D, p, sc, weekly, null));
+    const year = weekly * 52;
+    return { weekly, tally: t, year, weeks: Math.round(year / ((p.essentials * 12) / 52)) };
+  });
+  return { persona: p.name, essentials: p.essentials, total: N, weekly_cap: cap, rows };
 }

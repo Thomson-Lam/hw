@@ -230,7 +230,7 @@ const s = StyleSheet.create({
 const RESULTS = ["moneyplan", "savings", "kit", "tally", "deck"];
 function headline(e: Element): string {
   switch (e.type) {
-    case "moneyplan": return `${e.after.fine.toLocaleString("en-CA")} of ${e.total.toLocaleString("en-CA")} futures end fine (was ${e.before.fine.toLocaleString("en-CA")})`;
+    case "moneyplan": return `Out of debt in ${Math.round((100 * e.after.fine) / e.total)}% of futures (now ${Math.round((100 * e.before.fine) / e.total)}%)`;
     case "savings": { const best = e.rows.find((r) => r.weekly > 0 && r.reached >= 0.8 * e.total) ?? e.rows.at(-1); return best ? `${e.goal}: $${best.weekly} a week reaches $${e.target.toLocaleString("en-CA")} in ${Math.round((100 * best.reached) / e.total)}% of futures` : e.goal; }
     case "kit": return `${e.title}: $${e.total.toLocaleString("en-CA")} total`;
     case "tally": return `${e.lever?.fine ?? e.baseline.fine} of ${e.total} futures end fine`;

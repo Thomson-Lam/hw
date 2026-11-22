@@ -404,7 +404,7 @@ const LEVERS = {
   income: { key: "lever_income", ask: "a way to add income or a one-time boost", unit: "$ per month added", hint: "0 (no) plus 2 realistic options, each at most 15% of income a month" },
 };
 const MONEY_DECISION = `You help one young person make money decisions about a worry, while they scroll. Ask ONE concrete decision on the given LEVER.
-Return JSON only: {"tile":{"type":"fork","prompt":string<=9 words,"opts":[3 options, each {"label":string<=5 words,"sub":string<=8 words,"amount":number}]},"message":string}.
+Return JSON only: {"tile":{"type":"fork","prompt":string<=9 words,"opts":[3 options, each {"label":string<=3 words,"sub":string<=4 words,"amount":number}]},"message":string}.
 amount is the option's number on the lever (see UNIT). The first option must be the "keep as is" choice with amount 0.
 Options must be specific to this person's life (their job, city, income) and realistic. No investment products, no advice beyond the decision.
 The message is one calm sentence of at most 18 words saying why this decision matters for their worry. Write money as $150, never bare numbers.`;
@@ -419,7 +419,7 @@ export async function moneyDecision(db, nodeId, ctx) {
     if (t?.type !== "fork" || !Array.isArray(t.opts) || t.opts.length < 2 || t.opts.length > 3) return ["shape: a fork with 3 options"];
     if (words(t.prompt) > 11) errs.push("length: prompt");
     t.opts.forEach((x, i) => {
-      if (typeof x?.label !== "string" || words(x.label) > 6 || words(x?.sub) > 10) errs.push(`length: option ${i + 1}`);
+      if (typeof x?.label !== "string" || words(x.label) > 4 || words(x?.sub) > 6) errs.push(`length: option ${i + 1}`);
       const a = Number(x?.amount);
       if (!(a >= 0 && a <= cap)) errs.push(`range: option ${i + 1} amount ${x?.amount} must be 0 to ${cap}`);
     });

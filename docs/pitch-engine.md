@@ -1,5 +1,7 @@
 # Road Scroll: pitching it as an engine (Overall · Canada Life · Sun Life)
 
+> **Superseded (Nov 21, 23:30).** We no longer pitch the general engine, the health pack or the Merch Trail. The product is the money road only: see `Uncharted-PRD.md` section 0 and `docs/demo-script.md`. Kept for history.
+
 Nov 21, 2026 · builds on `idea-breakdown.md`
 
 > Build note (2026-11-21 03:50): the build uses **lead-in tiles at forks plus a deterministic fallback road**, not Spaceship pre-paving (decision after the loop sim; see `.pi/rigor-goal/road-lab-engine-*/decisions.md`). "Nothing waits" still holds. A third pack, **Merch Trail** (an agent searches Printables for a 3D-printable horse for Hack Western merch), is also in scope.
