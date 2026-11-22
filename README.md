@@ -1,27 +1,71 @@
-# hw: Road Scroll (Hack Western 13)
+# Uncharted
 
-Pre-prototype phase. We try ideas fast in a shared **playground** web app and keep what works.
+We wanted to a) experiment with a new way to interact with and use LLMs to power the user experience, b) arrive at a same goal but through different processes and see what would happen, c) maybe not watch reels while Clauding and enrich ourselves organically without forcing ourselves to do so mentally.
 
-- `playground/`: Next.js app that holds every prototype. Rules: [`playground/AGENTS.md`](playground/AGENTS.md)
-- `docs/`: design brief (`docs/playground/references/idea-breakdown.md`) and references
-- Hosting: **local only for now** (`npm run dev` / `npm run build && npm start`). Vercel setup is deferred: [`docs/playground/vercel-setup.md`](docs/playground/vercel-setup.md)
+1. you enter something you want to do.
+2. you scroll and make decisions.
+3. you see the result of your decisions. If you don't like it and want to see more, keep scrolling.
+4. you explore other ways you could have gotten to the same goal and try different things.
 
-## Teammates: get started
+Is the gist of Uncharted. We combined 2 favorites things for hackers: prompting and doom scrolling, into one thing; for hackers, by hackers. And once in a while, a nice, random surprise from Wikipedia pops out.
 
-### Make a prototype (laptop or phone)
-You don't write the boilerplate. A coding agent does, by following `playground/AGENTS.md`.
+**Canada Life track**: Uncharted is also an app that simulate scenarios that forces you to make good investment decisions through simulations, with the fun of doom scrolling (if you can't fight it, join it!) and the randomness of LLMs.
 
-- **From a phone:** open Claude Code on the web (claude.ai/code) or your agent of choice, and select the `Thomson-Lam/hw` repo. Ask, for example:
-  > Make a playground prototype called `fork-tap`: three road signs at a fork; tapping one bends the road toward it. Add controls for sign count and bend speed.
-  The agent reads `CLAUDE.md` → `playground/AGENTS.md`. It builds on a branch, runs the checks, opens a PR, and posts the preview link.
-- **From a laptop:** run your agent (Claude Code, Codex, Cursor…) in the repo root with the same kind of request.
+> WARNING: Our harness is designed to force Gemini to be **creative**; it never repeats and has to keep exploring, so it gets desperate to make a good idea the more you scroll. You may run into *fun* ideas if you keep scrolling, so scroll with caution.
 
-### Rules of thumb
-- Each prototype is one folder: `playground/app/prototypes/<slug>/`. Don't import from another person's prototype. Copy instead.
-- Work on a branch, never on `main`. Before you push, `npm run check` must pass. CI runs the same check on every PR.
-- Open a prototype on your phone from the PR's Vercel preview link: `<preview>/prototypes/<slug>`.
-- Prototypes are private (password) by default. A prototype goes public at `/p/<slug>` only when Thomson asks for it.
-- When something breaks and you fix it, add the lesson to `playground/AGENTS.md` §4.
+<p align="center">
+  <img src="docs/screenshots/IMG_6415.jpg" width="250" alt="Idea card: Dark Beat Singletrack, a rhythmic nighttime mountain bike descent. Your choices: 25." />
+  <img src="docs/screenshots/IMG_6416.jpg" width="250" alt="Idea card: Data Trail Chart Stream, review digital charts for the trail ahead. Your choices: 47." />
+  <img src="docs/screenshots/IMG_6417.jpg" width="250" alt="Idea card: Visual Fauna Log Feed, read animal data tracks in the dark. Your choices: 48." />
+</p>
+
+## Scroll yourself 
+
+1. Clone and install
+
+ ```bash
+git clone https://github.com/Thomson-Lam/hw.git
+cd hw/uncharted-app
+npm ci
+ ```
+
+2. Add your key to hw/.env, at the repo root, not inside uncharted-app/
+
+ ```bash
+echo 'GEMINI_API_KEY=your-key-here' > ../.env
+```
+
+The server reads this file at startup (server/server.mjs:10). If the file is missing,
+it crashes, even when you set UNCHARTED_GEMINI_KEY instead. The repo has no .env.example.
+
+3. Start the road server (port 8787)
+
+```bash
+node server/server.mjs
+ ```
+
+It creates uncharted.sqlite on the first run.
+
+4. Start the app in a second terminal
+
+```bash
+npx expo start --lan
+```
+
+- Phone: scan the QR code with Expo Go. The phone and laptop must be on the same Wi-Fi, because the app calls <laptop-ip>:8787.
+- Laptop: press w for the web build, or run ./sim.sh for a phone-sized Chrome window.
+
+If you use Mac, hotspot and run `./phone.sh`. It finds the hotspot address and restarts Expo on it.
+
+Optional: the playground (prototypes, Next.js)
+
+```bash
+cd ../playground && npm install && npm run dev
+```
+
+## some nice to have next steps?
+
+Maybe random retro games and comics to go along with the nice HW components. No videos though; we want to keep our minds fresh and focused.
 
 ## Credits
 
