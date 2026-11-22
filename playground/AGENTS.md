@@ -87,13 +87,14 @@ Keep this file current on every change. It has these sections:
 - Namespace everything that is global: localStorage keys (`pg:<slug>:*`), API routes (`/api/<slug>/*`), SVG/DOM ids (`<slug>-...`).
 
 ### 2.4 Design system
-- Always use `components/ui` and design tokens: `bg-background`, `text-foreground`, `bg-card`, `bg-muted`, `text-muted-foreground`, `bg-primary`, `border-border`, `fill-foreground`, `stroke-border`, and so on. In SVG, use `className="fill-…"` / `stroke-…` and `fillOpacity`. For gradient stops, use `className="[stop-color:var(--background)]"`.
+- Follow the UI/UX rules in `docs/design-rules/` (start with its `README.md`; run `09-review-checklist.md` before you deliver). On any visual or UX conflict with this file, those rules win.
+- Always use `components/ui` and design tokens: `bg-background`, `text-foreground`, `bg-card`, `bg-muted`, `text-muted-foreground`, `bg-primary`, `border-border`, `fill-foreground`, `stroke-border`, and so on. In SVG, use `className="fill-…"` / `stroke-…` and `fillOpacity`.
 - Never hardcode colors: no `bg-black`, no `text-white`, no hex/rgb/oklch values, no inline color styles.
 - **Read the component source in `components/ui/` before you use a prop.** These components are shadcn `base-nova` on **Base UI, not Radix**. Known differences:
   - Use the `render` prop for composition, not `asChild`. Example: `<SheetTrigger render={<Button />}>`.
   - `Slider` takes an **array**: `value={[n]}`. If you pass a number, it renders two thumbs. `onValueChange` gives `number | number[]`.
   - `Switch` uses `checked` / `onCheckedChange`.
-  - Button sizes are `xs|sm|default|lg|icon|icon-xs|icon-sm|icon-lg`. They are smaller than 44px, so add `className="h-11"` / `size-11` for touch targets.
+  - Button sizes are `xs|sm|default|lg|icon|icon-xs|icon-sm|icon-lg`. They are smaller than 48px, so add `className="h-12"` / `size-12` for touch targets.
 - Components import `cn` from the `cn` package (shadcn's clsx + tailwind-merge). `@/lib/utils` re-exports it.
 
 ### 2.5 Control panels
@@ -110,7 +111,7 @@ Keep this file current on every change. It has these sections:
   const controls = useControls(SLUG, controlSchema);           // persisted at pg:<slug>:controls
   <PrototypeShell panel={<ControlPanel controls={controls} />}>…</PrototypeShell>
   ```
-  You get Reset and Randomize for free. **Every control panel has both.** `PrototypeShell` puts the panel in a sticky side column on `lg+`, where it never covers the subject. On mobile, it puts the panel in a bottom sheet behind a 44px floating button.
+  You get Reset and Randomize for free. **Every control panel has both.** `PrototypeShell` puts the panel in a sticky side column on `lg+`, where it never covers the subject. On mobile, it puts the panel in a bottom sheet behind a floating button.
 - If you need a new control type, add it to `lib/controls` (types, logic, panel field). Do not fork the library inside a prototype.
 
 ### 2.6 Clean and minimal by default
@@ -121,7 +122,7 @@ Keep this file current on every change. It has these sections:
 
 ### 2.7 Mobile first
 - Everything must work at 375px wide, with no horizontal scroll.
-- Tap targets are at least 44×44px.
+- Tap targets are at least 48×48px, at least 8px apart.
 - On mobile, buttons show only an icon. Labels appear from `sm:` up (`<span className="hidden sm:inline">`), and the button keeps an `aria-label`.
 - No hover-only interactions. Every hover state needs a visible touch equivalent (`active:` states, tap toggles).
 - Code blocks wrap (`whitespace-pre-wrap break-words`). Nothing scrolls horizontally.

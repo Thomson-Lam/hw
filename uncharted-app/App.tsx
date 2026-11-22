@@ -15,13 +15,13 @@ export default function App() {
     "CossetteTexte-Regular": require("./assets/fonts/CossetteTexte-Regular.ttf"),
     Figtree: require("./assets/fonts/Figtree-Variable.ttf"),
   });
-  const [trip, setTrip] = useState<{ seed: Seed; n: number } | null>(null);
+  const [trip, setTrip] = useState<{ seed: Seed; n: number; resume?: string } | null>(null);
   if (!fonts) return <View style={{ flex: 1, backgroundColor: "rgb(97,158,184)" }} />;
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
       <View style={{ flex: 1, backgroundColor: "#1f3a2a" }}>
-        {trip ? <Road key={trip.n} seed={trip.seed} restart={() => setTrip(null)} /> : <Title go={(seed) => setTrip({ seed, n: Date.now() })} />}
+        {trip ? <Road key={trip.n} seed={trip.seed} resume={trip.resume} restart={() => setTrip(null)} /> : <Title go={(seed) => setTrip({ seed, n: Date.now() })} open={(id) => setTrip({ seed: null, n: Date.now(), resume: id })} />}
       </View>
     </SafeAreaProvider>
   );

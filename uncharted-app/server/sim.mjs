@@ -76,7 +76,7 @@ function run(D, p, sc, weekly, dare) {
       series.push(Math.round(bal));
     }
     const outcome = bal < 0 || maxNegRun >= 6 ? "hard" : min < 0 ? "rough_recovered" : "fine";
-    paths.push({ outcome, end_balance: Math.round(bal), min_balance: Math.round(min), neg, series, events });
+    paths.push({ outcome, end_balance: Math.round(bal), min_balance: Math.round(min), neg, longest: maxNegRun, series, events });
   }
   return paths;
 }
@@ -95,7 +95,9 @@ function story(p, other, weekly) {
   let how;
   if (p.outcome === "fine") how = `You ended with ${money(p.end_balance)} and options.`;
   else if (p.outcome === "rough_recovered") how = `${p.neg} month${p.neg > 1 ? "s" : ""} on credit, back above zero by month 60 with ${money(p.end_balance)}.`;
-  else how = other && weekly ? `It ended ${money(p.end_balance)}. With $${weekly} a week, this future ends at ${money(other.end_balance)}.` : `It ended ${money(p.end_balance)}, a hard stretch with a way back.`;
+  // Hard means still in debt at month 60, or 6+ months in a row below zero. Say which, without contradicting the numbers.
+  else if (other && weekly) how = `It ended ${money(p.end_balance)}. With $${weekly} a week, this future ends at ${money(other.end_balance)}.`;
+  else how = p.end_balance < 0 ? `Still ${money(-p.end_balance)} in debt at month 60.` : `${p.longest} months in a row below zero, then back to ${money(p.end_balance)} by month 60.`;
   return `${what} ${how}`;
 }
 
@@ -149,5 +151,61 @@ export function simulate({ persona = { id: "maya" }, scenario = { id: "layoff", 
       ...(lever ? { lever: side(lever, id) } : {}),
       events: base[id].events,
     })),
+  };
+}
+
+// Savings odds for a goal (the agent's tool on find/make roads): in how many of 5,000 futures does the
+// person put aside `target` dollars on top of today's savings within `horizon` months, at each weekly amount?
+// Same random draws for every row, so rows differ only by the weekly amount.
+export function goalOdds({ persona = { id: "sam" }, target, horizon = 24, weeklies = [0, 10, 25, 50], seed = 42 }) {
+  const p = { ...PERSONAS[persona.id ?? "sam"], ...(persona.overrides ?? {}) };
+  const room = Math.max(0, p.income - p.essentials - p.saving);
+  const cap = Math.floor((room * 12) / 52);
+  const D = draws(seed);
+  const sc = { id: "none", intensity: "moderate" };
+  const rows = weeklies.filter((w) => w <= cap).map((weekly) => {
+    const paths = run(D, p, sc, weekly, null);
+    const firsts = [];
+    for (const x of paths) { const m = x.series.findIndex((b, i) => i > 0 && i <= horizon && b >= p.savings + target); if (m > 0) firsts.push(m); }
+    firsts.sort((a, b) => a - b);
+    return { weekly, reached: firsts.length, month: firsts.length ? firsts[Math.floor(firsts.length / 2)] : null };
+  });
+  return {
+    persona: p.name, target: Math.round(target), horizon, total: N, weekly_cap: cap, rows,
+    assumptions: [
+      `${p.name}: $${p.income} net income and $${p.essentials} essentials a month, $${p.savings} saved, $${p.saving} a month already saved.`,
+      "Counts a future when savings grow by the price within the window, after surprise bills and any job loss.",
+      "Demo defaults, not calibrated. Simulated outcomes for education, not financial advice.",
+    ],
+  };
+}
+
+// Decision-first money road: the same 5,000 futures before and after the person's plan.
+// plan = { weekly: $/week set aside, spend: $/month cut from essentials, income: $/month added, once: $ one-time boost to savings }
+export function moneyPlan({ persona = { id: "sam" }, scenario = { id: "layoff", intensity: "moderate" }, plan = {}, seed = 42 }) {
+  const p0 = { ...PERSONAS[persona.id ?? "sam"], ...(persona.overrides ?? {}) };
+  const sc = { intensity: "moderate", ...scenario };
+  const weekly = Math.max(0, Number(plan.weekly) || 0), spend = Math.max(0, Number(plan.spend) || 0), income = Math.max(0, Number(plan.income) || 0), once = Math.max(0, Number(plan.once) || 0);
+  const p1 = { ...p0, essentials: Math.max(0, p0.essentials - spend), income: p0.income + income, savings: p0.savings + once };
+  const D = draws(seed);
+  const before = run(D, p0, sc, 0, null), after = run(D, p1, sc, weekly, null);
+  const ids = sample(before, seed);
+  const rank = { hard: 0, rough_recovered: 1, fine: 2 };
+  const changed = ids.filter((id) => rank[after[id].outcome] > rank[before[id].outcome]);
+  const pick = [...changed, ...ids.filter((id) => !changed.includes(id))].slice(0, 3);
+  const side = (x) => ({ outcome: x.outcome, end_balance: x.end_balance, story: story(x) });
+  const room = Math.max(0, p0.income - p0.essentials - p0.saving);
+  return {
+    persona: p0.name, scenario: SCENARIOS[sc.id]?.label ?? "Your futures as they stand", total: N,
+    plan: { weekly, spend, income, once }, monthly: Math.round((weekly * 52) / 12 + spend + income),
+    weekly_cap: Math.floor((room * 12) / 52),
+    before: tally(before), after: tally(after),
+    examples: pick.map((id) => ({ future_id: id, before: side(before[id]), after: side(after[id]) })),
+    assumptions: [
+      `${p0.name}: $${p0.income} net income and $${p0.essentials} essentials a month, $${p0.savings} saved.`,
+      `Your plan: ${[weekly && `$${weekly} a week set aside`, spend && `$${spend} a month less spending`, income && `$${income} a month more income`, once && `$${once} once into savings`].filter(Boolean).join(", ") || "no changes"}.`,
+      `Job-loss chance ${sc.id === "layoff" ? Math.round((0.01 + 0.02 * (SCALE[sc.intensity] ?? 1)) * 100) : 1}% a month; 6% chance of a surprise bill each month.`,
+      "Demo defaults, not calibrated. Simulated outcomes for education, not financial advice.",
+    ],
   };
 }

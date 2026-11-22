@@ -30,7 +30,7 @@ node scripts/grab.mjs <testID|css-selector> [--explore] [--url http://localhost:
 ```
 
 - A bare word is a `testID` (`data-testid` on web). Anything else is a CSS selector.
-- `--explore` taps **Just explore** first, so road elements exist: `lane-0`, `fork-sign`, `pin-*`, `rules-toggle`, `mode`.
+- `--explore` starts a road with "Layoffs in my field" first, so road elements exist: `lane-0`, `fork-sign`, `card-*`, `rules-toggle`, `paths`, `profile`.
 - Output line 1 is `getSource` as JSON (`filePath`, `lineNumber`, `componentName`). The lines after it are the component stack.
 - Exit code 1 means the element did not appear within 30 s. Check the testID, or add `--explore`.
 

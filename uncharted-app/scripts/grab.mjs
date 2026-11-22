@@ -1,6 +1,6 @@
 // Map an on-screen element of the Expo web build to its source file with React Grab.
 // Usage: node scripts/grab.mjs <testID|css> [--explore] [--url http://localhost:8081]
-//   --explore  taps "Just explore" first, so road elements (lane-0, fork-sign, pin-*) exist.
+//   --explore  starts the road with "Layoffs in my field" first, so road elements (lane-0, fork-sign, card-*) exist.
 // Needs: `npx expo start` running (web served on :8081), and Playwright (resolved from ../playground).
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -20,8 +20,8 @@ const b = await chromium.launch({ args: ["--use-gl=angle", "--enable-unsafe-swif
 const p = await b.newPage({ viewport: { width: 390, height: 844 } });
 try {
   await p.goto(url);
-  await p.getByTestId("just-explore").waitFor({ timeout: 90000 });
-  if (args.includes("--explore")) await p.getByTestId("just-explore").click();
+  await p.getByTestId("goal-input").waitFor({ timeout: 90000 });
+  if (args.includes("--explore")) { await p.getByTestId("goal-input").fill("Layoffs in my field"); await p.getByTestId("start").click(); }
   await p.locator(selector).first().waitFor({ timeout: 30000 });
   await p.waitForFunction(() => !!window.__REACT_GRAB__, null, { timeout: 15000 });
   const out = await p.evaluate(async (sel) => {

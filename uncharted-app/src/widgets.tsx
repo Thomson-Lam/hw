@@ -1,16 +1,20 @@
 import Slider from "@react-native-community/slider";
 import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Image } from "expo-image";
+import { Linking, Pressable, Text, TextInput, View } from "react-native";
 import Svg, { Circle, Line, Polyline } from "react-native-svg";
 import { AnswerPayload } from "./api";
 import { Element, FutureSide, Outcome, Segment, Tally } from "./contract";
 import { C, Chip, F, Pill, T, Window } from "./hw";
+import { Deck, Dial, Story } from "./learn";
+import { Compare, Kit, MoneyPlan, Savings } from "./plan";
+import { hoursLabel, tagChip } from "./tags";
 
 export type WidgetProps = { seg: Segment; answer: (p: AnswerPayload) => void; change: () => void; retry: () => void; onGoal: () => void; onExplore: () => void };
 type Of<K extends Element["type"]> = Extract<Element, { type: K }>;
 
-const title = (seg: Segment, what: string) =>
-  `${seg.source === "agent" ? "Agent" : seg.source === "fallback" ? "Offline" : "Fixed"} · ${what}`;
+// Window title: what the stop is. Where it came from (agent, fixed, offline) is dev detail and stays off screen.
+const title = (_seg: Segment, what: string) => what.charAt(0).toUpperCase() + what.slice(1);
 
 function Answered({ seg, change }: { seg: Segment; change: () => void }) {
   if (!seg.answer) return null;
@@ -22,31 +26,27 @@ function Answered({ seg, change }: { seg: Segment; change: () => void }) {
   );
 }
 
-function Item({ seg, answer, change }: WidgetProps) {
+// An idea is content: what it is, a photo, and its labels. No Save/Skip, no rules.
+function Item({ seg }: WidgetProps) {
   const e = seg.el as Of<"item">;
-  const [why, setWhy] = useState(false);
-  const done = !!seg.answer;
   return (
     <Window title={title(seg, "idea")}>
+      {e.image ? (
+        <View style={{ gap: 4 }}>
+          <Image source={{ uri: e.image.url }} style={{ width: "100%", aspectRatio: 16 / 9, borderRadius: 8, backgroundColor: "#dfe2e6" }} contentFit="cover" transition={200} accessibilityLabel={e.image.alt ?? e.title} testID="item-image" />
+          {e.image.page ? (
+            <Pressable onPress={() => Linking.openURL(e.image!.page!)} accessibilityRole="link" hitSlop={8}>
+              <Text style={{ fontFamily: F.body, fontSize: 12, lineHeight: 16, color: C.sub, textDecorationLine: "underline" }}>Photo: Wikipedia, {e.image.credit ?? "see page"}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ) : null}
       <Text style={T.h}>{e.title}</Text>
       <Text style={T.p}>{e.line}</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-        {e.tags.map((t) => <Chip key={t} text={t} />)}
-        {e.hours ? <Chip text={`${e.hours} h`} /> : null}
+        {e.tags.map((t) => <Chip key={t} text={tagChip(t)} />)}
+        {e.hours ? <Chip text={hoursLabel(e.hours)} /> : null}
       </View>
-      {done ? <Answered seg={seg} change={change} /> : why ? (
-        <>
-          <Text style={T.k}>Not for me because…</Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {e.tags.map((t) => <Pill key={t} label={`no ${t}`} onPress={() => answer({ verdict: "nope", tag: t })} />)}
-          </View>
-        </>
-      ) : (
-        <View style={{ flexDirection: "row", gap: 8 }}>
-          <Pill flex label="Save" testID="save" onPress={() => answer({ verdict: "save" })} />
-          <Pill flex label="Not for me" testID="nope" onPress={() => setWhy(true)} />
-        </View>
-      )}
     </Window>
   );
 }
@@ -121,7 +121,7 @@ function Fork({ seg, answer, change }: WidgetProps) {
 const OUT: Record<Outcome, { icon: string; label: string }> = {
   fine: { icon: "●", label: "Fine" },
   rough_recovered: { icon: "◐", label: "Rough, recovered" },
-  hard: { icon: "○", label: "Hard, with a way back" },
+  hard: { icon: "○", label: "Hard stretch" },
 };
 const money = (v: number) => `${v < 0 ? "−" : ""}$${Math.abs(Math.round(v)).toLocaleString("en-CA")}`;
 
@@ -271,12 +271,19 @@ export function Widget(p: WidgetProps & { rulesNow: string[] }) {
     case "action": return <Action {...p} />;
     case "checkin": return <Checkin {...p} />;
     case "deadend": return <Deadend {...p} />;
+    case "dial": return <Dial seg={p.seg} />;
+    case "story": return <Story seg={p.seg} />;
+    case "deck": return <Deck seg={p.seg} progress={0} />;
+    case "compare": return <Compare seg={p.seg} answer={p.answer} change={p.change} />;
+    case "kit": return <Kit seg={p.seg} />;
+    case "savings": return <Savings seg={p.seg} />;
+    case "moneyplan": return <MoneyPlan seg={p.seg} />;
   }
 }
 
 export function Paving() {
   return (
-    <Window title="Agent · paving the next stretch" testID="paving">
+    <Window title="Paving the next stretch" testID="paving">
       <Text style={[T.p, { fontFamily: F.label }]}>Paving the road ahead from your picks…</Text>
     </Window>
   );
@@ -296,5 +303,12 @@ export function pinLabel(seg: Segment): { title: string; note: string } {
     case "action": return { title: "One next step", note };
     case "checkin": return { title: e.final ? "End of this road" : "Your road so far", note };
     case "deadend": return { title: "The road stops here", note };
+    case "dial": return { title: e.title, note };
+    case "story": return { title: e.title, note };
+    case "deck": return { title: e.title, note: `${e.cards.length} flashcards` };
+    case "compare": return { title: e.title, note: seg.answer ? `✓ ${seg.answer.label}` : `${e.items.length} real listings` };
+    case "kit": return { title: e.title, note: `$${e.total.toLocaleString("en-CA")} total` };
+    case "savings": return { title: `Saving for ${e.goal}`, note: `$${e.target.toLocaleString("en-CA")}` };
+    case "moneyplan": return { title: "Your plan, tested", note: `${e.after.fine.toLocaleString("en-CA")} of ${e.total.toLocaleString("en-CA")} end fine (was ${e.before.fine.toLocaleString("en-CA")})` };
   }
 }

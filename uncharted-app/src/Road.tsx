@@ -1,13 +1,18 @@
 import { Image } from "expo-image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { PanResponder, Pressable, ScrollView, ScrollViewInstance, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import Animated, { FadeIn, SlideInDown, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { AnswerPayload, fetchRoad, Road as RoadView, Seed, sendAnswer, sendChange, sendErase, sendRetry, startSession } from "./api";
+import { AnswerPayload, fetchMeta, fetchRoad, fetchTree, Meta, Road as RoadView, Seed, sendAnswer, sendChange, sendRetry, startSession, TreeNode } from "./api";
 import { Segment } from "./contract";
-import { C, Chip, CloseCtx, F, MessageCtx, T, Window } from "./hw";
+import { C, CloseCtx, F, MessageCtx, T } from "./hw";
+import { IconBack, IconPaths, IconPerson } from "./icons";
+import { Drawer, ProfilePanel, VariantsPanel } from "./Panels";
 import { DitherMode, TerrainCanvas } from "./TerrainCanvas";
-import { at, camera, choiceOpts, lanePoint, laneForSwipe, layout, Placed, straightPoint, zoomEnd } from "./terrain";
-import { Paving, pinLabel, Widget } from "./widgets";
+import { at, camera, choiceOpts, lanePoint, laneForSwipe, layout, Placed, zoomEnd } from "./terrain";
+import { Deck } from "./learn";
+import { CardActions, CardBody, PavingCard } from "./RoadCard";
+import { Paving, Widget } from "./widgets";
 
 const PIN = require("../assets/hw/pin.svg");
 const ease = (u: number) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
@@ -25,34 +30,20 @@ function Ring({ size, left, top }: { size: number; left: number; top: number }) 
   return <View pointerEvents="none" style={{ position: "absolute", left: left - size / 2, top: top - size / 2, width: size, height: size, borderRadius: 999, borderWidth: 2, borderColor: "#fff", opacity: 0.9 * (1 - e), transform: [{ scale: 0.6 + 1.3 * e }] }} />;
 }
 
-// A Hack Western pin beside the road, with its label on the outer side.
-function PinMark({ x, y, k, pulseOn, label, note, side, onPress, testID, dim }: { x: number; y: number; k: number; pulseOn: boolean; label: string; note?: string; side: number; onPress?: () => void; testID?: string; dim?: boolean }) {
-  const h = 58 * k, w = h / 2.5, lw = 150, sw = useWindowDimensions().width;
-  const lx = Math.min(sw - lw - 8, Math.max(8, side < 0 ? x - w / 2 - 6 - lw : x + w / 2 + 6));
-  const bx = Math.min(lx, x - w / 2), by = y - h * 0.97, bw = Math.max(lx + lw, x + w / 2) - bx;
-  return (
-    <Pressable onPress={onPress} testID={testID} accessibilityRole="button" accessibilityLabel={label} style={{ position: "absolute", left: bx, top: by, width: bw, height: Math.max(h, 52), opacity: dim ? 0.6 : 1 }}>
-      {pulseOn ? <Ring size={h * 0.5} left={x - bx} top={w * 0.36} /> : null}
-      <Image source={PIN} style={{ position: "absolute", left: x - w / 2 - bx, top: 0, width: w, height: h }} />
-      <View style={{ position: "absolute", top: 0, left: lx - bx, width: lw, minHeight: 44, justifyContent: "center", backgroundColor: "rgba(244,245,248,0.95)", borderRadius: 8, borderWidth: 0.9, borderColor: C.border, paddingHorizontal: 9, paddingVertical: 5 }}>
-        <Text numberOfLines={2} style={{ fontFamily: F.head, fontSize: 13, lineHeight: 15, color: C.ink }}>{label}</Text>
-        {note ? <Text numberOfLines={1} style={{ fontFamily: F.body, fontSize: 11, color: C.sub }}>{note}</Text> : null}
-      </View>
-    </Pressable>
-  );
-}
-
-export function Road({ seed, restart }: { seed: Seed; restart: () => void }) {
+export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; restart: () => void }) {
   const [road, setRoad] = useState<RoadView | null>(null);
   const [err, setErr] = useState("");
   const { width: W, height: H } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReducedMotion();
   const [s, setS] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
-  const [seen, setSeen] = useState<string[]>([]);
-  const [rulesOpen, setRulesOpen] = useState(false);
   const [mode, setMode] = useState<DitherMode>("trail");
   const [follow, setFollow] = useState<string | null>(null);
+  const [panel, setPanel] = useState<"variants" | "profile" | null>(null);
+  const [treeNodes, setTreeNodes] = useState<TreeNode[] | null>(null);
+  const [meta, setMeta] = useState<Meta | null>(null);
+  const [peek, setPeek] = useState<TreeNode | null>(null);
   const scroller = useRef<ScrollViewInstance>(null);
   const anim = useRef(0);
 
@@ -61,8 +52,9 @@ export function Road({ seed, restart }: { seed: Seed; restart: () => void }) {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
-    startSession(seed).then(setRoad).catch((e) => setErr(String(e.message ?? e)));
-  }, [seed]);
+    // A prior road from the home screen reopens as it was left; otherwise a new road starts from the seed.
+    (resume ? fetchRoad(resume) : startSession(seed)).then(setRoad).catch((e) => setErr(String(e.message ?? e)));
+  }, [seed, resume]);
   const [retryTick, setRetryTick] = useState(0);
   useEffect(() => {
     if (!road) return;
@@ -72,6 +64,9 @@ export function Road({ seed, restart }: { seed: Seed; restart: () => void }) {
   }, [road, retryTick]);
   const act = (p: Promise<RoadView>) => p.then((r) => { setErr(""); setRoad(r); return r; }).catch((e) => { setErr(String(e.message ?? e)); return null; });
   const sid = road?.session_id ?? "";
+  // Paths panel: refetch the whole tree whenever the road changes while it is open.
+  useEffect(() => { if (panel === "variants" && sid) fetchTree(sid).then(setTreeNodes).catch(() => {}); }, [panel, road, sid]);
+  useEffect(() => { fetchMeta().then(setMeta).catch(() => {}); }, []);
 
   const shown: Segment[] = useMemo(() => (road?.nodes ?? []).map((n) => ({ id: n.id, el: n.element, source: n.source, message: n.message, blocks: n.blocks, answer: n.answer })), [road]);
   const gi = shown.findIndex((x) => x.blocks);
@@ -107,6 +102,17 @@ export function Road({ seed, restart }: { seed: Seed; restart: () => void }) {
     if (r) setFollow(seg.id);
   };
 
+  // Inline cards call through a ref, so their memoized bodies never hold stale handlers.
+  const cardActions = useRef<CardActions>(null!);
+  useLayoutEffect(() => {
+    cardActions.current = {
+      answer: (seg, p) => { if ("option_index" in p) return void pickLane(seg, p.option_index); act(sendAnswer(sid, seg.id, p)); },
+      change: (seg) => act(sendChange(sid, seg.id)),
+      retry: (seg) => act(sendRetry(sid, seg.id)),
+      home: restart,
+    };
+  });
+
   // At an open fork on screen, sideways and upward drags pick a lane; downward drags still scroll back.
   const [preview, setPreview] = useState(-1);
   const gateSec = L.sections.at(-1);
@@ -125,7 +131,18 @@ export function Road({ seed, restart }: { seed: Seed; restart: () => void }) {
   const goalSeg = shown.find((x) => x.answer?.rules.some((r) => r.key === "scenario" || r.key === "goal"));
   const active = road?.rules ?? [];
   const openSeg = shown.find((x) => x.id === open);
-  const show = (id: string) => { setOpen(id); setSeen((x) => (x.includes(id) ? x : [...x, id])); };
+  const show = (id: string) => setOpen(id);
+  const personaSeg = shown.find((x) => x.el.type === "fork" && x.el.opts.some((o) => o.rule.key === "persona")) ?? null;
+  const personaRule = personaSeg && personaSeg.el.type === "fork" && personaSeg.answer?.option_index != null ? personaSeg.el.opts[personaSeg.answer.option_index]?.rule : null;
+  const personaId = personaRule && personaRule.kind === "set" ? String(personaRule.value) : null;
+  const roadIds = useMemo(() => new Set(shown.map((x) => x.id)), [shown]);
+  // Each choice on the road, in order. Tapping one glides back to the exact stop where it was made, to choose differently.
+  const picks = shown.filter((x) => x.answer && ["fork", "thisthat", "compare", "ask"].includes(x.el.type));
+  const jumpTo = (id: string) => {
+    const sec = L.sections.find((x) => x.seg?.id === id);
+    if (sec) glide(Math.max(0, Math.min(L.maxS, sec.T)));
+  };
+  const barBtn = { minHeight: 48, minWidth: 48, paddingHorizontal: 14, borderRadius: 999, backgroundColor: "rgba(244,245,248,0.95)", borderWidth: 1, borderColor: C.border, flexDirection: "row" as const, alignItems: "center" as const, gap: 6 };
 
   const marks = placed.flatMap((p: Placed) => {
     const sec = p.sec, seg = sec.seg, out: React.ReactNode[] = [];
@@ -160,58 +177,88 @@ export function Road({ seed, restart }: { seed: Seed; restart: () => void }) {
       });
       return out;
     }
-    const sp = straightPoint(sec.kind, sec.side), q = at(p, sp.x, sp.y), k = Math.min(1.4, Math.max(0.6, p.zoom));
-    if (sec.ghost) { out.push(<PinMark key={`ghost${p.i}`} x={q.x} y={q.y} k={k} pulseOn dim label="Paving the road ahead…" note="from your picks" side={sec.side} testID="paving" />); return out; }
-    const L2 = pinLabel(seg!), isGate = gi >= 0 && shown[gi].id === seg!.id;
-    out.push(<PinMark key={seg!.id} x={q.x} y={q.y} k={k} pulseOn={isGate || !seen.includes(seg!.id)} label={L2.title} note={isGate ? "open to answer" : L2.note} side={sec.side} onPress={() => show(seg!.id)} testID={`pin-${seg!.el.type}`} />);
     return out;
+  });
+
+  // Straight stretches carry their stop as a full card. Cards live inside the ScrollView (content coordinates),
+  // so a drag that starts on a card still scrolls the road. On a straight stretch cs + p.r.y is constant.
+  const rulesNow = active.map((r) => r.text).join("\n");
+  const cards = placed.flatMap((p: Placed) => {
+    const sec = p.sec, seg = sec.seg;
+    if (sec.n) return [];
+    const scale = p.r.w / W;
+    if (scale < 0.8 || scale > 1.6) return [];
+    const fade = Math.max(0, Math.min(1, 1 - (Math.abs(scale - 1) - 0.08) / 0.25));
+    const base = Math.min(p.r.h * 0.12, 120) + insets.top;
+    const key = sec.ghost ? `ghost${p.i}` : seg!.id;
+    if (seg?.el.type === "deck") {
+      // A deck pins near the top while its stretch scrolls past; that scroll deals the cards.
+      const travel = Math.max(1, p.r.h - base - 340);
+      const screenTop = Math.min(Math.max(base, p.r.y + base), p.r.y + base + travel);
+      const progress = Math.max(0, Math.min(1, -p.r.y / travel));
+      return [
+        <View key={key} pointerEvents={fade < 0.5 ? "none" : "box-none"} style={{ position: "absolute", top: cs + screenTop, left: 12, right: 12, opacity: fade }}>
+          <Deck seg={seg} progress={progress} still={reduceMotion} />
+        </View>,
+      ];
+    }
+    const top = cs + p.r.y + base;
+    // Scroll-linked: in the lower 40% of the screen a card sits down and to the right, and slides diagonally into place as it rises.
+    const u = reduceMotion ? 0 : Math.max(0, Math.min(1, (top - cs - H * 0.6) / (H * 0.4)));
+    return [
+      <View key={key} pointerEvents={fade < 0.5 ? "none" : "box-none"}
+        style={{ position: "absolute", top, left: 12, right: 12, opacity: fade * (1 - 0.7 * u), transform: [{ translateX: 140 * u }, { translateY: 90 * u }] }}>
+        {sec.ghost ? <PavingCard /> : <CardBody seg={seg!} rulesNow={rulesNow} actions={cardActions} />}
+      </View>,
+    ];
   });
 
   return (
     <View style={{ flex: 1, backgroundColor: "#22301f" }}>
       <TerrainCanvas placed={placed} W={W} H={H} mode={mode} />
       <View style={StyleSheet.absoluteFill} {...pan.panHandlers} testID="swipe">
-        <ScrollView ref={scroller} style={StyleSheet.absoluteFill} contentContainerStyle={{ height: H + L.maxS }} scrollEventThrottle={16}
-          onScroll={(e) => setS(e.nativeEvent.contentOffset.y)} onScrollBeginDrag={() => cancelAnimationFrame(anim.current)} showsVerticalScrollIndicator={false} testID="road" />
-        {/* Pins live inside the swipe layer, so a swipe that starts on a pin still picks a lane. */}
+        <ScrollView ref={scroller} style={StyleSheet.absoluteFill} contentContainerStyle={{ height: H + L.maxS }} scrollEventThrottle={16} keyboardShouldPersistTaps="handled"
+          onScroll={(e) => setS(e.nativeEvent.contentOffset.y)} onScrollBeginDrag={() => cancelAnimationFrame(anim.current)} showsVerticalScrollIndicator={false} testID="road">
+          {cards}
+        </ScrollView>
+        {/* Fork pins live inside the swipe layer, so a swipe that starts on a pin still picks a lane. */}
         <View style={StyleSheet.absoluteFill} pointerEvents="box-none">{marks}</View>
       </View>
 
-      <View pointerEvents="box-none" style={{ position: "absolute", top: insets.top + 8, left: 12, right: 12, flexDirection: "row", alignItems: "flex-start", gap: 8 }}>
-        <View pointerEvents="none" style={{ flex: 1 }}>
-          <Text style={{ fontFamily: F.head, fontSize: 28, lineHeight: 32, color: "#fff", textShadowColor: "rgba(0,0,0,0.5)", textShadowRadius: 10 }}>Uncharted</Text>
-          <Text numberOfLines={1} style={{ fontFamily: F.label, fontSize: 13, color: "#fff", textShadowColor: "rgba(0,0,0,0.6)", textShadowRadius: 6 }}>
-            {t.pipe === "intro" ? "Swipe or tap to pick a lane." : `${t.pipe === "finance" ? "Your futures" : "Exploring"} · ${goalSeg?.answer?.label ?? t.goal}`}
-          </Text>
-        </View>
-        <Pressable onPress={() => setMode(mode === "trail" ? "stream" : "trail")} testID="mode" accessibilityRole="button"
-          style={{ minHeight: 44, minWidth: 44, paddingHorizontal: 12, borderRadius: 999, backgroundColor: "rgba(244,245,248,0.92)", borderWidth: 0.9, borderColor: C.border, justifyContent: "center" }}>
-          <Text style={{ fontFamily: F.head, fontSize: 13, color: C.ink }}>{mode === "trail" ? "Trail" : "Stream"}</Text>
+      <View pointerEvents="box-none" style={{ position: "absolute", top: insets.top + 8, left: 12, right: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Pressable onPress={restart} testID="home" accessibilityRole="button" accessibilityLabel="Back to home" style={barBtn}>
+          <IconBack /><Text style={{ fontFamily: F.head, fontSize: 15, color: C.ink }}>Home</Text>
+        </Pressable>
+        <Pressable onPress={() => setPanel("variants")} testID="variants" accessibilityRole="button" accessibilityLabel="Show saved variants" style={barBtn}>
+          <IconPaths /><Text style={{ fontFamily: F.head, fontSize: 15, color: C.ink }}>Variants</Text>
+        </Pressable>
+        <View style={{ flex: 1 }} pointerEvents="none" />
+        <Pressable onPress={() => setPanel("profile")} testID="profile" accessibilityRole="button" accessibilityLabel="Profile and settings" style={barBtn}>
+          <IconPerson /><Text style={{ fontFamily: F.head, fontSize: 15, color: C.ink }}>Profile</Text>
         </Pressable>
       </View>
 
       <View pointerEvents="box-none" style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10, gap: 8 }}>
         {err ? <Text style={[T.p, { color: "#fff", textShadowColor: "#000", textShadowRadius: 4 }]}>{err}</Text> : null}
-        {rulesOpen ? (
-          <Window title="Your rules · tap one to erase it" onClose={() => setRulesOpen(false)}>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
-              {active.length ? active.map((r) => <Chip key={r.id} text={r.text} testID={`erase-${r.key}`} onPress={() => act(sendErase(sid, r.id))} />) : <Text style={T.p}>Your picks become rules here.</Text>}
-            </View>
-            {road?.log ? <Text numberOfLines={3} testID="agent-log" style={[T.p, { fontSize: 11, color: C.faint }]}>{road.stopped ? `Model stopped (${road.stopped}). ` : ""}{road.log}</Text> : null}
-          </Window>
-        ) : null}
-        <Pressable onPress={() => setRulesOpen(!rulesOpen)} accessibilityRole="button" testID="rules-toggle"
-          style={{ minHeight: 46, borderRadius: 999, backgroundColor: "rgba(244,245,248,0.95)", borderWidth: 0.9, borderColor: C.border, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <Text style={[T.p, { color: C.ink, fontFamily: F.head }]}>Your rules · {active.length}</Text>
-          <Text numberOfLines={1} style={[T.p, { flex: 1, fontSize: 13 }]} testID="log">{active.length ? active.map((r) => r.text).join(" · ") : "picks become rules"}</Text>
-          <Text style={T.p}>{rulesOpen ? "▾" : "▴"}</Text>
-        </Pressable>
+        <View style={{ minHeight: 52, borderRadius: 999, backgroundColor: "rgba(244,245,248,0.95)", borderWidth: 1, borderColor: C.border, flexDirection: "row", alignItems: "center", paddingLeft: 16, gap: 8, overflow: "hidden" }} testID="choices-bar">
+          <Text style={{ fontFamily: F.head, fontSize: 14, color: C.ink }}>Choices</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingRight: 12, alignItems: "center" }}>
+            {picks.length ? picks.map((p, i) => (
+              <Pressable key={p.id} onPress={() => jumpTo(p.id)} accessibilityRole="button" accessibilityLabel={`Go back to: ${p.answer!.label}`} testID={`choice-${i}`}
+                style={({ pressed }) => [{ minHeight: 36, borderRadius: 999, borderWidth: 1, borderColor: C.sel, paddingHorizontal: 12, justifyContent: "center", backgroundColor: pressed ? "#e6e8eb" : "#fff" }]}>
+                <Text numberOfLines={1} style={{ fontFamily: F.body, fontSize: 14, color: C.ink, maxWidth: 180 }}>{p.answer!.label}</Text>
+              </Pressable>
+            )) : <Text style={{ fontFamily: F.body, fontSize: 14, color: C.sub }}>appear here as you pick</Text>}
+          </ScrollView>
+        </View>
       </View>
 
       {openSeg ? (
         <View style={StyleSheet.absoluteFill}>
-          <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10,20,30,0.35)" }]} onPress={() => setOpen(null)} testID="sheet-backdrop" />
-          <View style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10, maxHeight: H * 0.8 }}>
+          <Animated.View entering={FadeIn.duration(180)} style={StyleSheet.absoluteFill}>
+            <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10,20,30,0.35)" }]} onPress={() => setOpen(null)} testID="sheet-backdrop" />
+          </Animated.View>
+          <Animated.View entering={SlideInDown.springify().damping(20).stiffness(180)} style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10, maxHeight: H * 0.8 }}>
             <ScrollView testID="sheet" contentContainerStyle={{ paddingTop: 4 }}>
               <CloseCtx.Provider value={() => setOpen(null)}>
                 <MessageCtx.Provider value={openSeg.message}>
@@ -227,8 +274,40 @@ export function Road({ seed, restart }: { seed: Seed; restart: () => void }) {
                 </MessageCtx.Provider>
               </CloseCtx.Provider>
             </ScrollView>
+          </Animated.View>
+        </View>
+      ) : null}
+      {peek && peek.element ? (
+        <View style={StyleSheet.absoluteFill}>
+          <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10,20,30,0.35)" }]} onPress={() => setPeek(null)} testID="peek-backdrop" />
+          <View style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10, maxHeight: H * 0.8, gap: 8 }}>
+            <ScrollView testID="peek">
+              <CloseCtx.Provider value={() => setPeek(null)}>
+                <MessageCtx.Provider value="A result from another set of choices. To get here again, tap a choice in the bar at the bottom of the road.">
+                  <View pointerEvents="none">
+                    <Widget seg={{ id: peek.id, el: peek.element, source: peek.source ?? "fixed", message: peek.message ?? "", blocks: false, answer: peek.answer ? { ...peek.answer, rules: [] } : null }}
+                      rulesNow={[]} answer={() => {}} change={() => {}} retry={() => {}} onGoal={() => {}} onExplore={() => {}} />
+                  </View>
+                </MessageCtx.Provider>
+              </CloseCtx.Provider>
+            </ScrollView>
+            <Pressable onPress={() => setPeek(null)} accessibilityRole="button" testID="peek-close" style={[barBtn, { justifyContent: "center" }]}>
+              <Text style={{ fontFamily: F.head, fontSize: 15, color: C.ink }}>Close preview</Text>
+            </Pressable>
           </View>
         </View>
+      ) : null}
+
+      {panel === "variants" ? (
+        <Drawer side="left" title="Variants" onClose={() => setPanel(null)} testID="variants-panel">
+          <VariantsPanel nodes={treeNodes} roadIds={roadIds} onOpen={(n, onRoad) => { setPanel(null); if (onRoad) { jumpTo(n.id); show(n.id); } else setPeek(n); }} />
+        </Drawer>
+      ) : null}
+      {panel === "profile" ? (
+        <Drawer side="right" title="Profile" onClose={() => setPanel(null)} testID="profile-panel">
+          <ProfilePanel meta={meta} personaId={personaId} personaSeg={personaSeg} onPersona={(j) => { setPanel(null); if (personaSeg) pickLane(personaSeg, j); }}
+            scenario={t.scenario} goal={goalSeg?.answer?.label ?? t.goal} weekly={active.find((r) => r.key === "weekly")?.text ?? null} mode={mode} setMode={setMode} />
+        </Drawer>
       ) : null}
     </View>
   );

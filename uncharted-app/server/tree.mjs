@@ -1,11 +1,13 @@
 // The decision tree. SQLite is the single source of truth: the road is the chain of taken nodes,
 // rules come from the active answers on that chain, and every node's context is rebuilt from its ancestors.
-import { exploreFallback, exploreTile, financeTile, stopState } from "./agent.mjs";
+import { conceptTile, exploreFallback, exploreTile, moneyDecision, research, shopFork, stopState } from "./agent.mjs";
 import { id, json, now, parse } from "./db.mjs";
-import { PERSONAS, SCENARIOS, simulate } from "./sim.mjs";
+import { findImage } from "./images.mjs";
+import { goalOdds, moneyPlan, PERSONAS, SCENARIOS } from "./sim.mjs";
 
 const CHOICE = ["fork", "thisthat"];
-const NEEDS_ANSWER = ["slider", "item", "ask", "action", "deadend"];
+// Idea cards ("item") are content only: the road continues past them without an answer.
+const NEEDS_ANSWER = ["slider", "ask", "action", "deadend", "compare"];
 const ENDS = (el) => el.type === "checkin" && el.final;
 
 const sameSlot = (a, b) => a.key === b.key && (a.kind === b.kind || (a.kind !== "max" && b.kind !== "max"));
@@ -15,16 +17,35 @@ function newestWins(list) {
   return out;
 }
 
+// How a tag reads in a sentence ("Show fewer history ideas"). Same list as src/tags.ts.
+export const TAG_PHRASE = {
+  outdoors: "outdoor ideas", night: "nighttime ideas", "hands-on": "hands-on projects", visual: "visual art ideas", history: "history ideas",
+  math: "math ideas", social: "ideas with other people", reading: "reading ideas", free: "free ideas", animals: "ideas with animals",
+  far: "ideas far from home", food: "food ideas", cheap: "low-cost ideas", quick: "quick ideas", music: "music ideas", online: "online ideas",
+  creative: "creative ideas", active: "active ideas",
+};
+const phrase = (t) => TAG_PHRASE[t] ?? `${t} ideas`;
+
 export function ruleText(r) {
   const v = r.value;
-  if (r.kind === "prefer") return `more ${r.key}`;
-  if (r.kind === "avoid") return `no ${r.key}`;
+  if (r.kind === "prefer") return `more ${phrase(r.key)}`;
+  if (r.kind === "avoid") return `fewer ${phrase(r.key)}`;
   if (r.kind === "max") return r.key === "hours" ? `at most ${v} h per idea` : `${r.key} at most ${v}`;
   if (r.key === "persona") return `using ${PERSONAS[v]?.name.split(",")[0] ?? v}'s numbers`;
   if (r.key === "weekly") return v ? `$${v} a week buffer` : "no buffer for now";
   if (r.key === "reminder") return v === "on" ? "remind me to set it up" : "no reminder";
   if (r.key === "kind") return v === "worry" ? "a worry about money" : v === "dare" ? "a dare" : "something I'm curious about";
   if (r.key === "goal") return `goal: ${v}`;
+  if (r.key === "concept") return `learning: ${v}`;
+  if (r.key === "find") return `${v}`;
+  if (r.key === "mode") return v === "make" ? "making it yourself" : "finding the right one";
+  if (r.key === "need") return `${v}`;
+  if (r.key === "pick") return `chose ${v}`;
+  if (r.key === "lever_spend") return v ? `spend $${v} a month less` : "keep spending as is";
+  if (r.key === "lever_income") return v ? `add $${v} a month` : "no extra income";
+  if (r.key === "lever_weekly") return v ? `$${v} a week set aside` : "no weekly saving";
+  if (r.key === "target") return `goal: $${Number(v).toLocaleString("en-CA")}`;
+  if (r.key === "focus") return `focus: ${v}`;
   if (r.key === "area") return v === "work" ? "worried about work" : "worried about costs";
   if (r.key === "scenario") return `what-if: ${SCENARIOS[v]?.label ?? v}`;
   return `${r.key}: ${v}`;
@@ -43,11 +64,18 @@ function rulesOf(el, payload) {
     return { label: `${v} ${el.unit}`, rules: [{ kind: "max", key: el.key, value: v }], value: v };
   }
   if (el.type === "item") {
-    if (payload.verdict === "save") return { label: "saved", rules: [{ kind: "prefer", key: el.tags[0] }], value: "save" };
-    if (payload.verdict === "nope" && el.tags.includes(payload.tag)) return { label: `no ${payload.tag}`, rules: [{ kind: "avoid", key: payload.tag }], value: payload.tag };
-    throw new Error("item answer needs verdict save, or nope with one of its tags");
+    if (payload.verdict === "save") return { label: "Saved", rules: [{ kind: "prefer", key: el.tags[0] }], value: "save" };
+    // A plain skip moves the road on without a rule; a reason ("show fewer …") becomes an avoid rule.
+    if (payload.verdict === "skip") return { label: "Skipped", rules: [], value: "skip" };
+    if (payload.verdict === "nope" && el.tags.includes(payload.tag)) return { label: `Fewer ${phrase(payload.tag)}`, rules: [{ kind: "avoid", key: payload.tag }], value: payload.tag };
+    throw new Error("item answer needs verdict save, skip, or nope with one of its tags");
   }
   if (el.type === "ask") { const g = String(payload.text ?? "").trim().slice(0, 120); if (!g) throw new Error("empty goal"); return { label: g, rules: [{ kind: "set", key: "goal", value: g }], value: g }; }
+  if (el.type === "compare") {
+    const it = el.items?.[payload.option_index];
+    if (!it) throw new Error("option_index out of range");
+    return { label: it.name, option_index: payload.option_index, rules: [{ kind: "set", key: "pick", value: it.name }, { kind: "set", key: "target", value: Math.round(it.price_cad) }] };
+  }
   if (el.type === "action") { const on = payload.verdict === "remind"; return { label: on ? "remind" : "not now", rules: [{ kind: "set", key: "reminder", value: on ? "on" : "off" }], value: on }; }
   throw new Error(`${el.type} takes no answer`);
 }
@@ -67,7 +95,10 @@ export function createTree(db, log = () => {}) {
   }
   const wire = (rs) => rs.map(({ kind, key, value }) => (value !== undefined ? { kind, key, value } : { kind, key }));
   const val = (rs, key) => [...rs].reverse().find((r) => r.key === key)?.value;
-  function trip(rs) { const scenario = val(rs, "scenario") ?? null, goal = val(rs, "goal") ?? ""; return { scenario, goal, kind: val(rs, "kind") ?? null, pipe: scenario ? "finance" : goal ? "explore" : "intro" }; }
+  function trip(rs) {
+    const scenario = val(rs, "scenario") ?? null, concept = val(rs, "concept") ?? null, find = val(rs, "find") ?? null, goal = val(rs, "goal") ?? concept ?? find ?? "";
+    return { scenario, goal, kind: val(rs, "kind") ?? null, pipe: scenario ? "finance" : concept ? "concept" : find ? "find" : val(rs, "goal") ? "explore" : "intro" };
+  }
 
   function describe(n) {
     const e = n.element, a = activeAnswer(n.id);
@@ -77,29 +108,21 @@ export function createTree(db, log = () => {}) {
       case "thisthat": case "slider": case "ask": return `${e.type} "${e.prompt}"${picked}`;
       case "fork": return `fork "${e.prompt}"${picked}`;
       case "future": { const s = e.lever ?? e.baseline; return `future #${e.future_id}: ${s.outcome}, month 60 balance ${s.end_balance}`; }
+      case "story": return `story "${e.title}": ${e.steps.map((x) => x.caption).join(" ")}`;
+      case "dial": return `dial "${e.title}" (${e.knob?.label} ${e.knob?.min}-${e.knob?.max})`;
+      case "deck": return `flashcards "${e.title}": ${e.cards.join(" ")}`;
+      case "compare": return `compared ${e.items.map((x) => `${x.name} $${x.price_cad}`).join(", ")}${picked}`;
+      case "kit": return `plan "${e.title}" costing $${e.total}`;
+      case "savings": return `savings odds for $${e.target}`;
+      case "moneyplan": return `money plan: ${e.after.fine} of ${e.total} futures end fine (was ${e.before.fine})`;
       default: return `${e?.type}${picked}`;
     }
   }
 
-  // ---- simulator runs, cached per session in sim_runs ----
-  function sim(sessionId, params) {
-    const key = json(params);
-    const row = q("SELECT result_json FROM sim_runs WHERE session_id=? AND params_json=?").get(sessionId, key);
-    if (row) return parse(row.result_json);
-    const t0 = performance.now();
-    const out = simulate(params);
-    q("INSERT OR IGNORE INTO sim_runs (id,session_id,params_json,result_json,ms,created_at) VALUES (?,?,?,?,?,?)").run(id(), sessionId, key, json(out), Math.round(performance.now() - t0), now());
-    return out;
-  }
-
   function introTile(rs) {
     const t = trip(rs);
-    if (!t.kind) return { element: { type: "fork", prompt: "Where do you want to go?", opts: [
-      { label: "A worry", sub: "about money", rule: { kind: "set", key: "kind", value: "worry" } },
-      { label: "A dare", sub: "something bold", rule: { kind: "set", key: "kind", value: "dare" } },
-      { label: "Curious", sub: "anything at all", rule: { kind: "set", key: "kind", value: "curious" } },
-    ] }, message: "Pick a direction. The road builds itself from your picks.", source: "fixed" };
-    if (t.kind === "curious") return { element: { type: "ask", prompt: "What are you curious about?", placeholder: "e.g. get into astronomy", examples: ["Get into astronomy", "Cook on a student budget", "Find a weekend hobby"] }, message: "Name anything. The agent paves the road from your words.", source: "fixed" };
+    // No built-in "worry / dare / curious" fork: a road with no goal yet just asks for one.
+    if (!t.kind || t.kind === "curious") return { element: { type: "ask", prompt: "What are you curious about?", placeholder: "e.g. get into astronomy", examples: ["Get into astronomy", "Cook on a student budget", "Find a weekend hobby"] }, message: "Name anything. The agent paves the road from your words.", source: "fixed" };
     // Every fork on the road has 2 or 3 lanes. Worries split into work or costs first, then one of two.
     const area = val(rs, "area");
     if (t.kind === "worry" && !area) return { element: { type: "fork", prompt: "What is the worry about?", opts: [
@@ -110,41 +133,104 @@ export function createTree(db, log = () => {}) {
     return { element: { type: "fork", prompt: t.kind === "worry" ? "Which worry?" : "Which dare?", opts: ids.map((sid) => ({ label: SCENARIOS[sid].chip, rule: { kind: "set", key: "scenario", value: sid } })) }, message: "Pick the one closest to what is on your mind.", source: "fixed" };
   }
 
-  const deadEnd = (why) => ({ element: { type: "deadend", reason: `The agent could not build a stop that fits your rules after 3 tries (${why}).` }, message: "Try again, change a pick, or erase a rule.", source: "fixed" });
-
-  async function financeStep(n, chain, rs, assumed) {
+  // Find / make road: 2 questions, real options from search, whose budget, savings odds from the simulator, one action.
+  async function findStep(n, chain, rs) {
     const t = trip(rs);
-    const start = chain.findIndex((x) => { const a = activeAnswer(x.id); return a && answerRules(a.id).some((r) => r.key === "scenario"); });
-    const body = chain.slice(start + 1);
+    const mode = val(rs, "mode") === "make" ? "make" : "find";
+    const start = chain.findIndex((x) => { const a = activeAnswer(x.id); return a && answerRules(a.id).some((r) => r.key === "find"); });
+    const body = chain.slice(start + 1).filter((x) => x.element);
+    const has = (type) => body.some((x) => x.element.type === type);
+    const forks = body.filter((x) => x.element.type === "fork" && x.element.opts.some((o) => o.rule.key === "need"));
+    const needs = rs.filter((r) => r.key === "need").map((r) => r.value);
+    if (forks.length < 2) {
+      const g = await shopFork(db, n.id, { goal: t.goal, mode, needs, asked: forks.map((x) => x.element.prompt) });
+      if (!g.failed) return g;
+      // Never stop the road on a question: fall back to a plain one.
+      const opt = (label, sub, value) => ({ label, sub, rule: { kind: "set", key: "need", value } });
+      return forks.length === 0
+        ? { element: { type: "fork", prompt: "How much do you want to spend?", opts: [opt("Keep it cheap", "the lowest sensible price", "budget, low price"), opt("Middle of the range", "good value for money", "mid-range price"), opt("Best I can get", "quality first", "high quality, premium")] }, message: "", source: "fallback" }
+        : { element: { type: "fork", prompt: "How will you use it?", opts: [opt("Now and then", "casual use", "casual beginner use"), opt("Every week", "regular use", "regular use"), opt("Seriously", "I want to get good", "serious use, room to grow")] }, message: "", source: "fallback" };
+    }
+    if (!has("compare") && !has("kit")) {
+      const g = await research(db, n.id, { goal: t.goal, mode, needs });
+      return g.failed ? deadEnd(g.failed[0]) : g;
+    }
+    const target = mode === "make" ? body.find((x) => x.element.type === "kit")?.element.total : Number(val(rs, "target"));
     const persona = val(rs, "persona");
-    if (!persona) return { element: { type: "fork", prompt: "Whose numbers should we run?", opts: Object.entries(PERSONAS).map(([pid, p]) => ({ label: p.name.split(",").slice(0, 2).join(","), sub: `$${p.income}/mo · $${p.savings} saved`, rule: { kind: "set", key: "persona", value: pid } })) }, message: "These are sample people. Pick the one closest to you.", source: "fixed" };
-    const levers = body.filter((x) => x.element?.type === "fork" && x.element.opts.some((o) => o.rule.key === "weekly")).length;
-    const weekly = Number(val(rs, "weekly") ?? 0);
-    const futures = body.filter((x) => x.element?.type === "future").length;
-    const has = (type) => body.some((x) => x.element?.type === type);
-    const actionDone = body.some((x) => x.element?.type === "action" && activeAnswer(x.id));
-    const r = sim(n.session_id, { persona: { id: persona }, scenario: { id: t.scenario, intensity: "moderate" }, weekly_extra: weekly, seed: 42 });
-    const cap = levers === 0 ? 5 : weekly > 0 || levers >= 2 ? 20 : 15;
-    const cands = [];
-    if (!has("assumptions")) cands.push({ id: "assumptions", element: { type: "assumptions", lines: r.assumptions }, data: { lines: r.assumptions } });
-    if (futures < Math.min(cap, r.cards.length)) {
-      const c = r.cards[futures];
-      const s = c.lever ?? c.baseline;
-      cands.push({ id: "future", element: { type: "future", future_id: c.future_id, baseline: c.baseline, lever: c.lever, weekly: weekly || undefined, index: futures + 1, of: r.cards.length, months: 60 }, data: { future_id: c.future_id, index: futures + 1, months: 60, outcome: s.outcome, balance_at_end: s.end_balance, story: s.story, ...(c.lever ? { without_buffer: c.baseline.outcome, weekly } : {}) } });
+    if (!persona) return { element: { type: "fork", prompt: "Whose budget should we plan with?", opts: Object.entries(PERSONAS).map(([pid, p]) => ({ label: p.name.split(",").slice(0, 2).join(","), sub: `$${p.income}/mo · saves $${p.saving}/mo`, rule: { kind: "set", key: "persona", value: pid } })) }, message: "These are sample people. Pick the one closest to you.", source: "fixed" };
+    if (!has("savings")) {
+      const odds = goalOdds({ persona: { id: persona }, target, horizon: 24 });
+      const pickName = val(rs, "pick") ?? body.find((x) => x.element.type === "kit")?.element.title ?? t.goal;
+      return { element: { type: "savings", goal: String(pickName), ...odds }, message: "Same 5,000 futures, different weekly amounts.", source: "sim" };
     }
-    if ((levers === 0 && futures >= 3) || (levers === 1 && weekly === 0 && futures >= 15)) {
-      const opts = [...[10, 25].filter((w) => w <= r.weekly_cap).map((w) => ({ label: `$${w} a week`, sub: `$${Math.round((w * 52) / 12)} a month`, rule: { kind: "set", key: "weekly", value: w } })), { label: "Not now", sub: "keep scrolling as is", rule: { kind: "set", key: "weekly", value: 0 } }];
-      if (opts.length >= 2) cands.push({ id: "lever", element: { type: "fork", prompt: "Add a small weekly buffer to these same futures?", opts }, data: { options: opts.map((o) => o.label) } });
+    if (!has("action")) {
+      const s = body.find((x) => x.element.type === "savings").element;
+      const rec = s.rows.find((r) => r.weekly > 0 && r.reached >= 0.8 * s.total) ?? s.rows.filter((r) => r.weekly > 0).at(-1) ?? { weekly: 10 };
+      return { element: { type: "action", weekly: rec.weekly }, message: "One step makes the plan real.", source: "fixed" };
     }
-    if (levers >= 1 && !has("tally") && futures >= 10) cands.push({ id: "tally", element: { type: "tally", baseline: r.tally.baseline, lever: r.tally.lever, weekly: weekly || undefined, total: 5000 }, data: { total: 5000, baseline: r.tally.baseline, ...(r.tally.lever ? { with_buffer: r.tally.lever, weekly } : {}) } });
-    if (has("tally") && weekly > 0 && !has("action")) cands.push({ id: "action", element: { type: "action", weekly }, data: { weekly } });
-    if (actionDone || (has("tally") && weekly === 0 && (levers >= 2 || futures >= 20)) || !cands.length) cands.push({ id: "end", element: { type: "checkin", final: true }, data: {} });
-    const ctx = { goal: t.goal || SCENARIOS[t.scenario]?.label || "", rules: wire(rs), path: chain.slice(-8).map(describe), assumed, candidates: cands };
-    if (stopState()) { const c = cands.find((x) => x.id !== "assumptions") ?? cands[0]; return { element: c.element, message: "The agent is offline, so this stop follows the default order.", source: "fallback" }; }
-    const g = await financeTile(db, n.id, ctx);
-    if (g.failed && g.stopped) { const c = cands.find((x) => x.id !== "assumptions") ?? cands[0]; return { element: c.element, message: "The agent is offline, so this stop follows the default order.", source: "fallback" }; }
+    return { element: { type: "checkin", final: true }, message: "That is your plan.", source: "fixed" };
+  }
+
+  // Lesson road: story, dial and flashcard stops, a fork every few stops, and an end after about 9 stops.
+  async function conceptStep(n, chain, rs, assumed) {
+    const t = trip(rs);
+    const start = chain.findIndex((x) => { const a = activeAnswer(x.id); return a && answerRules(a.id).some((r) => r.key === "concept"); });
+    const body = chain.slice(start + 1).filter((x) => x.element);
+    const teaching = body.filter((x) => ["story", "dial", "deck"].includes(x.element.type));
+    if (teaching.length >= 9) return { element: { type: "checkin", final: true }, message: "That is the whole road for this topic.", source: "fixed" };
+    const lastFork = body.map((x) => x.element.type).lastIndexOf("fork");
+    const ctx = {
+      goal: t.goal, focus: val(rs, "focus") ?? null, assumed,
+      path: body.slice(-8).map(describe),
+      sinceFork: lastFork < 0 ? body.length : body.length - 1 - lastFork,
+      lastType: body.at(-1)?.element.type ?? null,
+      covered: body.map((x) => x.element.title ?? x.element.prompt).filter(Boolean),
+      teachingStops: teaching.length,
+    };
+    const g = await conceptTile(db, n.id, ctx);
     if (g.failed) return deadEnd(g.failed[0]);
     return g;
+  }
+
+  const deadEnd = (why) => ({ element: { type: "deadend", reason: `The agent could not build a stop that fits your rules after 3 tries (${why}).` }, message: "Try again, change a pick, or erase a rule.", source: "fixed" });
+
+  // Money road: decisions first, the result at the end. Whose numbers, then 3 decisions on closed levers
+  // (spending, income, weekly saving), then one plan card from the simulator (same 5,000 futures before and after), then one action.
+  const MONEY_ORDER = ["spend", "income", "weekly"];
+  const leverOf = (el) => el?.type === "fork" ? el.opts.find((o) => String(o.rule?.key).startsWith("lever_"))?.rule.key.slice(6) : null;
+  function leverFallback(lever, p, cap) {
+    const o = (label, sub, value) => ({ label, sub, rule: { kind: "set", key: `lever_${lever}`, value } });
+    if (lever === "spend") return { type: "fork", prompt: "Trim one monthly cost?", opts: [o("Keep as is", "no change", 0), o("Cook at home more", "about $120 a month less", Math.min(120, Math.round(p.essentials * 0.15))), o("Cheaper phone and apps", "about $50 a month less", 50)] };
+    if (lever === "income") return { type: "fork", prompt: "Add a little income?", opts: [o("Not now", "no change", 0), o("A few weekend shifts", "about $200 a month", Math.min(200, Math.round(p.income * 0.15))), o("Sell things you don't use", "about $80 a month", 80)] };
+    const ws = [10, 25, 50].filter((w) => w <= cap);
+    return { type: "fork", prompt: "Set aside something every week?", opts: [o("Not now", "keep things as they are", 0), ...ws.slice(0, 2).map((w) => o(`$${w} a week`, `$${Math.round((w * 52) / 12)} a month`, w))] };
+  }
+
+  async function financeStep(n, chain, rs) {
+    const t = trip(rs);
+    const start = chain.findIndex((x) => { const a = activeAnswer(x.id); return a && answerRules(a.id).some((r) => r.key === "scenario"); });
+    const body = chain.slice(start + 1).filter((x) => x.element);
+    const has = (type) => body.some((x) => x.element.type === type);
+    const persona = val(rs, "persona");
+    if (!persona) return { element: { type: "fork", prompt: "Whose numbers should we run?", opts: Object.entries(PERSONAS).map(([pid, p]) => ({ label: p.name.split(",").slice(0, 2).join(","), sub: `$${p.income}/mo · $${p.savings} saved`, rule: { kind: "set", key: "persona", value: pid } })) }, message: "These are sample people. Pick the one closest to you.", source: "fixed" };
+    const p = PERSONAS[persona];
+    const asked = body.map((x) => leverOf(x.element)).filter(Boolean);
+    const next = MONEY_ORDER.find((l) => !asked.includes(l));
+    const plan = { spend: Number(val(rs, "lever_spend") ?? 0), income: Number(val(rs, "lever_income") ?? 0), weekly: Number(val(rs, "lever_weekly") ?? 0) };
+    const weeklyCap = Math.floor((Math.max(0, p.income - p.essentials - p.saving) * 12) / 52);
+    if (next) {
+      const so_far = body.filter((x) => leverOf(x.element) && activeAnswer(x.id)).map((x) => `${x.element.prompt} -> ${activeAnswer(x.id).label}`);
+      const worry = SCENARIOS[t.scenario]?.label ?? t.goal;
+      const g = stopState() ? { failed: ["offline"] } : await moneyDecision(db, n.id, { lever: next, persona: p, worry, weeklyCap, so_far });
+      return g.failed ? { element: leverFallback(next, p, weeklyCap), message: "", source: "fallback" } : g;
+    }
+    if (!has("moneyplan")) {
+      const r = moneyPlan({ persona: { id: persona }, scenario: { id: t.scenario, intensity: "moderate" }, plan });
+      const choices = body.filter((x) => leverOf(x.element) && activeAnswer(x.id)).map((x) => activeAnswer(x.id).label);
+      return { element: { type: "moneyplan", worry: r.scenario, choices, ...r }, message: "Here is what your choices change, across the same 5,000 futures.", source: "sim" };
+    }
+    if (plan.weekly > 0 && !has("action")) return { element: { type: "action", weekly: plan.weekly }, message: "One step makes the plan real.", source: "fixed" };
+    return { element: { type: "checkin", final: true }, message: "That is your plan.", source: "fixed" };
   }
 
   async function produce(n) {
@@ -160,7 +246,9 @@ export function createTree(db, log = () => {}) {
     const t = trip(rs);
     const context = { pipe: t.pipe, rules: wire(rs), assumed };
     if (t.pipe === "intro") return { ...introTile(rs), context };
-    if (t.pipe === "finance") return { ...(await financeStep(n, chain, rs, assumed)), context };
+    if (t.pipe === "finance") return { ...(await financeStep(n, chain, rs)), context };
+    if (t.pipe === "concept") return { ...(await conceptStep(n, chain, rs, assumed)), context };
+    if (t.pipe === "find") return { ...(await findStep(n, chain, rs)), context };
     const start = chain.findIndex((x) => { const a = activeAnswer(x.id); return a && answerRules(a.id).some((r) => r.key === "goal"); });
     const body = chain.slice(start + 1);
     const lastFork = body.map((x) => x.element?.type).lastIndexOf("fork");
@@ -198,6 +286,12 @@ export function createTree(db, log = () => {}) {
     if (!n || n.status !== "pending" || n.state === "stale") return;
     const t0 = Date.now();
     const out = await produce(n);
+    // Idea cards get a photo from Wikipedia (looked up here, never written by the model). No photo is fine.
+    if (out.element?.type === "item" && !out.element.image) {
+      const goal = (out.context?.rules ?? []).find((r) => r.key === "goal")?.value;
+      const img = await findImage(out.element.title, goal);
+      if (img) out.element = { ...out.element, image: img };
+    }
     const fresh = node(nid);
     if (!fresh || fresh.status !== "pending") return;
     q("UPDATE nodes SET status='ready', source=?, element_json=?, message=?, context_json=?, ready_at=? WHERE id=?").run(out.source, json(out.element), out.message, json(out.context), now(), nid);
@@ -214,6 +308,7 @@ export function createTree(db, log = () => {}) {
 
   // A taken, ready node decides what to generate next.
   function onVisible(n) {
+    q("UPDATE nodes SET seen_at=? WHERE id=? AND seen_at IS NULL").run(now(), n.id);
     const el = n.element;
     if (!el || ENDS(el) || NEEDS_ANSWER.includes(el.type) || activeAnswer(n.id)) return;
     const live = kids(n.id).filter((k) => k.state !== "stale");
@@ -300,7 +395,10 @@ export function createTree(db, log = () => {}) {
   }
 
   function road(sid) {
-    const chain = takenChain(sid);
+    let chain = takenChain(sid);
+    // Roads saved while ideas still waited for Save/Skip: continue them now that ideas need no answer.
+    const last = chain.at(-1);
+    if (last?.status === "ready" && last.element?.type === "item" && !activeAnswer(last.id)) { onVisible(last); chain = takenChain(sid); }
     const shown = chain.filter((n) => n.status === "ready");
     const rs = rulesOn(shown);
     const gen = q("SELECT g.ms, g.attempt, g.errors_json, n.state FROM generations g JOIN nodes n ON n.id=g.node_id WHERE n.session_id=? ORDER BY g.created_at DESC LIMIT 1").get(sid);
@@ -318,11 +416,23 @@ export function createTree(db, log = () => {}) {
   }
 
   function tree(sid) {
-    return q("SELECT id,parent_id,option_index,depth,state,status,source,element_json,message FROM nodes WHERE session_id=? ORDER BY depth, created_at").all(sid).map((n) => {
+    return q("SELECT id,parent_id,option_index,depth,state,status,source,element_json,message,seen_at FROM nodes WHERE session_id=? ORDER BY depth, created_at").all(sid).map((n) => {
       const e = parse(n.element_json);
-      return { id: n.id, parent_id: n.parent_id, option_index: n.option_index, depth: n.depth, state: n.state, status: n.status, source: n.source, type: e?.type ?? null, label: e?.title ?? e?.prompt ?? (e?.type === "future" ? `#${e.future_id}` : null), message: n.message };
+      const a = activeAnswer(n.id);
+      return { id: n.id, parent_id: n.parent_id, option_index: n.option_index, depth: n.depth, state: n.state, status: n.status, source: n.source, type: e?.type ?? null, label: e?.title ?? e?.prompt ?? (e?.type === "future" ? `#${e.future_id}` : null), message: n.message, element: e, answer: a ? { label: a.label, option_index: a.option_index } : null, seen: !!n.seen_at };
     });
   }
 
-  return { createSession, answer, change, erase, retry, road, tree, idle: () => !busy.size && !waiting.length };
+  // Prior roads for the home screen, newest first. Only roads started from a goal (the old "just explore" ones have no label).
+  function sessions(limit = 30) {
+    return q("SELECT id, seed_json, created_at FROM sessions ORDER BY created_at DESC LIMIT ?").all(limit).flatMap((s) => {
+      const seed = parse(s.seed_json);
+      if (!seed?.label) return [];
+      const chain = takenChain(s.id).filter((n) => n.status === "ready");
+      const t = trip(rulesOn(chain));
+      return [{ id: s.id, label: seed.label, created_at: s.created_at, pipe: t.pipe, stops: Math.max(0, chain.length - 1) }];
+    });
+  }
+
+  return { createSession, answer, change, erase, retry, road, tree, sessions, idle: () => !busy.size && !waiting.length };
 }
