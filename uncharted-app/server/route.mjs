@@ -23,7 +23,7 @@ export const GOAL_CRITERIA = {
 };
 export const GOAL_QUESTION = "If this is a goal, which kind of goal is it?";
 
-const MONEY = /\b(sav(e|ing)|money|debt|rent|layoff|laid off|fired|lose my job|hours|inflation|prices?|afford|paycheque|paycheck|broke|bills)\b|\$/i;
+const MONEY = /\b(sav(e|ing)|money|debt|rent|layoffs?|laid off|fired|jobs?|recession|economy|hiring|hours|shifts|inflation|prices?|groceries|tariffs?|afford|paycheque|paycheck|broke|bills|housing)\b|\$/i;
 const CONCEPT = /^(how|what|why|explain|teach|who|when)\b|\b(basics|explained|work\??)$/i;
 function fallback(text) {
   if (MONEY.test(text)) return "money_worry";

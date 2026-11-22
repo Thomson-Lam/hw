@@ -5,14 +5,14 @@ import Animated, { FadeIn, SlideInDown, useReducedMotion } from "react-native-re
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnswerPayload, fetchMeta, fetchRoad, fetchTree, Meta, Road as RoadView, Seed, sendAnswer, sendChange, sendRetry, startSession, TreeNode } from "./api";
 import { Segment } from "./contract";
-import { C, CloseCtx, F, MessageCtx, T } from "./hw";
+import { C, CloseCtx, F, MessageCtx, Pick, PicksCtx, T, Window } from "./hw";
 import { IconBack, IconPaths, IconPerson } from "./icons";
 import { Drawer, ProfilePanel, VariantsPanel } from "./Panels";
 import { DitherMode, TerrainCanvas } from "./TerrainCanvas";
 import { at, camera, choiceOpts, lanePoint, laneForSwipe, layout, Placed, zoomEnd } from "./terrain";
 import { Deck } from "./learn";
 import { CardActions, CardBody, PavingCard } from "./RoadCard";
-import { Paving, Widget } from "./widgets";
+import { Paving, PickList, Widget } from "./widgets";
 
 const PIN = require("../assets/hw/pin.svg");
 const ease = (u: number) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
@@ -137,11 +137,17 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
   const personaId = personaRule && personaRule.kind === "set" ? String(personaRule.value) : null;
   const roadIds = useMemo(() => new Set(shown.map((x) => x.id)), [shown]);
   // Each choice on the road, in order. Tapping one glides back to the exact stop where it was made, to choose differently.
-  const picks = shown.filter((x) => x.answer && ["fork", "thisthat", "compare", "ask"].includes(x.el.type));
+  const picks: Pick[] = useMemo(() => shown.filter((x) => x.answer && ["fork", "thisthat", "compare", "ask"].includes(x.el.type))
+    .map((x) => ({ id: x.id, prompt: "prompt" in x.el ? x.el.prompt : "title" in x.el ? x.el.title : "", label: x.answer!.label })), [shown]);
   const jumpTo = (id: string) => {
     const sec = L.sections.find((x) => x.seg?.id === id);
     if (sec) glide(Math.max(0, Math.min(L.maxS, sec.T)));
   };
+  // Stable across scroll frames, so cards that list picks do not re-render while scrolling.
+  const jumpRef = useRef(jumpTo);
+  useLayoutEffect(() => { jumpRef.current = jumpTo; });
+  const picksCtx = useMemo(() => ({ picks, jump: (id: string) => jumpRef.current(id) }), [picks]);
+  const [choicesOpen, setChoicesOpen] = useState(false);
   const barBtn = { minHeight: 48, minWidth: 48, paddingHorizontal: 14, borderRadius: 999, backgroundColor: "rgba(244,245,248,0.95)", borderWidth: 1, borderColor: C.border, flexDirection: "row" as const, alignItems: "center" as const, gap: 6 };
 
   const marks = placed.flatMap((p: Placed) => {
@@ -151,26 +157,35 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
     if (scale < 0.8 || scale > 1.6) return out;
     if (sec.n && seg) {
       const sign = at(p, 0.5, 0.12), opts = choiceOpts(seg), chosen = sec.chosen ?? -1;
+      const signW = Math.min(W - 20, 320);
       if (scale < 1.15) out.push(
-        <Pressable key={seg.id + "-sign"} onPress={() => show(seg.id)} testID="fork-sign" style={{ position: "absolute", left: Math.max(10, Math.min(W - 250, sign.x - 120)), top: sign.y, width: 240, alignItems: "center" }}>
-          <View style={{ backgroundColor: "rgba(244,245,248,0.96)", borderRadius: 10, borderWidth: 0.9, borderColor: C.border, paddingHorizontal: 12, paddingVertical: 7, minHeight: 44, justifyContent: "center" }}>
-            <Text style={{ fontFamily: F.head, fontSize: 16, color: C.ink, textAlign: "center" }}>{(seg.el as { prompt: string }).prompt}</Text>
-            <Text style={{ fontFamily: F.body, fontSize: 11, color: C.sub, textAlign: "center" }}>{chosen >= 0 ? `✓ ${seg.answer!.label} · tap a lane to change` : sec.n === 3 ? "swipe left, right, or scroll down" : "swipe left or right"}</Text>
+        <Pressable key={seg.id + "-sign"} onPress={() => show(seg.id)} testID="fork-sign" style={{ position: "absolute", left: Math.max(10, Math.min(W - signW - 10, sign.x - signW / 2)), top: sign.y, width: signW, alignItems: "center" }}>
+          <View style={{ backgroundColor: "rgba(244,245,248,0.96)", borderRadius: 12, borderWidth: 0.9, borderColor: C.border, paddingHorizontal: 18, paddingVertical: 12, gap: 4, minHeight: 44, justifyContent: "center" }}>
+            <Text style={{ fontFamily: F.head, fontSize: 16, lineHeight: 20, color: C.ink, textAlign: "center" }}>{(seg.el as { prompt: string }).prompt}</Text>
+            <Text style={{ fontFamily: F.body, fontSize: 13, lineHeight: 16, color: C.sub, textAlign: "center" }}>{chosen >= 0 ? `✓ ${seg.answer!.label} · tap a lane to change` : sec.n === 3 ? "swipe left, right, or scroll down" : "swipe left or right"}</Text>
           </View>
         </Pressable>,
       );
-      const lw = Math.min(140, p.r.w / sec.n - 18);
+      // Lane labels (docs/design-rules 04, 05, 14): a 16 pt gap between labels so each reads as its own choice,
+      // 16/20 names and 13/16 details, at least 48 pt tall. Outer labels shift outward a little (SPREAD) to make room,
+      // but each still covers its own pin. Labels never leave the screen (8 pt margin).
+      const GAP = 16, SPREAD = sec.n === 3 ? 16 : 0, EDGE = 8;
+      const qs = opts.slice(0, sec.n).map((_, j) => { const lp = lanePoint(sec.kind, j); return at(p, lp.x, lp.y); });
+      const step = Math.min(...qs.slice(1).map((q, j) => q.x - qs[j].x), Infinity);
+      const lw = Math.min(150, (Number.isFinite(step) ? step + SPREAD : p.r.w / sec.n) - GAP);
       opts.slice(0, sec.n).forEach((o, j) => {
-        const lp = lanePoint(sec.kind, j), q = at(p, lp.x, lp.y), picked = j === chosen || (chosen < 0 && j === preview), dim = (chosen >= 0 && j !== chosen) || (preview >= 0 && j !== preview);
+        const q = qs[j], picked = j === chosen || (chosen < 0 && j === preview), dim = (chosen >= 0 && j !== chosen) || (preview >= 0 && j !== preview);
         if (!picked && scale > 1.1) return;
+        const cx = q.x + (j - ((sec.n ?? 1) - 1) / 2) * SPREAD;
+        const left = Math.max(EDGE, Math.min(W - EDGE - lw, cx - lw / 2));
         out.push(
-          <Pressable key={`${seg.id}-${j}`} testID={`lane-${j}`} accessibilityRole="button" accessibilityLabel={o.label} onPress={() => pickLane(seg, j)}
-            style={{ position: "absolute", left: q.x - lw / 2, top: q.y - 58, width: lw, alignItems: "center", opacity: dim ? 0.5 : 1 }}>
-            {chosen < 0 ? <Ring size={30} left={lw / 2} top={8} /> : null}
-            <Image source={PIN} style={{ width: 23, height: 58 }} />
-            <View style={{ marginTop: 4, backgroundColor: picked ? "#2f3a4a" : "rgba(244,245,248,0.96)", borderRadius: 8, borderWidth: 0.9, borderColor: C.border, paddingHorizontal: 6, paddingVertical: 5, minHeight: 44, width: lw, justifyContent: "center" }}>
-              <Text numberOfLines={2} style={{ fontFamily: F.head, fontSize: 13, lineHeight: 15, color: picked ? "#fff" : C.ink, textAlign: "center" }}>{j === chosen ? "✓ " : ""}{o.label}</Text>
-              {o.sub ? <Text numberOfLines={2} style={{ fontFamily: F.body, fontSize: 10.5, color: picked ? "#d7dde5" : C.sub, textAlign: "center" }}>{o.sub}</Text> : null}
+          <Pressable key={`${seg.id}-${j}`} testID={`lane-${j}`} accessibilityRole="button" accessibilityLabel={o.sub ? `${o.label}, ${o.sub.replace(/\n/g, ", ")}` : o.label} onPress={() => pickLane(seg, j)}
+            style={{ position: "absolute", left, top: q.y - 58, width: lw, opacity: dim ? 0.5 : 1 }}>
+            {chosen < 0 ? <Ring size={30} left={q.x - left} top={8} /> : null}
+            <Image source={PIN} style={{ width: 23, height: 58, marginLeft: q.x - left - 11.5 }} />
+            <View style={{ marginTop: 4, backgroundColor: picked ? "#2f3a4a" : "rgba(244,245,248,0.96)", borderRadius: 8, borderWidth: 0.9, borderColor: C.border, paddingHorizontal: 8, paddingVertical: 8, minHeight: 48, width: lw, justifyContent: "center", gap: 4 }}>
+              <Text numberOfLines={2} style={{ fontFamily: F.head, fontSize: 16, lineHeight: 20, color: picked ? "#fff" : C.ink, textAlign: "center" }}>{j === chosen ? "✓ " : ""}{o.label}</Text>
+              {o.sub ? <Text numberOfLines={3} style={{ fontFamily: F.body, fontSize: 13, lineHeight: 16, color: picked ? "#d7dde5" : C.sub, textAlign: "center" }}>{o.sub}</Text> : null}
             </View>
           </Pressable>,
         );
@@ -180,40 +195,30 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
     return out;
   });
 
-  // Straight stretches carry their stop as a full card. Cards live inside the ScrollView (content coordinates),
-  // so a drag that starts on a card still scrolls the road. On a straight stretch cs + p.r.y is constant.
+  // Straight stretches carry their stop as a full card, centred on the stretch. Cards live inside the ScrollView
+  // (content coordinates), so a drag that starts on a card still scrolls the road. A stretch rests at content y = sec.T
+  // (fork windows are square and bottom-aligned, so a finished zoom lands it there too), so a card's position never
+  // changes with scroll: the browser moves it natively, with no one-frame lag. Cards mount a screen ahead, off screen.
   const rulesNow = active.map((r) => r.text).join("\n");
-  const cards = placed.flatMap((p: Placed) => {
-    const sec = p.sec, seg = sec.seg;
+  const cards = L.sections.flatMap((sec, i) => {
+    const seg = sec.seg;
     if (sec.n) return [];
-    const scale = p.r.w / W;
-    if (scale < 0.8 || scale > 1.6) return [];
-    const fade = Math.max(0, Math.min(1, 1 - (Math.abs(scale - 1) - 0.08) / 0.25));
-    const base = Math.min(p.r.h * 0.12, 120) + insets.top;
-    const key = sec.ghost ? `ghost${p.i}` : seg!.id;
-    if (seg?.el.type === "deck") {
-      // A deck pins near the top while its stretch scrolls past; that scroll deals the cards.
-      const travel = Math.max(1, p.r.h - base - 340);
-      const screenTop = Math.min(Math.max(base, p.r.y + base), p.r.y + base + travel);
-      const progress = Math.max(0, Math.min(1, -p.r.y / travel));
-      return [
-        <View key={key} pointerEvents={fade < 0.5 ? "none" : "box-none"} style={{ position: "absolute", top: cs + screenTop, left: 12, right: 12, opacity: fade }}>
-          <Deck seg={seg} progress={progress} still={reduceMotion} />
-        </View>,
-      ];
-    }
-    const top = cs + p.r.y + base;
-    // Scroll-linked: in the lower 40% of the screen a card sits down and to the right, and slides diagonally into place as it rises.
-    const u = reduceMotion ? 0 : Math.max(0, Math.min(1, (top - cs - H * 0.6) / (H * 0.4)));
+    if (sec.T + L.Hc < cs - H || sec.T > cs + 2 * H) return [];
+    // Scroll-linked arrival: a card fades and grows in as its centre rises through the bottom half of the screen.
+    const c = sec.T + L.Hc / 2 - cs;
+    const v = reduceMotion ? 1 : Math.max(0, Math.min(1, (H * 1.05 - c) / (H * 0.45)));
+    const key = sec.ghost ? `ghost${i}` : seg!.id;
     return [
-      <View key={key} pointerEvents={fade < 0.5 ? "none" : "box-none"}
-        style={{ position: "absolute", top, left: 12, right: 12, opacity: fade * (1 - 0.7 * u), transform: [{ translateX: 140 * u }, { translateY: 90 * u }] }}>
-        {sec.ghost ? <PavingCard /> : <CardBody seg={seg!} rulesNow={rulesNow} actions={cardActions} />}
+      <View key={key} pointerEvents="box-none" style={{ position: "absolute", top: sec.T, minHeight: L.Hc, left: 12, right: 12, justifyContent: "center" }}>
+        <View pointerEvents={v < 0.5 ? "none" : "box-none"} style={{ opacity: 0.15 + 0.85 * v, transform: [{ scale: 0.96 + 0.04 * v }] }}>
+          {sec.ghost ? <PavingCard /> : seg!.el.type === "deck" ? <Deck seg={seg!} progress={0} still={reduceMotion} /> : <CardBody seg={seg!} rulesNow={rulesNow} actions={cardActions} />}
+        </View>
       </View>,
     ];
   });
 
   return (
+    <PicksCtx.Provider value={picksCtx}>
     <View style={{ flex: 1, backgroundColor: "#22301f" }}>
       <TerrainCanvas placed={placed} W={W} H={H} mode={mode} />
       <View style={StyleSheet.absoluteFill} {...pan.panHandlers} testID="swipe">
@@ -240,18 +245,34 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
 
       <View pointerEvents="box-none" style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10, gap: 8 }}>
         {err ? <Text style={[T.p, { color: "#fff", textShadowColor: "#000", textShadowRadius: 4 }]}>{err}</Text> : null}
-        <View style={{ minHeight: 52, borderRadius: 999, backgroundColor: "rgba(244,245,248,0.95)", borderWidth: 1, borderColor: C.border, flexDirection: "row", alignItems: "center", paddingLeft: 16, gap: 8, overflow: "hidden" }} testID="choices-bar">
-          <Text style={{ fontFamily: F.head, fontSize: 14, color: C.ink }}>Choices</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingRight: 12, alignItems: "center" }}>
-            {picks.length ? picks.map((p, i) => (
-              <Pressable key={p.id} onPress={() => jumpTo(p.id)} accessibilityRole="button" accessibilityLabel={`Go back to: ${p.answer!.label}`} testID={`choice-${i}`}
-                style={({ pressed }) => [{ minHeight: 36, borderRadius: 999, borderWidth: 1, borderColor: C.sel, paddingHorizontal: 12, justifyContent: "center", backgroundColor: pressed ? "#e6e8eb" : "#fff" }]}>
-                <Text numberOfLines={1} style={{ fontFamily: F.body, fontSize: 14, color: C.ink, maxWidth: 180 }}>{p.answer!.label}</Text>
-              </Pressable>
-            )) : <Text style={{ fontFamily: F.body, fontSize: 14, color: C.sub }}>appear here as you pick</Text>}
-          </ScrollView>
-        </View>
+        {picks.length ? (
+          <Pressable onPress={() => setChoicesOpen(true)} accessibilityRole="button" accessibilityLabel={`Your choices, ${picks.length}`} testID="choices-bar"
+            style={({ pressed }) => [barBtn, { alignSelf: "flex-start", paddingRight: 8 }, pressed && { backgroundColor: "#e6e8eb" }]}>
+            <Text style={{ fontFamily: F.head, fontSize: 15, color: C.ink }}>Your choices</Text>
+            <View style={{ minWidth: 24, height: 24, borderRadius: 12, paddingHorizontal: 6, backgroundColor: C.sel, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ fontFamily: F.head, fontSize: 13, color: "#fff" }}>{picks.length}</Text>
+            </View>
+          </Pressable>
+        ) : null}
       </View>
+
+      {choicesOpen ? (
+        <View style={StyleSheet.absoluteFill}>
+          <Animated.View entering={FadeIn.duration(180)} style={StyleSheet.absoluteFill}>
+            <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10,20,30,0.35)" }]} onPress={() => setChoicesOpen(false)} testID="choices-backdrop" />
+          </Animated.View>
+          <Animated.View entering={SlideInDown.duration(260)} style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10, maxHeight: H * 0.8 }}>
+            <ScrollView testID="choices-sheet">
+              <CloseCtx.Provider value={() => setChoicesOpen(false)}>
+                <Window title="Your choices">
+                  <Text style={T.p}>Go back to any choice to pick differently. The road ahead repaves.</Text>
+                  <PickList onJump={() => setChoicesOpen(false)} />
+                </Window>
+              </CloseCtx.Provider>
+            </ScrollView>
+          </Animated.View>
+        </View>
+      ) : null}
 
       {openSeg ? (
         <View style={StyleSheet.absoluteFill}>
@@ -261,17 +282,15 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
           <Animated.View entering={SlideInDown.springify().damping(20).stiffness(180)} style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10, maxHeight: H * 0.8 }}>
             <ScrollView testID="sheet" contentContainerStyle={{ paddingTop: 4 }}>
               <CloseCtx.Provider value={() => setOpen(null)}>
-                <MessageCtx.Provider value={openSeg.message}>
-                  <Widget seg={openSeg} rulesNow={active.map((r) => r.text)}
-                    answer={(p: AnswerPayload) => {
-                      setTimeout(() => setOpen(null), 450);
-                      if ("option_index" in p) return void pickLane(openSeg, p.option_index);
-                      act(sendAnswer(sid, openSeg.id, p));
-                    }}
-                    change={() => { act(sendChange(sid, openSeg.id)); setOpen(null); }}
-                    retry={() => { act(sendRetry(sid, openSeg.id)); setOpen(null); }}
-                    onGoal={restart} onExplore={restart} />
-                </MessageCtx.Provider>
+                <Widget seg={openSeg} rulesNow={active.map((r) => r.text)}
+                  answer={(p: AnswerPayload) => {
+                    setTimeout(() => setOpen(null), 450);
+                    if ("option_index" in p) return void pickLane(openSeg, p.option_index);
+                    act(sendAnswer(sid, openSeg.id, p));
+                  }}
+                  change={() => { act(sendChange(sid, openSeg.id)); setOpen(null); }}
+                  retry={() => { act(sendRetry(sid, openSeg.id)); setOpen(null); }}
+                  onGoal={restart} onExplore={restart} />
               </CloseCtx.Provider>
             </ScrollView>
           </Animated.View>
@@ -283,7 +302,7 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
           <View style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10, maxHeight: H * 0.8, gap: 8 }}>
             <ScrollView testID="peek">
               <CloseCtx.Provider value={() => setPeek(null)}>
-                <MessageCtx.Provider value="A result from another set of choices. To get here again, tap a choice in the bar at the bottom of the road.">
+                <MessageCtx.Provider value="A result from another set of choices. To get here again, open Your choices and change a pick.">
                   <View pointerEvents="none">
                     <Widget seg={{ id: peek.id, el: peek.element, source: peek.source ?? "fixed", message: peek.message ?? "", blocks: false, answer: peek.answer ? { ...peek.answer, rules: [] } : null }}
                       rulesNow={[]} answer={() => {}} change={() => {}} retry={() => {}} onGoal={() => {}} onExplore={() => {}} />
@@ -310,6 +329,7 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
         </Drawer>
       ) : null}
     </View>
+    </PicksCtx.Provider>
   );
 }
 

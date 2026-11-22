@@ -16,8 +16,9 @@ const DB = process.env.UNCHARTED_DB ?? new URL("../uncharted.sqlite", import.met
 const db = openDb(DB);
 const tree = createTree(db, (m) => console.log(`${new Date().toISOString().slice(11, 19)} ${m}`));
 
-// The Decisions API picks the road (server/route.mjs). Money worries go to the futures simulator,
-// concepts to the lesson road, everything else to the choice road.
+// The free text bar: the Decisions API (server/route.mjs) picks the road.
+// Money worries go to the futures simulator (the demo road, Uncharted-PRD.md section 0),
+// concepts to the lesson road, find/make goals to the research road, other goals to the choice road.
 async function route({ goal }) {
   const g = String(goal ?? "").trim();
   const r = await classifyRoad(g);

@@ -3,7 +3,7 @@
 import { conceptTile, exploreFallback, exploreTile, moneyDecision, research, shopFork, stopState } from "./agent.mjs";
 import { id, json, now, parse } from "./db.mjs";
 import { findImage } from "./images.mjs";
-import { goalOdds, moneyPlan, PERSONAS, SCENARIOS } from "./sim.mjs";
+import { bufferLesson, goalOdds, moneyPlan, PERSONAS, SCENARIOS, simulate } from "./sim.mjs";
 
 const CHOICE = ["fork", "thisthat"];
 // Idea cards ("item") are content only: the road continues past them without an answer.
@@ -194,17 +194,83 @@ export function createTree(db, log = () => {}) {
 
   const deadEnd = (why) => ({ element: { type: "deadend", reason: `The agent could not build a stop that fits your rules after 3 tries (${why}).` }, message: "Try again, change a pick, or erase a rule.", source: "fixed" });
 
-  // Money road: decisions first, the result at the end. Whose numbers, then 3 decisions on closed levers
-  // (spending, income, weekly saving), then one plan card from the simulator (same 5,000 futures before and after), then one action.
-  const MONEY_ORDER = ["spend", "income", "weekly"];
+  // Money road (Uncharted-PRD.md section 0). One road, in the order of Maya's four barriers:
+  //   whose numbers -> your futures as they stand ("why bother") -> one of them up close
+  //   -> dial: what a weekly buffer does to the same futures ("what would it do for me", "$25 won't matter")
+  //   -> deck: where to keep it ("I might need that money") -> one decision: how much a week
+  //   -> the same 5,000 futures before and after -> one action.
+  // Every number comes from the simulator. Lesson copy is fixed and checked against CRA pages, never model text.
+  const MONEY_ORDER = ["weekly"];
   const leverOf = (el) => el?.type === "fork" ? el.opts.find((o) => String(o.rule?.key).startsWith("lever_"))?.rule.key.slice(6) : null;
   function leverFallback(lever, p, cap) {
     const o = (label, sub, value) => ({ label, sub, rule: { kind: "set", key: `lever_${lever}`, value } });
-    if (lever === "spend") return { type: "fork", prompt: "Trim one monthly cost?", opts: [o("Keep as is", "no change", 0), o("Cook at home more", "about $120 a month less", Math.min(120, Math.round(p.essentials * 0.15))), o("Cheaper phone and apps", "about $50 a month less", 50)] };
-    if (lever === "income") return { type: "fork", prompt: "Add a little income?", opts: [o("Not now", "no change", 0), o("A few weekend shifts", "about $200 a month", Math.min(200, Math.round(p.income * 0.15))), o("Sell things you don't use", "about $80 a month", 80)] };
     const ws = [10, 25, 50].filter((w) => w <= cap);
-    return { type: "fork", prompt: "Set aside something every week?", opts: [o("Not now", "keep things as they are", 0), ...ws.slice(0, 2).map((w) => o(`$${w} a week`, `$${Math.round((w * 52) / 12)} a month`, w))] };
+    return { type: "fork", prompt: "Set aside something every week?", opts: [o("Not now", "no change", 0), ...ws.slice(-2).map((w) => o(`$${w}/week`, `$${Math.round((w * 52) / 12)} a month`, w))] };
   }
+  const first = (p) => p.name.split(",")[0];
+  const pct = (n, total) => Math.round((100 * n) / total);
+
+  function futuresNow(p, pid, scenario) {
+    const r = simulate({ persona: { id: pid }, scenario: { id: scenario, intensity: "moderate" }, weekly_extra: 0 });
+    const t = r.tally.baseline, total = t.fine + t.rough_recovered + t.hard;
+    // The tile's headline carries the numbers; the message says what they assume.
+    const message = p.saving
+      ? `This is with the $${p.saving} a month ${first(p)} saves now.`
+      : `This is with nothing set aside each month.${t.fine >= total / 2 ? "" : " That part can change."}`;
+    return { element: { type: "tally", baseline: t, total }, message, source: "sim" };
+  }
+  function oneFuture(pid, scenario) {
+    // A rough or hard future where the worry actually happens and a $25 buffer would help, shown before the lever.
+    // The card draws only the baseline line, so the story must not quote the $25 ending.
+    const r = simulate({ persona: { id: pid }, scenario: { id: scenario, intensity: "moderate" }, weekly_extra: 25, mention_buffer: false });
+    const rank = { hard: 0, rough_recovered: 1, fine: 2 };
+    const hitType = { layoff: "job_loss", hours_cut: "hours_cut", rent_spike: "rent_spike", inflation: null }[scenario];
+    const helps = (c) => c.lever && rank[c.lever.outcome] > rank[c.baseline.outcome];
+    const c = r.cards.find((c) => helps(c) && (!hitType || c.events.some((e) => e.type === hitType)))
+      ?? r.cards.find(helps) ?? r.cards.find((c) => c.baseline.outcome !== "fine") ?? r.cards[0];
+    return { element: { type: "future", future_id: c.future_id, baseline: c.baseline, index: 0, of: 5000 }, message: "One future up close. Keep it in mind for later.", source: "sim" };
+  }
+  // Percentages that always add up to 100 (largest remainder), so the three bars never show 101%.
+  function shares(t, total) {
+    const keys = ["fine", "rough_recovered", "hard"], raw = keys.map((k) => (100 * t[k]) / total), out = raw.map(Math.floor);
+    let left = 100 - out.reduce((x, y) => x + y, 0);
+    raw.map((r, i) => [i, r - out[i]]).sort((x, y) => y[1] - x[1]).forEach(([i]) => { if (left-- > 0) out[i]++; });
+    return Object.fromEntries(keys.map((k, i) => [k, out[i]]));
+  }
+  function dial(p, pid, scenario) {
+    // One simulator run for every stop of the knob, so the bars and the caption always describe the same amount.
+    // Nothing on the dial is interpolated.
+    const cap = Math.floor((Math.max(0, p.income - p.essentials - p.saving) * 12) / 52);
+    const max = cap >= 100 ? 100 : cap >= 50 ? 50 : Math.max(5, Math.floor(cap / 5) * 5);
+    const step = 5; // $25 (the demo amount and a weekly option) is always a stop
+    const weeklies = Array.from({ length: Math.floor(max / step) + 1 }, (_, i) => i * step);
+    const L = bufferLesson({ persona: { id: pid }, scenario: { id: scenario, intensity: "moderate" }, weeklies });
+    const name = first(p);
+    const frames = L.rows.map((r) => {
+      const sh = shares(r.tally, L.total);
+      return {
+        at: r.weekly,
+        caption: r.weekly === 0
+          ? (p.saving ? `With nothing extra set aside, a big enough gap still goes onto credit, at about 20% interest. ${sh.fine}% of futures end fine.` : `With nothing set aside, any gap in income goes onto credit, at about 20% interest. ${sh.fine}% of futures end fine.`)
+          : `$${r.weekly} a week is $${r.year.toLocaleString("en-CA")} in a year: about ${r.weeks} week${r.weeks === 1 ? "" : "s"} of ${name}'s rent and groceries if the income stops. ${sh.fine}% of futures end fine.`,
+        viz: { kind: "bars", unit: "%", items: [
+          { label: "Fine", value: sh.fine },
+          { label: "Rough", value: sh.rough_recovered },
+          { label: "Hard", value: sh.hard },
+        ] },
+      };
+    });
+    const top = L.rows.at(-1)?.weekly ?? 0;
+    return { element: { type: "dial", title: "What a weekly buffer does", prompt: `Drag to set aside more each week. Same 5,000 futures, ${name}'s numbers.`, knob: { label: "Each week", min: 0, max: top, step, unit: "$" }, frames }, message: "Small amounts add up to a cushion.", source: "sim" };
+  }
+  // Checked against canada.ca (TFSA: contributing, withdrawing; 2026 dollar limit $7,000). Keep each card short: it is set at 22 pt.
+  const DECK = { type: "deck", title: "Where to keep it", cards: [
+    "An emergency fund is money for surprises: a layoff, a big bill, a rent jump. It's not for investing.",
+    "Keep it safe and easy to reach: a high-interest savings account, or savings inside a TFSA.",
+    "A TFSA isn't locked. You can take money out any time, and withdrawals aren't taxed.",
+    "Money you take out gets its room back next January, not right away.",
+    "Automatic beats willpower: a weekly transfer saves money you never have to decide on.",
+  ] };
 
   async function financeStep(n, chain, rs) {
     const t = trip(rs);
@@ -212,11 +278,16 @@ export function createTree(db, log = () => {}) {
     const body = chain.slice(start + 1).filter((x) => x.element);
     const has = (type) => body.some((x) => x.element.type === type);
     const persona = val(rs, "persona");
-    if (!persona) return { element: { type: "fork", prompt: "Whose numbers should we run?", opts: Object.entries(PERSONAS).map(([pid, p]) => ({ label: p.name.split(",").slice(0, 2).join(","), sub: `$${p.income}/mo · $${p.savings} saved`, rule: { kind: "set", key: "persona", value: pid } })) }, message: "These are sample people. Pick the one closest to you.", source: "fixed" };
+    const cad = (n) => `$${n.toLocaleString("en-CA")}`;
+    if (!persona) return { element: { type: "fork", prompt: "Whose numbers should we run?", opts: Object.entries(PERSONAS).map(([pid, p]) => ({ label: p.name.split(",").slice(0, 2).join(","), sub: `${cad(p.income)}/mo\n${cad(p.savings)} saved`, rule: { kind: "set", key: "persona", value: pid } })) }, message: "These are sample people. Pick the one closest to you.", source: "fixed" };
     const p = PERSONAS[persona];
+    if (!has("tally")) return futuresNow(p, persona, t.scenario);
+    if (!has("future")) return oneFuture(persona, t.scenario);
+    if (!has("dial")) return dial(p, persona, t.scenario);
+    if (!has("deck")) return { element: DECK, message: "Five things worth knowing before you start.", source: "fixed" };
     const asked = body.map((x) => leverOf(x.element)).filter(Boolean);
     const next = MONEY_ORDER.find((l) => !asked.includes(l));
-    const plan = { spend: Number(val(rs, "lever_spend") ?? 0), income: Number(val(rs, "lever_income") ?? 0), weekly: Number(val(rs, "lever_weekly") ?? 0) };
+    const plan = { weekly: Number(val(rs, "lever_weekly") ?? 0) };
     const weeklyCap = Math.floor((Math.max(0, p.income - p.essentials - p.saving) * 12) / 52);
     if (next) {
       const so_far = body.filter((x) => leverOf(x.element) && activeAnswer(x.id)).map((x) => `${x.element.prompt} -> ${activeAnswer(x.id).label}`);
@@ -227,10 +298,10 @@ export function createTree(db, log = () => {}) {
     if (!has("moneyplan")) {
       const r = moneyPlan({ persona: { id: persona }, scenario: { id: t.scenario, intensity: "moderate" }, plan });
       const choices = body.filter((x) => leverOf(x.element) && activeAnswer(x.id)).map((x) => activeAnswer(x.id).label);
-      return { element: { type: "moneyplan", worry: r.scenario, choices, ...r }, message: "Here is what your choices change, across the same 5,000 futures.", source: "sim" };
+      return { element: { type: "moneyplan", worry: r.scenario, choices, ...r }, message: plan.weekly > 0 ? "The same 5,000 futures and the same luck, now with your plan." : "Nothing set aside, so these futures stay as they were.", source: "sim" };
     }
-    if (plan.weekly > 0 && !has("action")) return { element: { type: "action", weekly: plan.weekly }, message: "One step makes the plan real.", source: "fixed" };
-    return { element: { type: "checkin", final: true }, message: "That is your plan.", source: "fixed" };
+    if (plan.weekly > 0 && !has("action")) return { element: { type: "action", weekly: plan.weekly }, message: "One step makes it real.", source: "fixed" };
+    return { element: { type: "checkin", final: true, money: true }, message: plan.weekly > 0 ? "That is your plan." : "You can come back and add a buffer any time.", source: "fixed" };
   }
 
   async function produce(n) {
@@ -324,8 +395,12 @@ export function createTree(db, log = () => {}) {
     q("INSERT INTO sessions (id,seed_json,created_at) VALUES (?,?,?)").run(sid, json(seed ?? null), now());
     const root = id();
     if (seed) {
-      const el = { type: "ask", prompt: "Where do you want to go?", placeholder: "e.g. get into astronomy", examples: ["Get into astronomy", "Cook on a student budget", "Find a weekend hobby"] };
-      q("INSERT INTO nodes (id,session_id,parent_id,option_index,depth,state,status,source,element_json,message,context_json,created_at,ready_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)").run(root, sid, null, null, 0, "taken", "ready", "fixed", json(el), "Your words from the title screen.", json({ pipe: "intro" }), now(), now());
+      // A money worry gets the money road's wording; every other road keeps the original goal card.
+      const money = (seed.rules ?? []).some((r) => r.key === "kind" && r.value === "worry");
+      const el = money
+        ? { type: "ask", prompt: "What money news is stressing you out?", placeholder: "e.g. rent going up", examples: [] }
+        : { type: "ask", prompt: "Where do you want to go?", placeholder: "e.g. get into astronomy", examples: ["Get into astronomy", "Cook on a student budget", "Find a weekend hobby"] };
+      q("INSERT INTO nodes (id,session_id,parent_id,option_index,depth,state,status,source,element_json,message,context_json,created_at,ready_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)").run(root, sid, null, null, 0, "taken", "ready", "fixed", json(el), money ? "Let's see what it would actually mean for you." : "Your words from the title screen.", json({ pipe: "intro" }), now(), now());
       writeAnswer(root, { label: seed.label, rules: seed.rules });
       addChild(node(root), null, "taken");
     } else {

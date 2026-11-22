@@ -7,6 +7,39 @@
 
 ---
 
+## 0. Purpose (read this first)
+
+> **Uncharted turns the scary headline you just scrolled past into a picture of your own future, and shows you how a small weekly saving keeps the bad versions survivable.**
+
+Short version (pitch, Devpost): **For young Canadians who doomscroll instead of save: see what $25 a week would do for you in an uncertain year, then set it up.**
+
+### Who we design for: Maya
+23, contract analyst in Toronto. $1,200 saved, $0 a month going to savings, no EI. About $800 a month left over that disappears. Her uncertainty is real, she *could* save, and she doesn't.
+
+Not for: people who already save (Sam), people who want investing advice, or people with nothing left over (telling them to save is tone-deaf).
+
+### The moment
+11pm, scrolling. "Tech layoffs hit entry-level roles." Stomach drops, "I'd be screwed," keeps scrolling. Uncharted is what she opens *instead of* the next scroll, not a budgeting app for Sundays.
+
+### Job to be done
+*When I see scary news about money, I want to know if I'd actually be okay and what one thing I can do, so I can stop spiraling.*
+
+### Why she doesn't save, and how we answer each one
+| Barrier | Our answer |
+|---|---|
+| "Why bother, the future's a mess." | Honest odds: most of her futures are fine, so the future isn't a write-off. |
+| "I don't know what it would do for me." | Her own futures, including the layoff, with and without a buffer. |
+| "$25 won't matter." | The lever: same futures, reshuffled, visibly better. |
+| "I might need that money." | Money lesson: a TFSA or savings account can be withdrawn from without penalty. |
+
+### The test for every feature
+**Does this help Maya get from a scary headline to understanding why a small buffer matters, and setting one up?** If not, cut it.
+
+Demo and pitch: the money road only. Fear chips on the title screen, futures feed, lever, tally, short money lessons tied to the fear (dial, deck), the auto-transfer action.
+Still in the app: the free text bar sends anything typed through the Gemini Decisions API to its road (money worry, lesson, find/make, choices). Those roads stay working, but they are not what we pitch. Out of the pitch: the health pack, the Merch Trail, and pitching it as a general engine.
+
+---
+
 ## 1. Summary
 
 Uncharted is a mobile web app that replaces the doom feed with a feed of your own futures.

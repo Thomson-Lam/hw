@@ -47,6 +47,9 @@ function Dots() {
 export const CloseCtx = createContext<(() => void) | undefined>(undefined);
 // The agent's message for the open tile, shown as the first line of its window.
 export const MessageCtx = createContext<string | undefined>(undefined);
+// The choices made on this road, in order, and a way back to each one.
+export type Pick = { id: string; prompt: string; label: string };
+export const PicksCtx = createContext<{ picks: Pick[]; jump: (id: string) => void }>({ picks: [], jump: () => {} });
 
 export function Window({ title, children, style, dim, testID, onClose: close }: { title: string; children: ReactNode; style?: ViewStyle; dim?: boolean; testID?: string; onClose?: () => void }) {
   const ctxClose = useContext(CloseCtx);
@@ -100,7 +103,7 @@ export const T = StyleSheet.create({
   h2: { fontFamily: F.head, fontSize: 18, lineHeight: 22, color: C.ink },
   p: { fontFamily: F.body, fontSize: 15, lineHeight: 21, color: C.sub },
   k: { fontFamily: F.label, fontSize: 11, letterSpacing: 1, textTransform: "uppercase", color: C.faint },
-  link: { fontFamily: F.body, fontSize: 14, color: C.sel, textDecorationLine: "underline", paddingVertical: 10 },
+  link: { fontFamily: F.body, fontSize: 15, color: C.ink, textDecorationLine: "underline", paddingVertical: 10 },
 });
 
 const s = StyleSheet.create({
@@ -110,7 +113,7 @@ const s = StyleSheet.create({
   light: { width: 14, height: 14 },
   barText: { position: "absolute", left: 12, right: 84, textAlign: "left", fontFamily: F.label, fontSize: 11, color: C.title },
   body: { backgroundColor: C.surface },
-  inner: { padding: 16, gap: 10 },
+  inner: { padding: 20, gap: 16 },
   pillWrap: { borderRadius: 999, shadowColor: "#000", shadowOpacity: 0.25, shadowRadius: 4, shadowOffset: { width: 0, height: 2 }, elevation: 3 },
   pill: { minHeight: 46, borderRadius: 999, borderWidth: 1, borderColor: "#b5b5b5", paddingHorizontal: 18, paddingVertical: 8, alignItems: "center", justifyContent: "center" },
   pillBig: { minHeight: 64, borderRadius: 18 },

@@ -29,7 +29,8 @@ export type StoryStep = { caption: string; viz?: Viz };
 export type Outcome = "fine" | "rough_recovered" | "hard";
 export type FutureSide = { outcome: Outcome; end_balance: number; min_balance: number; series: number[]; story: string };
 export type Tally = Record<Outcome, number>;
-export type MiniFuture = { outcome: Outcome; end_balance: number; story: string };
+// Older saved plans carry a story sentence instead of the series.
+export type MiniFuture = { outcome: Outcome; end_balance: number; min_balance?: number; series?: number[]; story?: string };
 
 export type Element =
   // Agent-filled (explore pipeline). Slots are short strings and tags from a closed vocabulary.
@@ -47,14 +48,14 @@ export type Element =
   | { type: "kit"; title: string; steps: string[]; items: Product[]; total: number; note?: string; sources?: WebSource[] } // how to make it and what to buy
   | { type: "savings"; goal: string; persona: string; target: number; horizon: number; total: number; weekly_cap: number; rows: OddsRow[]; assumptions: string[] } // simulator: odds of reaching the target
   // Money road result: the same 5,000 futures before and after the person's decisions.
-  | { type: "moneyplan"; worry: string; persona: string; choices: string[]; total: number; monthly: number; before: Tally; after: Tally; examples: { future_id: number; before: MiniFuture; after: MiniFuture }[]; assumptions: string[] }
+  | { type: "moneyplan"; worry: string; persona: string; choices: string[]; total: number; monthly: number; plan?: { weekly: number; spend: number; income: number; once: number }; before: Tally; after: Tally; examples: { future_id: number; what?: string; before: MiniFuture; after: MiniFuture }[]; assumptions: string[] }
   // Simulator-filled (finance pipeline, Uncharted PRD section 9 shapes).
   | { type: "future"; future_id: number; baseline: FutureSide; lever?: FutureSide; weekly?: number; index: number; of: number; months?: number }
   | { type: "tally"; baseline: Tally; lever?: Tally; weekly?: number; total: number }
   | { type: "assumptions"; lines: string[] }
   // Fixed copy, never model text.
   | { type: "action"; weekly: number }
-  | { type: "checkin"; final?: boolean }
+  | { type: "checkin"; final?: boolean; money?: boolean } // money: end of the money road
   | { type: "deadend"; reason: string };
 
 export type ElementType = Element["type"];
