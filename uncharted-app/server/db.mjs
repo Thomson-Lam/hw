@@ -71,6 +71,8 @@ export function openDb(file) {
   const db = new DatabaseSync(file);
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec(SCHEMA);
+  // Added later: when a stop was actually on the person's road (pre-built speculative stops never get one).
+  try { db.exec("ALTER TABLE nodes ADD COLUMN seen_at INTEGER"); } catch { /* column exists */ }
   return db;
 }
 
