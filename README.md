@@ -22,3 +22,8 @@ You don't write the boilerplate. A coding agent does, by following `playground/A
 - Open a prototype on your phone from the PR's Vercel preview link: `<preview>/prototypes/<slug>`.
 - Prototypes are private (password) by default. A prototype goes public at `/p/<slug>` only when Thomson asks for it.
 - When something breaks and you fix it, add the lesson to `playground/AGENTS.md` §4.
+
+## Credits
+
+- Mountain and sky art (`mountain-1…4.webp`, `sky-noise.webp`) comes from the [Hack Western website](https://github.com/hackwestern/hackwestern), MIT License, © 2025 Hack Western. The full notice is in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+- `uncharted-app/` started from the Expo app template (MIT, © 650 Industries).
