@@ -98,6 +98,24 @@ export function Chip({ text, onPress, testID }: { text: string; onPress?: () => 
   );
 }
 
+// Desktop folder like Hack Western: icon + pill label. Opens a Window when tapped.
+export function Folder({ label, onPress, testID }: { label: string; onPress: () => void; testID?: string }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Open ${label}`}
+      testID={testID}
+      style={({ pressed }) => [{ alignItems: "center", gap: 10, alignSelf: "flex-start", opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] }]}
+    >
+      <Image source={require("../assets/hw/folder.png")} style={{ width: 88, height: 88 }} contentFit="contain" />
+      <View style={{ backgroundColor: "rgba(30,36,44,0.88)", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 6, maxWidth: 160 }}>
+        <Text numberOfLines={1} style={{ fontFamily: F.head, fontSize: 15, lineHeight: 20, color: "#fff", textAlign: "center" }}>{label}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
 export const T = StyleSheet.create({
   h: { fontFamily: F.head, fontSize: 22, lineHeight: 26, color: C.ink },
   h2: { fontFamily: F.head, fontSize: 18, lineHeight: 22, color: C.ink },

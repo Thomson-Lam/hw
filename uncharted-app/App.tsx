@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
 import { Platform, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { PastRoads } from "./src/PastRoads";
 import { Road } from "./src/Road";
 import { Seed } from "./src/api";
 import { Title } from "./src/Title";
@@ -16,12 +17,20 @@ export default function App() {
     Figtree: require("./assets/fonts/Figtree-Variable.ttf"),
   });
   const [trip, setTrip] = useState<{ seed: Seed; n: number; resume?: string } | null>(null);
+  const [past, setPast] = useState(false);
   if (!fonts) return <View style={{ flex: 1, backgroundColor: "rgb(97,158,184)" }} />;
+  const openRoad = (id: string) => { setPast(false); setTrip({ seed: null, n: Date.now(), resume: id }); };
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
       <View style={{ flex: 1, backgroundColor: "#1f3a2a" }}>
-        {trip ? <Road key={trip.n} seed={trip.seed} resume={trip.resume} restart={() => setTrip(null)} /> : <Title go={(seed) => setTrip({ seed, n: Date.now() })} open={(id) => setTrip({ seed: null, n: Date.now(), resume: id })} />}
+        {trip ? (
+          <Road key={trip.n} seed={trip.seed} resume={trip.resume} restart={() => setTrip(null)} />
+        ) : past ? (
+          <PastRoads open={openRoad} back={() => setPast(false)} />
+        ) : (
+          <Title go={(seed) => setTrip({ seed, n: Date.now() })} onPast={() => setPast(true)} />
+        )}
       </View>
     </SafeAreaProvider>
   );

@@ -1,7 +1,7 @@
 import { Image } from "expo-image";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { PanResponder, Pressable, ScrollView, ScrollViewInstance, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import Animated, { FadeIn, SlideInDown, useReducedMotion } from "react-native-reanimated";
+import Animated, { FadeIn, ZoomIn, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AnswerPayload, fetchMeta, fetchRoad, fetchTree, Meta, Road as RoadView, Seed, sendAnswer, sendChange, sendRetry, startSession, TreeNode } from "./api";
 import { Segment } from "./contract";
@@ -51,6 +51,8 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
   const [treeNodes, setTreeNodes] = useState<TreeNode[] | null>(null);
   const [meta, setMeta] = useState<Meta | null>(null);
   const [peek, setPeek] = useState<TreeNode | null>(null);
+  // After picking a person from Profile, open the next result in a centered sheet.
+  const [openAfterPick, setOpenAfterPick] = useState(false);
   const scroller = useRef<ScrollViewInstance>(null);
   const anim = useRef(0);
 
@@ -100,6 +102,15 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
     setFollow(null);
     glide(Math.min(L.maxS, zoomEnd(L, sec, H)));
   }, [follow, L]);
+
+  // Profile persona pick: once the next stop is paved, show it centered (not stuck on the road edge).
+  useEffect(() => {
+    if (!openAfterPick || !road || road.paving) return;
+    const next = [...shown].reverse().find((x) => x.el.type !== "fork" && x.el.type !== "ask");
+    if (!next) return;
+    setOpenAfterPick(false);
+    setOpen(next.id);
+  }, [openAfterPick, road, shown]);
 
   const pickLane = async (seg: Segment, j: number) => {
     const cur = seg.answer?.option_index ?? -1;
@@ -264,60 +275,66 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
       </View>
 
       {choicesOpen ? (
-        <View style={StyleSheet.absoluteFill}>
+        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
           <Animated.View entering={FadeIn.duration(180)} style={StyleSheet.absoluteFill}>
             <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10,20,30,0.35)" }]} onPress={() => setChoicesOpen(false)} testID="choices-backdrop" />
           </Animated.View>
-          <Animated.View entering={SlideInDown.duration(260)} style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10, maxHeight: H * 0.8 }}>
-            <ScrollView testID="choices-sheet">
-              <CloseCtx.Provider value={() => setChoicesOpen(false)}>
-                <Window title="Your choices">
-                  <Text style={T.p}>Go back to any choice to pick differently. The road ahead repaves.</Text>
-                  <PickList onJump={() => setChoicesOpen(false)} />
-                </Window>
-              </CloseCtx.Provider>
-            </ScrollView>
-          </Animated.View>
+          <View style={[StyleSheet.absoluteFill, { justifyContent: "center", paddingHorizontal: 10, paddingVertical: insets.top + 24 }]} pointerEvents="box-none">
+            <Animated.View entering={ZoomIn.duration(220)} style={{ maxHeight: H * 0.8 }}>
+              <ScrollView testID="choices-sheet" bounces={false}>
+                <CloseCtx.Provider value={() => setChoicesOpen(false)}>
+                  <Window title="Your choices">
+                    <Text style={T.p}>Go back to any choice to pick differently. The road ahead repaves.</Text>
+                    <PickList onJump={() => setChoicesOpen(false)} />
+                  </Window>
+                </CloseCtx.Provider>
+              </ScrollView>
+            </Animated.View>
+          </View>
         </View>
       ) : null}
 
       {openSeg ? (
-        <View style={StyleSheet.absoluteFill}>
+        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
           <Animated.View entering={FadeIn.duration(180)} style={StyleSheet.absoluteFill}>
             <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10,20,30,0.35)" }]} onPress={() => setOpen(null)} testID="sheet-backdrop" />
           </Animated.View>
-          <Animated.View entering={SlideInDown.springify().damping(20).stiffness(180)} style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10, maxHeight: H * 0.8 }}>
-            <ScrollView testID="sheet" contentContainerStyle={{ paddingTop: 4 }}>
-              <CloseCtx.Provider value={() => setOpen(null)}>
-                <Widget seg={openSeg} rulesNow={active.map((r) => r.text)}
-                  answer={(p: AnswerPayload) => {
-                    setTimeout(() => setOpen(null), 450);
-                    if ("option_index" in p) return void pickLane(openSeg, p.option_index);
-                    act(sendAnswer(sid, openSeg.id, p));
-                  }}
-                  change={() => { act(sendChange(sid, openSeg.id)); setOpen(null); }}
-                  retry={() => { act(sendRetry(sid, openSeg.id)); setOpen(null); }}
-                  onGoal={restart} onExplore={restart} />
-              </CloseCtx.Provider>
-            </ScrollView>
-          </Animated.View>
+          <View style={[StyleSheet.absoluteFill, { justifyContent: "center", paddingHorizontal: 10, paddingVertical: insets.top + 24 }]} pointerEvents="box-none">
+            <Animated.View entering={ZoomIn.duration(220)} style={{ maxHeight: H * 0.8 }}>
+              <ScrollView testID="sheet" bounces={false} contentContainerStyle={{ paddingTop: 4 }}>
+                <CloseCtx.Provider value={() => setOpen(null)}>
+                  <Widget seg={openSeg} rulesNow={active.map((r) => r.text)}
+                    answer={(p: AnswerPayload) => {
+                      setTimeout(() => setOpen(null), 450);
+                      if ("option_index" in p) return void pickLane(openSeg, p.option_index);
+                      act(sendAnswer(sid, openSeg.id, p));
+                    }}
+                    change={() => { act(sendChange(sid, openSeg.id)); setOpen(null); }}
+                    retry={() => { act(sendRetry(sid, openSeg.id)); setOpen(null); }}
+                    onGoal={restart} onExplore={restart} />
+                </CloseCtx.Provider>
+              </ScrollView>
+            </Animated.View>
+          </View>
         </View>
       ) : null}
       {peek && peek.element ? (
-        <View style={StyleSheet.absoluteFill}>
+        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
           <Pressable style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(10,20,30,0.35)" }]} onPress={() => setPeek(null)} testID="peek-backdrop" />
-          <View style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10, maxHeight: H * 0.8, gap: 8 }}>
-            <ScrollView testID="peek">
-              <CloseCtx.Provider value={() => setPeek(null)}>
-                <MessageCtx.Provider value="A result from another set of choices. To get here again, open Your choices and change a pick.">
-                  <View pointerEvents="none">
-                    <Widget seg={{ id: peek.id, el: peek.element, source: peek.source ?? "fixed", message: peek.message ?? "", blocks: false, answer: peek.answer ? { ...peek.answer, rules: [] } : null }}
-                      rulesNow={[]} answer={() => {}} change={() => {}} retry={() => {}} onGoal={() => {}} onExplore={() => {}} />
-                  </View>
-                </MessageCtx.Provider>
-              </CloseCtx.Provider>
-            </ScrollView>
-            <Pressable onPress={() => setPeek(null)} accessibilityRole="button" testID="peek-close" style={[barBtn, { justifyContent: "center" }]}>
+          <View style={[StyleSheet.absoluteFill, { justifyContent: "center", paddingHorizontal: 10, paddingVertical: insets.top + 24, gap: 8 }]} pointerEvents="box-none">
+            <View style={{ maxHeight: H * 0.75 }}>
+              <ScrollView testID="peek" bounces={false}>
+                <CloseCtx.Provider value={() => setPeek(null)}>
+                  <MessageCtx.Provider value="A result from another set of choices. To get here again, open Your choices and change a pick.">
+                    <View pointerEvents="none">
+                      <Widget seg={{ id: peek.id, el: peek.element, source: peek.source ?? "fixed", message: peek.message ?? "", blocks: false, answer: peek.answer ? { ...peek.answer, rules: [] } : null }}
+                        rulesNow={[]} answer={() => {}} change={() => {}} retry={() => {}} onGoal={() => {}} onExplore={() => {}} />
+                    </View>
+                  </MessageCtx.Provider>
+                </CloseCtx.Provider>
+              </ScrollView>
+            </View>
+            <Pressable onPress={() => setPeek(null)} accessibilityRole="button" testID="peek-close" style={[barBtn, { justifyContent: "center", alignSelf: "center" }]}>
               <Text style={{ fontFamily: F.head, fontSize: 15, color: C.ink }}>Close preview</Text>
             </Pressable>
           </View>
@@ -331,7 +348,12 @@ export function Road({ seed, resume, restart }: { seed: Seed; resume?: string; r
       ) : null}
       {panel === "profile" ? (
         <Drawer side="right" title="Profile" onClose={() => setPanel(null)} testID="profile-panel">
-          <ProfilePanel meta={meta} personaId={personaId} personaSeg={personaSeg} onPersona={(j) => { setPanel(null); if (personaSeg) pickLane(personaSeg, j); }}
+          <ProfilePanel meta={meta} personaId={personaId} personaSeg={personaSeg} onPersona={(j) => {
+            setPanel(null);
+            if (!personaSeg) return;
+            setOpenAfterPick(true);
+            void pickLane(personaSeg, j);
+          }}
             scenario={t.scenario} goal={goalSeg?.answer?.label ?? t.goal} weekly={active.find((r) => r.key === "weekly")?.text ?? null} mode={mode} setMode={setMode} />
         </Drawer>
       ) : null}
